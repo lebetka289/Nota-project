@@ -7,6 +7,8 @@ const recordingPriceRub = (recordingType) => {
       return 3000;
     case 'home-recording':
       return 3500;
+    case 'video-clip':
+      return 15000;
     case 'with-music':
       return 7000;
     case 'own-music':

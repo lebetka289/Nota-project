@@ -20,14 +20,16 @@ function PaymentPage({ recordingType, musicStyle }) {
     'indie': 'Инди',
     'lofi': 'Low-fi',
     'russian-rap': 'Русский реп',
-    'funk': 'Фонк'
+    'funk': 'Фонк',
+    'video-clip': 'Видеоклип'
   };
 
   const recordingTypesNames = {
     'own-music': 'Запись на свою музыку',
     'with-music': 'Запись с покупкой музыки',
     'buy-music': 'Покупка музыки',
-    'home-recording': 'Запись из дома'
+    'home-recording': 'Запись из дома',
+    'video-clip': 'Съёмка видеоклипа'
   };
 
   const processSteps = {
@@ -61,7 +63,23 @@ function PaymentPage({ recordingType, musicStyle }) {
       'Создание профессиональной сводки по жанру',
       'Получение обработанного трека',
       'Возможность дальнейшей записи в студии'
+    ],
+    'video-clip': [
+      'Создание сценария клипа под вашу песню',
+      'Подбор локаций и реквизита',
+      'Профессиональная видеосъёмка',
+      'Постпродакшн и цветокоррекция',
+      'Синхронизация видео с вашим треком',
+      'Финальная сдача клипа'
     ]
+  };
+
+  const priceByType = {
+    'buy-music': 3000,
+    'home-recording': 3500,
+    'own-music': 5000,
+    'with-music': 7000,
+    'video-clip': 15000
   };
 
   const handlePayment = async () => {
@@ -161,10 +179,12 @@ function PaymentPage({ recordingType, musicStyle }) {
           <div className="price-card">
             <div className="price-amount">
               <span className="price-label">От</span>
-              <span className="price-value">5 000 ₽</span>
+              <span className="price-value">
+                {Number(priceByType[finalType] || 5000).toLocaleString('ru-RU')} ₽
+              </span>
             </div>
             <p className="price-note">
-              Точная стоимость зависит от выбранного типа записи и стиля музыки.
+              Точная стоимость зависит от выбранного типа услуги и деталей проекта.
               С вами свяжется менеджер для уточнения деталей.
             </p>
           </div>

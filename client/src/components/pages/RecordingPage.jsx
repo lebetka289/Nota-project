@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import './RecordingPage.css';
 
@@ -21,6 +21,10 @@ function RecordingPage({ onNavigate }) {
   const [profilePurchases, setProfilePurchases] = useState([]);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState('');
+  const [videoSlideIndex, setVideoSlideIndex] = useState(0);
+  const [videoItemsPerView, setVideoItemsPerView] = useState(2);
+  const [playingVideoId, setPlayingVideoId] = useState(null);
+  const videoRefs = useRef({});
 
   const recordingTypes = [
     {
@@ -86,7 +90,8 @@ function RecordingPage({ onNavigate }) {
     'own-music': 'Запись на свою музыку',
     'with-music': 'Запись с покупкой музыки',
     'buy-music': 'Покупка музыки',
-    'home-recording': 'Запись из дома'
+    'home-recording': 'Запись из дома',
+    'video-clip': 'Съёмка видеоклипа'
   };
 
   const musicStyleNames = {
@@ -95,7 +100,8 @@ function RecordingPage({ onNavigate }) {
     indie: 'Инди',
     lofi: 'Low-fi',
     'russian-rap': 'Русский реп',
-    funk: 'Фонк'
+    funk: 'Фонк',
+    'video-clip': 'Видеоклип'
   };
 
   const roleNames = {
@@ -134,6 +140,92 @@ function RecordingPage({ onNavigate }) {
 
     loadReviews();
   }, []);
+
+  useEffect(() => {
+    const updateItemsPerView = () => {
+      setVideoItemsPerView(window.innerWidth <= 900 ? 1 : 2);
+    };
+    updateItemsPerView();
+    window.addEventListener('resize', updateItemsPerView);
+    return () => window.removeEventListener('resize', updateItemsPerView);
+  }, []);
+
+  const videoWorks = [
+    {
+      id: 'clip-1',
+      title: 'Песня в подарок мужу — С тобой мне очень хорошо',
+      subtitle: 'Съёмка видеоклипа',
+      image: '/videos/clip-1.jpg',
+      video: '/videos/clip-1.mp4'
+    },
+    {
+      id: 'clip-2',
+      title: 'Кавер — Я по полюшку',
+      subtitle: 'Съёмка видеоклипа',
+      image: '/videos/clip-2.jpg',
+      video: '/videos/clip-2.mp4'
+    },
+    {
+      id: 'clip-3',
+      title: 'Urban Light',
+      subtitle: 'Съёмка видеоклипа',
+      image: '/videos/clip-3.jpg',
+      video: '/videos/clip-3.mp4'
+    },
+    {
+      id: 'clip-4',
+      title: 'Night Session',
+      subtitle: 'Съёмка видеоклипа',
+      image: '/videos/clip-4.jpg',
+      video: '/videos/clip-4.mp4'
+    }
+  ];
+
+  const maxVideoSlide = Math.max(0, videoWorks.length - videoItemsPerView);
+
+  useEffect(() => {
+    setVideoSlideIndex((prev) => Math.min(prev, Math.max(0, videoWorks.length - videoItemsPerView)));
+  }, [videoItemsPerView, videoWorks.length]);
+
+  const pauseAllVideos = () => {
+    Object.values(videoRefs.current).forEach((video) => {
+      if (video && !video.paused) {
+        video.pause();
+      }
+    });
+    setPlayingVideoId(null);
+  };
+
+  useEffect(() => {
+    pauseAllVideos();
+  }, [videoSlideIndex, videoItemsPerView]);
+
+  const handleVideoPrev = () => {
+    setVideoSlideIndex((prev) => (prev <= 0 ? maxVideoSlide : prev - 1));
+  };
+
+  const handleVideoNext = () => {
+    setVideoSlideIndex((prev) => (prev >= maxVideoSlide ? 0 : prev + 1));
+  };
+
+  const handleVideoToggle = async (videoId) => {
+    const video = videoRefs.current[videoId];
+    if (!video) return;
+
+    if (!video.paused) {
+      video.pause();
+      setPlayingVideoId(null);
+      return;
+    }
+
+    pauseAllVideos();
+    try {
+      await video.play();
+      setPlayingVideoId(videoId);
+    } catch (error) {
+      console.error('Не удалось запустить видео:', error);
+    }
+  };
 
   useEffect(() => {
     if (!profileUserId) {
@@ -308,6 +400,26 @@ function RecordingPage({ onNavigate }) {
     }
   };
 
+  const handleVideoOrder = () => {
+    if (!user) {
+      alert('Войдите в аккаунт, чтобы продолжить');
+      if (onNavigate) {
+        onNavigate('auth');
+      }
+      return;
+    }
+
+    localStorage.setItem('recordingData', JSON.stringify({
+      recordingType: 'video-clip',
+      musicStyle: 'video-clip',
+      styleName: 'Видеоклип'
+    }));
+
+    if (onNavigate) {
+      onNavigate('payment');
+    }
+  };
+
   const handleOpenProfile = (userId) => {
     setProfileUserId(userId);
   };
@@ -365,6 +477,90 @@ function RecordingPage({ onNavigate }) {
           </div>
         ))}
       </div>
+
+      <section className="video-clip-section">
+        <div className="video-clip-header">
+          <div className="video-clip-title">
+            <div className="video-clip-badge">СЪЕМКА ВИДЕОКЛИПА</div>
+            <h2>СЪЕМКА ВИДЕОКЛИПА</h2>
+            <p>Создаем сценарий и снимаем клип по вашей истории или песне</p>
+          </div>
+          <div className="video-clip-controls">
+            <span>Листайте</span>
+            <div className="video-clip-buttons">
+              <button type="button" className="video-clip-btn" onClick={handleVideoPrev} aria-label="Предыдущий клип">
+                ←
+              </button>
+              <button type="button" className="video-clip-btn primary" onClick={handleVideoNext} aria-label="Следующий клип">
+                →
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="video-clip-slider">
+          <div
+            className="video-clip-track"
+            style={{ transform: `translateX(-${videoSlideIndex * (100 / videoItemsPerView)}%)` }}
+          >
+            {videoWorks.map((work) => (
+              <div key={work.id} className="video-clip-item">
+                <div
+                  className={`video-clip-media ${playingVideoId === work.id ? 'playing' : ''}`}
+                  onClick={() => handleVideoToggle(work.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      handleVideoToggle(work.id);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Воспроизвести клип: ${work.title}`}
+                >
+                  <video
+                    className="video-clip-video"
+                    src={work.video}
+                    poster={work.image}
+                    preload="metadata"
+                    playsInline
+                    ref={(el) => {
+                      if (el) {
+                        videoRefs.current[work.id] = el;
+                      } else {
+                        delete videoRefs.current[work.id];
+                      }
+                    }}
+                    onPlay={() => setPlayingVideoId(work.id)}
+                    onPause={() => setPlayingVideoId((current) => (current === work.id ? null : current))}
+                    onEnded={() => setPlayingVideoId(null)}
+                  />
+                  <div className="video-clip-play">▶</div>
+                </div>
+                <div className="video-clip-caption">
+                  <div className="video-clip-name">{work.title}</div>
+                  <div className="video-clip-sub">{work.subtitle}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="video-clip-info">
+          <div className="video-clip-includes">
+            <h3>Что входит</h3>
+            <ul>
+              <li>Память на всю жизнь</li>
+              <li>Сценарий клипа</li>
+              <li>Профессиональный видеоклип с записи песни</li>
+              <li>Профессиональный свет</li>
+            </ul>
+          </div>
+          <button type="button" className="video-clip-order" onClick={handleVideoOrder}>
+            Заказать видеоклип
+          </button>
+        </div>
+      </section>
 
       <section className="reviews-section">
         <div className="reviews-card">

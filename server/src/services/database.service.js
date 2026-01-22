@@ -37,6 +37,17 @@ async function initDatabase() {
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   )`);
 
+  // Таблица услуг
+  await query(`CREATE TABLE IF NOT EXISTS services (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    slug VARCHAR(100) UNIQUE NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    features TEXT,
+    price DECIMAL(10, 2) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )`);
+
   // Начальные товары
   const productCount = await queryOne("SELECT COUNT(*) as count FROM products");
   if (productCount.count === 0) {
@@ -73,6 +84,27 @@ async function initDatabase() {
         product
       );
     }
+  }
+
+  // Начальная услуга: съемка видеоклипа
+  const videoClipService = await queryOne("SELECT id FROM services WHERE slug = ?", ['video-clip']);
+  if (!videoClipService) {
+    const features = JSON.stringify([
+      'Память на всю жизнь',
+      'Сценарий клипа',
+      'Профессиональный видеоклип с записи песни',
+      'Профессиональный свет'
+    ]);
+    await query(
+      "INSERT INTO services (slug, title, description, features, price) VALUES (?, ?, ?, ?, ?)",
+      [
+        'video-clip',
+        'Съёмка видеоклипа',
+        'Снимаем клип по вашей истории или песне с полным продакшеном.',
+        features,
+        15000
+      ]
+    );
   }
 
   // Таблица корзины товаров
