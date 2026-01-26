@@ -50,6 +50,20 @@ exports.createRecordingPayment = async (req, res) => {
     const amountRub = Number(recording.price || recordingPriceRub(recording.recording_type));
     const returnUrl = process.env.PAYMENT_RETURN_URL || 'http://localhost:5173/';
 
+    if (process.env.PAYMENT_SKIP_CONFIRMATION === 'true') {
+      const mockPaymentId = `mock_${Date.now()}`;
+      await query(
+        "UPDATE user_recordings SET payment_provider = ?, payment_id = ?, payment_status = ?, status = 'paid', paid_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?",
+        ['mock', mockPaymentId, 'succeeded', recording.id, req.user.id]
+      );
+      return res.json({
+        confirmation_url: null,
+        payment_id: mockPaymentId,
+        recording_id: recording.id,
+        mock: true
+      });
+    }
+
     const payment = await createRedirectPayment({
       amountRub,
       description: `Nota Studio: ${recording.recording_type} / ${recording.music_style}`,
@@ -109,6 +123,18 @@ exports.createCartPayment = async (req, res) => {
     }
 
     const returnUrl = process.env.PAYMENT_RETURN_URL || 'http://localhost:5173/';
+
+    if (process.env.PAYMENT_SKIP_CONFIRMATION === 'true') {
+      for (const it of toPay) {
+        await query(
+          "INSERT INTO beat_purchases (user_id, beat_id, payment_provider, payment_id, payment_status, status, paid_at) VALUES (?, ?, 'mock', ?, 'succeeded', 'paid', CURRENT_TIMESTAMP) ON DUPLICATE KEY UPDATE payment_provider='mock', payment_id=VALUES(payment_id), payment_status='succeeded', status='paid', paid_at=CURRENT_TIMESTAMP",
+          [req.user.id, it.beat_id, `mock_${Date.now()}_${it.beat_id}`]
+        );
+      }
+      await query("DELETE FROM beat_cart WHERE user_id = ?", [req.user.id]);
+      return res.json({ ok: true, mock: true });
+    }
+
     const payment = await createRedirectPayment({
       amountRub: total,
       description: `Nota Studio: покупка битов (${toPay.length})`,

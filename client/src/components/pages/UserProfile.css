@@ -50,11 +50,13 @@
   font-weight: 500;
 }
 
-.recordings-section {
+.recordings-section,
+.purchases-section {
   margin-top: 3rem;
 }
 
-.recordings-section h2 {
+.recordings-section h2,
+.purchases-section h2 {
   font-size: 2rem;
   color: #fff;
   margin-bottom: 2rem;
@@ -195,6 +197,111 @@
   font-weight: 700;
 }
 
+.pay-recording-btn {
+  margin-top: 1.5rem;
+  width: 100%;
+  padding: 0.9rem 1.5rem;
+  background: linear-gradient(135deg, #e1062f 0%, #a3001f 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pay-recording-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 25px rgba(225, 6, 47, 0.25);
+}
+
+.pay-recording-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.purchases-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.purchase-card {
+  background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+  border: 2px solid #444;
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 1rem;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.purchase-card:hover {
+  border-color: rgba(225, 6, 47, 0.55);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(225, 6, 47, 0.18);
+}
+
+.purchase-cover {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #111;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #444;
+}
+
+.purchase-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.purchase-cover-placeholder {
+  font-size: 2rem;
+  opacity: 0.5;
+}
+
+.purchase-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.purchase-title {
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.purchase-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.purchase-chip {
+  background: rgba(255, 255, 255, 0.08);
+  color: #aaa;
+  padding: 0.25rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+}
+
+.purchase-date {
+  color: #888;
+  font-size: 0.85rem;
+  margin-left: auto;
+}
+
 .auth-required {
   text-align: center;
   padding: 3rem;
@@ -234,5 +341,23 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
+  }
+
+  .purchases-list {
+    grid-template-columns: 1fr;
+  }
+
+  .purchase-card {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .purchase-cover {
+    margin: 0 auto;
+  }
+
+  .purchase-date {
+    margin-left: 0;
+    margin-top: 0.5rem;
   }
 }

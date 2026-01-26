@@ -16,7 +16,11 @@ const GENRES = [
 function BeatmakerPanel() {
   const { user, token, isBeatmaker } = useAuth();
   const [beats, setBeats] = useState([]);
+  const [paidRecordings, setPaidRecordings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [recordingsLoading, setRecordingsLoading] = useState(true);
+  const [uploadingTrackId, setUploadingTrackId] = useState(null);
+  const [sendingTrackId, setSendingTrackId] = useState(null);
 
   const [title, setTitle] = useState('');
   const [genre, setGenre] = useState('hyperpop');
@@ -41,9 +45,98 @@ function BeatmakerPanel() {
   };
 
   useEffect(() => {
-    if (user && token && isBeatmaker) loadMine();
+    if (user && token && isBeatmaker) {
+      loadMine();
+      loadPaidRecordings();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, token, isBeatmaker]);
+
+  const loadPaidRecordings = async () => {
+    if (!token) return;
+    try {
+      setRecordingsLoading(true);
+      const r = await fetch(`${API_URL}/recordings/paid`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await r.json();
+      setPaidRecordings(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setRecordingsLoading(false);
+    }
+  };
+
+  const handleTrackUpload = async (recordingId, trackFile) => {
+    if (!trackFile) return alert('Выберите файл трека');
+    
+    try {
+      setUploadingTrackId(recordingId);
+      const formData = new FormData();
+      formData.append('track', trackFile);
+
+      const response = await fetch(`${API_URL}/recordings/${recordingId}/upload-track`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Ошибка загрузки файла');
+      }
+
+      alert('✅ Файл трека загружен');
+      await loadPaidRecordings();
+    } catch (error) {
+      alert(error.message || 'Ошибка загрузки файла');
+    } finally {
+      setUploadingTrackId(null);
+    }
+  };
+
+  const handleSendTrack = async (recordingId) => {
+    if (!confirm('Отправить трек на email пользователя?')) return;
+
+    try {
+      setSendingTrackId(recordingId);
+      const response = await fetch(`${API_URL}/recordings/${recordingId}/send-track`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Ошибка отправки');
+      }
+
+      alert('✅ Трек отправлен на email пользователя');
+      await loadPaidRecordings();
+    } catch (error) {
+      alert(error.message || 'Ошибка отправки трека');
+    } finally {
+      setSendingTrackId(null);
+    }
+  };
+
+  const recordingTypesNames = {
+    'own-music': 'Запись на свою музыку',
+    'with-music': 'Запись с покупкой музыки',
+    'buy-music': 'Покупка музыки',
+    'home-recording': 'Запись из дома',
+    'video-clip': 'Съёмка видеоклипа'
+  };
+
+  const musicStylesNames = {
+    'hyperpop': 'Хайпер поп',
+    'pop-rock': 'Поп рок',
+    'indie': 'Инди',
+    'lofi': 'Low-fi',
+    'russian-rap': 'Русский реп',
+    'funk': 'Фонк',
+    'video-clip': 'Видеоклип'
+  };
 
   const uploadBeat = async (e) => {
     e.preventDefault();
@@ -165,6 +258,68 @@ function BeatmakerPanel() {
                 <div className="bm-item-actions">
                   <a className="bm-link" href={b.file_url} target="_blank" rel="noreferrer">Открыть</a>
                   <button className="bm-delete" onClick={() => removeBeat(b.id)}>Удалить</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="bm-list" style={{ marginTop: '3rem' }}>
+        <div className="bm-list-title">Оплаченные заявки</div>
+        {recordingsLoading ? (
+          <div className="bm-muted">Загрузка…</div>
+        ) : paidRecordings.length === 0 ? (
+          <div className="bm-muted">Нет оплаченных заявок</div>
+        ) : (
+          <div className="bm-items">
+            {paidRecordings.map((recording) => (
+              <div key={recording.id} className="bm-item">
+                <div className="bm-item-main">
+                  <div className="bm-item-title">
+                    {recordingTypesNames[recording.recording_type] || recording.recording_type}
+                  </div>
+                  <div className="bm-item-sub">
+                    <span className="bm-pill">{musicStylesNames[recording.music_style] || recording.music_style}</span>
+                    <span className="bm-pill">{recording.user_name || recording.user_email}</span>
+                    {recording.price && (
+                      <span className="bm-pill accent">{Number(recording.price).toLocaleString('ru-RU')} ₽</span>
+                    )}
+                  </div>
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: '#aaa' }}>
+                    {recording.track_file_path ? '✅ Файл загружен' : '⚠️ Файл не загружен'}
+                  </div>
+                </div>
+                <div className="bm-item-actions" style={{ flexDirection: 'column', gap: '0.5rem' }}>
+                  <label style={{ cursor: 'pointer', display: 'block' }}>
+                    <input
+                      type="file"
+                      accept="audio/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleTrackUpload(recording.id, file);
+                        e.target.value = '';
+                      }}
+                      style={{ display: 'none' }}
+                      disabled={uploadingTrackId === recording.id}
+                    />
+                    <span
+                      className="bm-link"
+                      style={{ display: 'inline-block', pointerEvents: uploadingTrackId === recording.id ? 'none' : 'auto', opacity: uploadingTrackId === recording.id ? 0.6 : 1 }}
+                    >
+                      {uploadingTrackId === recording.id ? 'Загрузка...' : recording.track_file_path ? 'Заменить файл' : 'Загрузить файл'}
+                    </span>
+                  </label>
+                  {recording.track_file_path && (
+                    <button
+                      type="button"
+                      className="bm-link"
+                      onClick={() => handleSendTrack(recording.id)}
+                      disabled={sendingTrackId === recording.id}
+                    >
+                      {sendingTrackId === recording.id ? 'Отправка...' : 'Отправить на email'}
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

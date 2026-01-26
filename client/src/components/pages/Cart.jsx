@@ -93,6 +93,10 @@ function Cart() {
         alert('✅ Биты отмечены как купленные');
         return fetchCart();
       }
+      if (data.mock) {
+        alert('✅ Оплата проведена в тестовом режиме');
+        return fetchCart();
+      }
       if (data.confirmation_url) {
         window.location.href = data.confirmation_url;
       } else {

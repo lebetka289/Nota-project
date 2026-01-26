@@ -8,6 +8,7 @@ function PaymentPage({ recordingType, musicStyle }) {
   const { user, token } = useAuth();
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [mockPaid, setMockPaid] = useState(false);
 
   // Получаем данные из localStorage или пропсов
   const recordingData = JSON.parse(localStorage.getItem('recordingData') || '{}');
@@ -114,6 +115,9 @@ function PaymentPage({ recordingType, musicStyle }) {
 
       if (data.confirmation_url) {
         window.location.href = data.confirmation_url;
+      } else if (data.mock) {
+        setMockPaid(true);
+        alert('✅ Оплата проведена в тестовом режиме');
       } else {
         alert('Платеж создан, но нет ссылки на оплату. Проверьте настройки YooKassa.');
       }
@@ -145,6 +149,11 @@ function PaymentPage({ recordingType, musicStyle }) {
           {saved && (
             <div className="saved-badge">
               ✓ Сохранено в личном кабинете
+            </div>
+          )}
+          {mockPaid && (
+            <div className="saved-badge">
+              ✓ Оплачено в тестовом режиме
             </div>
           )}
         </div>

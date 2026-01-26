@@ -68,7 +68,12 @@ export const AuthProvider = ({ children }) => {
         setUser(data.user);
         return { success: true };
       } else {
-        return { success: false, error: data.error };
+        return { 
+          success: false, 
+          error: data.error,
+          requiresVerification: data.requiresVerification,
+          userId: data.userId
+        };
       }
     } catch (error) {
       return { success: false, error: 'Ошибка подключения к серверу' };

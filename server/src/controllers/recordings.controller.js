@@ -1,4 +1,7 @@
 const { query, queryOne } = require('../../config/database');
+const { sendTrackToUser } = require('../services/email.service');
+const path = require('path');
+const fs = require('fs');
 
 // Создать запись
 exports.createRecording = async (req, res) => {
@@ -83,5 +86,135 @@ exports.updateRecordingStatus = async (req, res) => {
   } catch (error) {
     console.error('Ошибка обновления записи:', error);
     res.status(500).json({ error: 'Ошибка обновления записи' });
+  }
+};
+
+// Получить оплаченные записи для битмейкера
+exports.getPaidRecordings = async (req, res) => {
+  try {
+    const recordings = await query(
+      `SELECT r.*, u.email as user_email, u.name as user_name
+       FROM user_recordings r
+       LEFT JOIN users u ON r.user_id = u.id
+       WHERE r.status = 'paid' OR r.status = 'in-progress'
+       ORDER BY r.paid_at DESC, r.created_at DESC`
+    );
+    res.json(recordings);
+  } catch (error) {
+    console.error('Ошибка получения оплаченных записей:', error);
+    res.status(500).json({ error: 'Ошибка получения записей' });
+  }
+};
+
+// Загрузить файл трека для записи
+exports.uploadTrack = async (req, res) => {
+  try {
+    const recordingId = Number(req.params.id);
+    if (!req.file) {
+      return res.status(400).json({ error: 'Файл не загружен' });
+    }
+
+    const recording = await queryOne(
+      "SELECT * FROM user_recordings WHERE id = ? AND (status = 'paid' OR status = 'in-progress')",
+      [recordingId]
+    );
+
+    if (!recording) {
+      // Удаляем загруженный файл если запись не найдена
+      if (req.file.path) {
+        fs.unlinkSync(req.file.path);
+      }
+      return res.status(404).json({ error: 'Запись не найдена или не оплачена' });
+    }
+
+    // Удаляем старый файл если есть
+    if (recording.track_file_path && fs.existsSync(recording.track_file_path)) {
+      fs.unlinkSync(recording.track_file_path);
+    }
+
+    const trackPath = req.file.path;
+    await query(
+      "UPDATE user_recordings SET track_file_path = ? WHERE id = ?",
+      [trackPath, recordingId]
+    );
+
+    res.json({ 
+      success: true, 
+      message: 'Файл трека загружен',
+      track_file_path: trackPath
+    });
+  } catch (error) {
+    console.error('Ошибка загрузки трека:', error);
+    if (req.file && req.file.path) {
+      fs.unlinkSync(req.file.path);
+    }
+    res.status(500).json({ error: 'Ошибка загрузки файла' });
+  }
+};
+
+// Отправить трек на email пользователя
+exports.sendTrackToUser = async (req, res) => {
+  try {
+    const recordingId = Number(req.params.id);
+    const recording = await queryOne(
+      `SELECT r.*, u.email as user_email, u.name as user_name
+       FROM user_recordings r
+       LEFT JOIN users u ON r.user_id = u.id
+       WHERE r.id = ? AND (r.status = 'paid' OR r.status = 'in-progress')`,
+      [recordingId]
+    );
+
+    if (!recording) {
+      return res.status(404).json({ error: 'Запись не найдена или не оплачена' });
+    }
+
+    if (!recording.track_file_path || !fs.existsSync(recording.track_file_path)) {
+      return res.status(400).json({ error: 'Файл трека не загружен' });
+    }
+
+    if (!recording.user_email) {
+      return res.status(400).json({ error: 'Email пользователя не найден' });
+    }
+
+    const recordingTypesNames = {
+      'own-music': 'Запись на свою музыку',
+      'with-music': 'Запись с покупкой музыки',
+      'buy-music': 'Покупка музыки',
+      'home-recording': 'Запись из дома',
+      'video-clip': 'Съёмка видеоклипа'
+    };
+
+    const musicStylesNames = {
+      'hyperpop': 'Хайпер поп',
+      'pop-rock': 'Поп рок',
+      'indie': 'Инди',
+      'lofi': 'Low-fi',
+      'russian-rap': 'Русский реп',
+      'funk': 'Фонк',
+      'video-clip': 'Видеоклип'
+    };
+
+    const fileName = path.basename(recording.track_file_path);
+    const result = await sendTrackToUser(
+      recording.user_email,
+      recording.user_name,
+      recordingTypesNames[recording.recording_type] || recording.recording_type,
+      musicStylesNames[recording.music_style] || recording.music_style,
+      recording.track_file_path,
+      fileName
+    );
+
+    if (result.success) {
+      await query(
+        "UPDATE user_recordings SET status = 'completed' WHERE id = ?",
+        [recordingId]
+      );
+      res.json({ success: true, message: 'Трек отправлен на email пользователя' });
+    } else {
+      res.status(500).json({ error: result.error || 'Ошибка отправки email' });
+    }
+  } catch (error) {
+    console.error('Ошибка отправки трека:', error);
+    res.status(500).json({ error: 'Ошибка отправки трека' });
   }
 };

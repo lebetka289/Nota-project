@@ -23,8 +23,15 @@ async function initDatabase() {
     password VARCHAR(255) NOT NULL,
     name VARCHAR(255) NOT NULL,
     role VARCHAR(50) DEFAULT 'user',
+    email_verified TINYINT(1) DEFAULT 0,
+    verification_code VARCHAR(6) NULL,
+    verification_code_expires TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   )`);
+
+  await ensureColumn('users', 'email_verified', "TINYINT(1) DEFAULT 0");
+  await ensureColumn('users', 'verification_code', "VARCHAR(6) NULL");
+  await ensureColumn('users', 'verification_code_expires', "TIMESTAMP NULL");
 
   // Таблица товаров
   await query(`CREATE TABLE IF NOT EXISTS products (
@@ -138,6 +145,7 @@ async function initDatabase() {
     music_style VARCHAR(50) NOT NULL,
     status VARCHAR(50) DEFAULT 'pending',
     price DECIMAL(10, 2),
+    track_file_path VARCHAR(255) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -147,6 +155,7 @@ async function initDatabase() {
   await ensureColumn('user_recordings', 'payment_id', "VARCHAR(128) NULL");
   await ensureColumn('user_recordings', 'payment_status', "VARCHAR(50) NULL");
   await ensureColumn('user_recordings', 'paid_at', "TIMESTAMP NULL");
+  await ensureColumn('user_recordings', 'track_file_path', "VARCHAR(255) NULL");
 
   // Чат: диалоги
   await query(`CREATE TABLE IF NOT EXISTS chat_conversations (
