@@ -17,9 +17,43 @@ const recordingPriceRub = (recordingType) => {
   }
 };
 
+// Получить скидку пользователя на основе количества оплаченных записей
+const getUserDiscount = async (userId) => {
+  const paidCount = await queryOne(
+    "SELECT COUNT(*) as count FROM user_recordings WHERE user_id = ? AND status IN ('paid', 'in-progress', 'completed')",
+    [userId]
+  );
+  const count = paidCount?.count || 0;
+  // Скидка 50% при 3+ оплаченных записях
+  return count >= 3 ? 50 : 0;
+};
+
+// Получить информацию о скидке пользователя
+exports.getUserDiscountInfo = async (req, res) => {
+  try {
+    const paidCount = await queryOne(
+      "SELECT COUNT(*) as count FROM user_recordings WHERE user_id = ? AND status IN ('paid', 'in-progress', 'completed')",
+      [req.user.id]
+    );
+    const count = paidCount?.count || 0;
+    const discountPercent = count >= 3 ? 50 : 0;
+    const recordsNeeded = Math.max(0, 3 - count);
+    
+    res.json({
+      discount_percent: discountPercent,
+      paid_recordings_count: count,
+      records_needed_for_discount: recordsNeeded,
+      has_discount: discountPercent > 0
+    });
+  } catch (error) {
+    console.error('Ошибка получения информации о скидке:', error);
+    res.status(500).json({ error: 'Ошибка получения информации о скидке' });
+  }
+};
+
 // Создать платеж для записи
 exports.createRecordingPayment = async (req, res) => {
-  const { recording_id, recording_type, music_style } = req.body;
+  const { recording_id, recording_type, music_style, purchased_beat_id } = req.body;
 
   try {
     let recording = null;
@@ -36,10 +70,26 @@ exports.createRecordingPayment = async (req, res) => {
         return res.status(400).json({ error: 'recording_type и music_style обязательны' });
       }
 
-      const price = recordingPriceRub(recording_type);
+      // Проверяем, что purchased_beat_id принадлежит пользователю
+      if (purchased_beat_id) {
+        const purchase = await queryOne(
+          "SELECT beat_id FROM beat_purchases WHERE user_id = ? AND beat_id = ? AND status = 'paid'",
+          [req.user.id, purchased_beat_id]
+        );
+        if (!purchase) {
+          return res.status(400).json({ error: 'Выбранный бит не куплен или не найден' });
+        }
+      }
+
+      // Получаем скидку пользователя
+      const discountPercent = await getUserDiscount(req.user.id);
+      const basePrice = recordingPriceRub(recording_type);
+      const discountAmount = (basePrice * discountPercent) / 100;
+      const finalPrice = basePrice - discountAmount;
+
       const r = await query(
-        "INSERT INTO user_recordings (user_id, recording_type, music_style, price, status) VALUES (?, ?, ?, ?, 'pending')",
-        [req.user.id, recording_type, music_style, price]
+        "INSERT INTO user_recordings (user_id, recording_type, music_style, price, status, purchased_beat_id, discount_percent) VALUES (?, ?, ?, ?, 'pending', ?, ?)",
+        [req.user.id, recording_type, music_style, finalPrice, purchased_beat_id || null, discountPercent]
       );
       recording = await queryOne(
         "SELECT * FROM user_recordings WHERE id = ? AND user_id = ?",

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import './UserProfile.css';
+import Alert from '../widgets/Alert';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -10,6 +11,7 @@ function UserProfile() {
   const [purchases, setPurchases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [payingRecordingId, setPayingRecordingId] = useState(null);
+  const [alert, setAlert] = useState(null);
 
   const musicStylesNames = {
     'hyperpop': 'Хайпер поп',
@@ -95,15 +97,15 @@ function UserProfile() {
       }
 
       if (data.mock) {
-        alert('✅ Оплата проведена в тестовом режиме');
+        setAlert({ message: 'Оплата проведена в тестовом режиме.', type: 'success' });
         fetchData();
       } else if (data.confirmation_url) {
         window.location.href = data.confirmation_url;
       } else {
-        alert('Платеж создан, но нет ссылки на оплату');
+        setAlert({ message: 'Платеж создан, но нет ссылки на оплату', type: 'error' });
       }
     } catch (error) {
-      alert(error.message || 'Ошибка оплаты');
+      setAlert({ message: error.message || 'Ошибка оплаты', type: 'error' });
     } finally {
       setPayingRecordingId(null);
     }
@@ -141,6 +143,7 @@ function UserProfile() {
 
   return (
     <div className="user-profile">
+      {alert && <Alert message={alert.message} type={alert.type} onClose={() => setAlert(null)} />}
       <div className="profile-container">
         <div className="profile-header">
           <h1>Личный кабинет</h1>
@@ -207,7 +210,7 @@ function UserProfile() {
           ) : paidRecordings.length === 0 ? (
             <div className="empty-recordings">
               <p>У вас пока нет оплаченных записей</p>
-              <span className="empty-icon">📝</span>
+              <span className="empty-icon">Empty</span>
             </div>
           ) : (
             <div className="recordings-list">
@@ -254,7 +257,7 @@ function UserProfile() {
           ) : purchases.length === 0 ? (
             <div className="empty-recordings">
               <p>У вас пока нет купленных битов</p>
-              <span className="empty-icon">🎵</span>
+              <span className="empty-icon">Empty</span>
             </div>
           ) : (
             <div className="purchases-list">
@@ -267,7 +270,7 @@ function UserProfile() {
                         alt={purchase.title}
                       />
                     ) : (
-                      <div className="purchase-cover-placeholder">🎵</div>
+                      <div className="purchase-cover-placeholder">—</div>
                     )}
                   </div>
                   <div className="purchase-info">

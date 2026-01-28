@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import './BeatmakerPanel.css';
+import Alert from '../widgets/Alert';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -21,6 +22,7 @@ function BeatmakerPanel() {
   const [recordingsLoading, setRecordingsLoading] = useState(true);
   const [uploadingTrackId, setUploadingTrackId] = useState(null);
   const [sendingTrackId, setSendingTrackId] = useState(null);
+  const [alert, setAlert] = useState(null);
 
   const [title, setTitle] = useState('');
   const [genre, setGenre] = useState('hyperpop');
@@ -69,7 +71,7 @@ function BeatmakerPanel() {
   };
 
   const handleTrackUpload = async (recordingId, trackFile) => {
-    if (!trackFile) return alert('Выберите файл трека');
+    if (!trackFile) return setAlert({ message: 'Выберите файл трека', type: 'warning' });
     
     try {
       setUploadingTrackId(recordingId);
@@ -87,10 +89,10 @@ function BeatmakerPanel() {
         throw new Error(data.error || 'Ошибка загрузки файла');
       }
 
-      alert('✅ Файл трека загружен');
+      setAlert({ message: 'Файл трека загружен.', type: 'success' });
       await loadPaidRecordings();
     } catch (error) {
-      alert(error.message || 'Ошибка загрузки файла');
+      setAlert({ message: error.message || 'Ошибка загрузки файла', type: 'error' });
     } finally {
       setUploadingTrackId(null);
     }
@@ -111,10 +113,10 @@ function BeatmakerPanel() {
         throw new Error(data.error || 'Ошибка отправки');
       }
 
-      alert('✅ Трек отправлен на email пользователя');
+      setAlert({ message: 'Трек отправлен на email пользователя.', type: 'success' });
       await loadPaidRecordings();
     } catch (error) {
-      alert(error.message || 'Ошибка отправки трека');
+      setAlert({ message: error.message || 'Ошибка отправки трека', type: 'error' });
     } finally {
       setSendingTrackId(null);
     }
@@ -140,8 +142,8 @@ function BeatmakerPanel() {
 
   const uploadBeat = async (e) => {
     e.preventDefault();
-    if (!file) return alert('Выбери файл бита (mp3/wav)');
-    if (!title.trim()) return alert('Введите название');
+    if (!file) return setAlert({ message: 'Выбери файл бита (mp3/wav)', type: 'warning' });
+    if (!title.trim()) return setAlert({ message: 'Введите название', type: 'warning' });
 
     try {
       const fd = new FormData();
@@ -159,7 +161,7 @@ function BeatmakerPanel() {
       });
 
       const data = await r.json().catch(() => ({}));
-      if (!r.ok) return alert(data.error || 'Ошибка загрузки (проверь роль beatmaker и токен)');
+      if (!r.ok) return setAlert({ message: data.error || 'Ошибка загрузки (проверь роль beatmaker и токен)', type: 'error' });
 
       setTitle('');
       setBpm(140);
@@ -167,10 +169,10 @@ function BeatmakerPanel() {
       setFile(null);
       setCover(null);
       await loadMine();
-      alert('✅ Бит загружен');
+      setAlert({ message: 'Бит загружен.', type: 'success' });
     } catch (err) {
       console.error(err);
-      alert('Ошибка загрузки: сервер недоступен или вернул ошибку. Открой DevTools → Network → /api/beats');
+      setAlert({ message: 'Ошибка загрузки: сервер недоступен или вернул ошибку. Открой DevTools → Network → /api/beats', type: 'error' });
     }
   };
 
@@ -181,7 +183,7 @@ function BeatmakerPanel() {
       headers: { Authorization: `Bearer ${token}` }
     });
     const data = await r.json();
-    if (!r.ok) return alert(data.error || 'Ошибка удаления');
+    if (!r.ok) return setAlert({ message: data.error || 'Ошибка удаления', type: 'error' });
     await loadMine();
   };
 
@@ -194,6 +196,7 @@ function BeatmakerPanel() {
 
   return (
     <div className="bm-page">
+      {alert && <Alert message={alert.message} type={alert.type} onClose={() => setAlert(null)} />}
       <div className="bm-head">
         <h1>Панель битмейкера</h1>
         <div className="bm-sub">Загрузка битов • жанр • BPM • цена</div>
@@ -287,7 +290,7 @@ function BeatmakerPanel() {
                     )}
                   </div>
                   <div style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: '#aaa' }}>
-                    {recording.track_file_path ? '✅ Файл загружен' : '⚠️ Файл не загружен'}
+                    {recording.track_file_path ? 'Файл загружен' : 'Файл не загружен'}
                   </div>
                 </div>
                 <div className="bm-item-actions" style={{ flexDirection: 'column', gap: '0.5rem' }}>

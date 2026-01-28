@@ -1,0 +1,131 @@
+/* ASOS-Style Testimonials Section */
+.testimonials-section {
+  padding: 5rem 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.testimonials-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.testimonials-title {
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  font-weight: 900;
+  text-transform: uppercase;
+  font-style: italic;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .testimonials-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .testimonials-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Testimonial Card */
+.testimonial-card {
+  background: var(--asos-white);
+  padding: 2rem;
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.testimonial-card:hover {
+  border-color: var(--asos-black);
+  box-shadow: var(--shadow);
+}
+
+.testimonial-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.testimonial-avatar {
+  width: 48px;
+  height: 48px;
+  background: var(--asos-black);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 900;
+  color: var(--asos-white);
+  flex-shrink: 0;
+}
+
+.testimonial-user-info {
+  flex: 1;
+}
+
+.testimonial-name {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.testimonial-date {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.testimonial-rating {
+  margin-bottom: 1rem;
+}
+
+.testimonial-star {
+  font-size: 1rem;
+  color: var(--border);
+  margin-right: 2px;
+}
+
+.testimonial-star.filled {
+  color: var(--asos-black);
+}
+
+.testimonial-text {
+  font-size: 0.875rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  margin: 0;
+  font-style: italic;
+}
+
+/* Loading */
+.testimonials-loading {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+@media (max-width: 768px) {
+  .testimonials-section {
+    padding: 3rem 1rem;
+  }
+
+  .testimonial-card {
+    padding: 1.5rem;
+  }
+}

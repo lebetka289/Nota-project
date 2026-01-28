@@ -42,7 +42,7 @@
   display: grid;
   place-items: center;
   font-weight: 900;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--text);
 }
 
 .bp-meta {
@@ -67,8 +67,8 @@
 
 .bp-pill {
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.03);
   padding: 6px 10px;
   font-weight: 900;
   letter-spacing: 0.08em;
@@ -79,7 +79,7 @@
 .bp-pill.accent {
   border-color: rgba(225, 6, 47, 0.55);
   background: rgba(225, 6, 47, 0.12);
-  color: #fff;
+  color: var(--text);
 }
 
 .bp-center {
@@ -92,7 +92,7 @@
   border-radius: 14px;
   border: 1px solid rgba(225, 6, 47, 0.55);
   background: linear-gradient(180deg, rgba(225, 6, 47, 0.95), rgba(225, 6, 47, 0.70));
-  color: #fff;
+  color: var(--text);
   font-weight: 900;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -146,8 +146,8 @@
   align-items: center;
   padding: 0 12px;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.03);
   color: var(--text);
   font-weight: 900;
   letter-spacing: 0.06em;

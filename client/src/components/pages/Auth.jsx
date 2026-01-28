@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import './Auth.css';
+import Alert from '../widgets/Alert';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -11,6 +12,7 @@ function Auth({ onSuccess }) {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [alert, setAlert] = useState(null);
   const [showVerification, setShowVerification] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   const [pendingUserId, setPendingUserId] = useState(null);
@@ -58,7 +60,7 @@ function Auth({ onSuccess }) {
           // Если SMTP не настроен, показываем код на экране
           if (data.mock && data.verificationCode) {
             setVerificationCode(data.verificationCode);
-            setError(`⚠️ SMTP не настроен. Используйте код: ${data.verificationCode}`);
+            setError(`SMTP не настроен. Используйте код: ${data.verificationCode}`);
           }
         } else {
           setError(data.error || 'Ошибка регистрации');
@@ -119,10 +121,10 @@ function Auth({ onSuccess }) {
       if (response.ok) {
         if (data.mock && data.verificationCode) {
           setVerificationCode(data.verificationCode);
-          setError(`⚠️ SMTP не настроен. Используйте код: ${data.verificationCode}`);
+          setError(`SMTP не настроен. Используйте код: ${data.verificationCode}`);
         } else {
           setError('');
-          alert('Код подтверждения отправлен на email');
+          setAlert({ message: 'Код подтверждения отправлен на email', type: 'success' });
         }
       } else {
         setError(data.error || 'Ошибка отправки кода');
@@ -151,7 +153,7 @@ function Auth({ onSuccess }) {
               textAlign: 'center'
             }}>
               <p style={{ color: '#ff6b6b', margin: 0, fontSize: '0.9rem' }}>
-                ⚠️ SMTP не настроен. Проверьте консоль сервера или настройте SMTP в .env файле.
+                SMTP не настроен. Проверьте консоль сервера или настройте SMTP в .env файле.
               </p>
             </div>
           )}
@@ -203,6 +205,7 @@ function Auth({ onSuccess }) {
 
   return (
     <div className="auth-container">
+      {alert && <Alert message={alert.message} type={alert.type} onClose={() => setAlert(null)} />}
       <div className="auth-card">
         <h2>{isLogin ? 'Вход' : 'Регистрация'}</h2>
         

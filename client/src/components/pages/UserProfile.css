@@ -1,6 +1,7 @@
+/* ASOS-Style User Profile */
 .user-profile {
   min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+  background: var(--asos-gray);
   padding: 2rem 0;
 }
 
@@ -11,169 +12,178 @@
 }
 
 .profile-header {
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
 }
 
 .profile-header h1 {
-  font-size: 2.5rem;
-  color: #fff;
-  margin-bottom: 2rem;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  color: var(--text);
+  margin-bottom: 1.5rem;
   text-align: center;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
+  letter-spacing: -0.02em;
+  font-weight: 900;
+  font-style: italic;
 }
 
 .user-info-card {
-  background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
-  border: 2px solid #444;
-  border-radius: 12px;
+  background: var(--asos-white);
+  border: 1px solid var(--border);
   padding: 2rem;
   text-align: center;
 }
 
 .user-info-card h2 {
-  font-size: 2rem;
-  color: #fff;
+  font-size: 1.25rem;
+  color: var(--text);
   margin: 0 0 0.5rem 0;
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
 .user-email {
-  color: #aaa;
-  font-size: 1.1rem;
-  margin: 0 0 0.5rem 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+  margin: 0 0 0.25rem 0;
 }
 
 .user-role {
   color: var(--accent);
-  font-size: 1rem;
+  font-size: 0.7rem;
   margin: 0;
-  font-weight: 500;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
 .recordings-section,
 .purchases-section {
-  margin-top: 3rem;
+  margin-top: 2rem;
 }
 
 .recordings-section h2,
 .purchases-section h2 {
-  font-size: 2rem;
-  color: #fff;
-  margin-bottom: 2rem;
+  font-size: 1.25rem;
+  color: var(--text);
+  margin-bottom: 1.5rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  font-style: italic;
 }
 
 .loading {
   text-align: center;
   padding: 3rem;
-  color: #fff;
-  font-size: 1.2rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
 .empty-recordings {
   text-align: center;
-  padding: 4rem 2rem;
-  background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
-  border: 2px solid #444;
-  border-radius: 12px;
+  padding: 3rem 2rem;
+  background: var(--asos-white);
+  border: 2px dashed var(--border);
 }
 
 .empty-recordings p {
-  color: #aaa;
-  font-size: 1.2rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
   margin-bottom: 1rem;
 }
 
 .empty-icon {
-  font-size: 4rem;
-  opacity: 0.5;
+  font-size: 3rem;
+  opacity: 0.3;
 }
 
 .recordings-list {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .recording-card {
-  background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
-  border: 2px solid #444;
-  border-radius: 12px;
-  padding: 2rem;
-  transition: all 0.3s ease;
+  background: var(--asos-white);
+  border: 1px solid var(--border);
+  padding: 1.5rem;
+  transition: all 0.2s ease;
 }
 
 .recording-card:hover {
-  border-color: rgba(225, 6, 47, 0.55);
-  transform: translateY(-5px);
-  box-shadow: 0 10px 30px rgba(225, 6, 47, 0.18);
+  border-color: var(--asos-black);
 }
 
 .recording-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   flex-wrap: wrap;
   gap: 1rem;
 }
 
 .recording-header h3 {
-  font-size: 1.5rem;
-  color: #fff;
+  font-size: 1rem;
+  color: var(--text);
   margin: 0;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .status-badge {
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 600;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.6rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.1em;
 }
 
 .status-pending {
-  background-color: rgba(255, 193, 7, 0.2);
-  color: #FFC107;
-  border: 1px solid #FFC107;
+  background: rgba(255, 193, 7, 0.1);
+  color: #b8860b;
+  border: 1px solid #b8860b;
 }
 
 .status-paid {
-  background-color: rgba(76, 175, 80, 0.2);
-  color: #4CAF50;
-  border: 1px solid #4CAF50;
+  background: rgba(1, 136, 73, 0.1);
+  color: var(--accent);
+  border: 1px solid var(--accent);
 }
 
 .status-in-progress {
-  background-color: rgba(33, 150, 243, 0.2);
-  color: #2196F3;
-  border: 1px solid #2196F3;
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text);
+  border: 1px solid var(--border);
 }
 
 .status-completed {
-  background-color: rgba(76, 175, 80, 0.2);
-  color: #4CAF50;
-  border: 1px solid #4CAF50;
+  background: rgba(1, 136, 73, 0.1);
+  color: var(--accent);
+  border: 1px solid var(--accent);
 }
 
 .status-cancelled {
-  background-color: rgba(244, 67, 54, 0.2);
-  color: #F44336;
-  border: 1px solid #F44336;
+  background: rgba(208, 19, 69, 0.1);
+  color: var(--accent-2);
+  border: 1px solid var(--accent-2);
 }
 
 .recording-details {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .detail-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid #333;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border);
 }
 
 .detail-item:last-child {
@@ -181,80 +191,85 @@
 }
 
 .detail-label {
-  color: #aaa;
-  font-size: 0.95rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
 .detail-value {
-  color: #fff;
-  font-size: 1rem;
-  font-weight: 500;
+  color: var(--text);
+  font-size: 0.875rem;
+  font-weight: 600;
 }
 
 .detail-value.price {
-  color: var(--accent);
-  font-size: 1.2rem;
-  font-weight: 700;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 900;
 }
 
 .pay-recording-btn {
-  margin-top: 1.5rem;
+  margin-top: 1rem;
   width: 100%;
-  padding: 0.9rem 1.5rem;
-  background: linear-gradient(135deg, #e1062f 0%, #a3001f 100%);
-  color: #fff;
+  padding: 1rem;
+  background: var(--accent);
+  color: var(--asos-white);
   border: none;
-  border-radius: 8px;
-  font-size: 1rem;
+  font-size: 0.7rem;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .pay-recording-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 25px rgba(225, 6, 47, 0.25);
+  background: var(--accent-hover);
 }
 
 .pay-recording-btn:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
+/* Purchases */
 .purchases-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .purchases-list {
+    grid-template-columns: 1fr;
+  }
 }
 
 .purchase-card {
-  background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
-  border: 2px solid #444;
-  border-radius: 12px;
-  padding: 1.5rem;
+  background: var(--asos-white);
+  border: 1px solid var(--border);
+  padding: 1rem;
   display: grid;
-  grid-template-columns: 80px 1fr;
+  grid-template-columns: 60px 1fr;
   gap: 1rem;
   align-items: center;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .purchase-card:hover {
-  border-color: rgba(225, 6, 47, 0.55);
-  transform: translateY(-5px);
-  box-shadow: 0 10px 30px rgba(225, 6, 47, 0.18);
+  border-color: var(--asos-black);
 }
 
 .purchase-cover {
-  width: 80px;
-  height: 80px;
-  border-radius: 8px;
+  width: 60px;
+  height: 60px;
   overflow: hidden;
-  background: #111;
+  background: var(--asos-gray);
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #444;
+  border: 1px solid var(--border);
 }
 
 .purchase-cover img {
@@ -264,68 +279,68 @@
 }
 
 .purchase-cover-placeholder {
-  font-size: 2rem;
-  opacity: 0.5;
+  font-size: 1.5rem;
+  opacity: 0.3;
 }
 
 .purchase-info {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .purchase-title {
-  color: #fff;
-  font-size: 1.1rem;
-  font-weight: 600;
+  color: var(--text);
+  font-size: 0.875rem;
+  font-weight: 700;
   margin: 0;
 }
 
 .purchase-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.375rem;
   align-items: center;
 }
 
 .purchase-chip {
-  background: rgba(255, 255, 255, 0.08);
-  color: #aaa;
-  padding: 0.25rem 0.6rem;
-  border-radius: 12px;
-  font-size: 0.85rem;
+  background: var(--asos-gray);
+  color: var(--muted);
+  padding: 0.2rem 0.5rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .purchase-date {
-  color: #888;
-  font-size: 0.85rem;
+  color: var(--muted-2);
+  font-size: 0.7rem;
   margin-left: auto;
 }
 
 .auth-required {
   text-align: center;
-  padding: 3rem;
-  background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
-  border: 2px solid #444;
-  border-radius: 12px;
+  padding: 3rem 2rem;
+  background: var(--asos-white);
+  border: 1px solid var(--border);
 }
 
 .auth-required h2 {
-  color: #fff;
+  color: var(--text);
   margin-bottom: 1rem;
+  font-size: 1.25rem;
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
 .auth-required p {
-  color: #aaa;
+  color: var(--muted);
+  font-size: 0.875rem;
 }
 
 @media (max-width: 768px) {
   .profile-container {
     padding: 0 1rem;
-  }
-
-  .profile-header h1 {
-    font-size: 2rem;
   }
 
   .user-info-card {
@@ -340,11 +355,7 @@
   .detail-item {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.5rem;
-  }
-
-  .purchases-list {
-    grid-template-columns: 1fr;
+    gap: 0.25rem;
   }
 
   .purchase-card {
@@ -358,6 +369,5 @@
 
   .purchase-date {
     margin-left: 0;
-    margin-top: 0.5rem;
   }
 }

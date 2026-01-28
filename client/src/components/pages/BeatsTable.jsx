@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import './BeatsTable.css';
+import Alert from '../widgets/Alert';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -14,7 +15,7 @@ const GENRES = [
   { id: 'funk', name: 'Фонк' }
 ];
 
-function BeatsTable() {
+function BeatsTable({ initialSearch = '' }) {
   const { token, user } = useAuth();
   const [beats, setBeats] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -22,12 +23,14 @@ function BeatsTable() {
   const [cartBeatIds, setCartBeatIds] = useState(new Set());
   const [activeBeat, setActiveBeat] = useState(null);
   const audioRef = useRef(null);
+  const playCountTrackedRef = useRef(new Set());
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(0.85);
+  const [alert, setAlert] = useState(null);
 
-  const [q, setQ] = useState('');
+  const [q, setQ] = useState(initialSearch);
   const [genre, setGenre] = useState('all');
   const [sort, setSort] = useState('newest');
 
@@ -67,9 +70,15 @@ function BeatsTable() {
   };
 
   useEffect(() => {
+    if (initialSearch) {
+      setQ(initialSearch);
+    }
+  }, [initialSearch]);
+
+  useEffect(() => {
     fetchBeats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [genre, token]);
+  }, [genre, q, token]);
 
   const fetchFavorites = async () => {
     if (!token) return setFavorites(new Set());
@@ -144,7 +153,7 @@ function BeatsTable() {
   const genreName = (id) => GENRES.find((g) => g.id === id)?.name || id;
 
   const toggleFavorite = async (beatId) => {
-    if (!token) return alert('Войдите, чтобы добавить в избранное');
+    if (!token) return setAlert({ message: 'Войдите, чтобы добавить в избранное', type: 'warning' });
     const isFav = favorites.has(beatId);
     const r = await fetch(`${API_URL}/favorites${isFav ? `/${beatId}` : ''}`, {
       method: isFav ? 'DELETE' : 'POST',
@@ -155,12 +164,12 @@ function BeatsTable() {
       body: isFav ? undefined : JSON.stringify({ beat_id: beatId })
     });
     const data = await r.json().catch(() => ({}));
-    if (!r.ok) return alert(data.error || 'Ошибка избранного');
+    if (!r.ok) return setAlert({ message: data.error || 'Ошибка избранного', type: 'error' });
     await fetchFavorites();
   };
 
   const addToCart = async (beatId) => {
-    if (!token) return alert('Войдите, чтобы добавить в корзину');
+    if (!token) return setAlert({ message: 'Войдите, чтобы добавить в корзину', type: 'warning' });
     const r = await fetch(`${API_URL}/cart`, {
       method: 'POST',
       headers: {
@@ -170,8 +179,9 @@ function BeatsTable() {
       body: JSON.stringify({ beat_id: beatId })
     });
     const data = await r.json().catch(() => ({}));
-    if (!r.ok) return alert(data.error || 'Ошибка корзины');
+    if (!r.ok) return setAlert({ message: data.error || 'Ошибка корзины', type: 'error' });
     await fetchCart();
+    window.dispatchEvent(new Event('nota:cart-updated'));
   };
 
   const formatTime = (sec) => {
@@ -215,6 +225,9 @@ function BeatsTable() {
         try {
           await a.play();
           setPlaying(true);
+          if (a.currentTime === 0) {
+            incrementPlayCount(b.id);
+          }
         } catch {
           setPlaying(false);
         }
@@ -240,6 +253,7 @@ function BeatsTable() {
     try {
       await a.play();
       setPlaying(true);
+      incrementPlayCount(b.id);
     } catch {
       setPlaying(false);
     }
@@ -281,15 +295,15 @@ function BeatsTable() {
   };
 
   const downloadBeat = async (b) => {
-    if (!token) return alert('Войдите, чтобы скачать');
-    if (!b.purchased && Number(b.price) > 0) return alert('Скачивание доступно только после покупки');
+    if (!token) return setAlert({ message: 'Войдите, чтобы скачать', type: 'warning' });
+    if (!b.purchased && Number(b.price) > 0) return setAlert({ message: 'Скачивание доступно только после покупки', type: 'warning' });
     try {
       const r = await fetch(`${API_URL}/beats/${b.id}/download`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!r.ok) {
         const data = await r.json().catch(() => ({}));
-        return alert(data.error || 'Ошибка скачивания');
+        return setAlert({ message: data.error || 'Ошибка скачивания', type: 'error' });
       }
       const blob = await r.blob();
       const disp = r.headers.get('content-disposition');
@@ -304,12 +318,30 @@ function BeatsTable() {
       URL.revokeObjectURL(href);
     } catch (e) {
       console.error(e);
-      alert('Ошибка скачивания');
+      setAlert({ message: 'Ошибка скачивания', type: 'error' });
+    }
+  };
+
+  const incrementPlayCount = async (beatId) => {
+    if (!beatId) return;
+    if (playCountTrackedRef.current.has(beatId)) return;
+    try {
+      await fetch(`${API_URL}/beats/${beatId}/play`, { method: 'POST' });
+      playCountTrackedRef.current.add(beatId);
+      setBeats((prev) =>
+        prev.map((b) => (b.id === beatId ? { ...b, play_count: (b.play_count || 0) + 1 } : b))
+      );
+      setActiveBeat((prev) =>
+        prev?.id === beatId ? { ...prev, play_count: (prev.play_count || 0) + 1 } : prev
+      );
+    } catch (e) {
+      console.error('Ошибка обновления счетчика прослушиваний:', e);
     }
   };
 
   return (
     <div className="beats-page">
+      {alert && <Alert message={alert.message} type={alert.type} onClose={() => setAlert(null)} />}
       <audio ref={audioRef} />
       <div className="beats-head">
         <h1>Биты</h1>
@@ -357,6 +389,7 @@ function BeatsTable() {
                 <th>Жанр</th>
                 <th>BPM</th>
                 <th>Цена</th>
+                <th>Прослушиваний</th>
                 <th>Прослушать</th>
                 <th>Действие</th>
               </tr>
@@ -372,7 +405,7 @@ function BeatsTable() {
                         <div className="beats-expanded">
                           <div className="beats-expanded-left" onClick={() => openBeat(b)} role="button" tabIndex={0}>
                             <div className="beats-cover expanded">
-                              {b.cover_url ? <img src={b.cover_url} alt="" /> : <div className="beats-cover-ph">♪</div>}
+                              {b.cover_url ? <img src={b.cover_url} alt="" /> : <div className="beats-cover-ph">—</div>}
                             </div>
                             <div className="beats-title-text">
                               <div className="beats-title-main">{b.title}</div>
@@ -432,7 +465,9 @@ function BeatsTable() {
                               onClick={() => toggleFavorite(b.id)}
                               title="Избранное"
                             >
-                              {favorites.has(b.id) ? '♥' : '♡'}
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                              </svg>
                             </button>
                             {b.purchased || Number(b.price) === 0 ? (
                               <button className="beats-download icon" onClick={() => downloadBeat(b)}>
@@ -456,7 +491,7 @@ function BeatsTable() {
                     <td className="beats-title">
                       <div className="beats-title-row">
                         <div className="beats-cover clickable" onClick={() => openBeat(b)} title="Открыть плеер">
-                          {b.cover_url ? <img src={b.cover_url} alt="" /> : <div className="beats-cover-ph">♪</div>}
+                          {b.cover_url ? <img src={b.cover_url} alt="" /> : <div className="beats-cover-ph">—</div>}
                         </div>
                         <div className="beats-title-text">
                           <div className="beats-title-main">{b.title}</div>
@@ -469,6 +504,11 @@ function BeatsTable() {
                     </td>
                     <td className="beats-bpm">{b.bpm}</td>
                     <td className="beats-price">{Number(b.price).toLocaleString('ru-RU')} ₽</td>
+                    <td className="beats-plays">
+                      <span className="beats-play-count">
+                        {b.play_count || 0}
+                      </span>
+                    </td>
                     <td className="beats-audio">
                       <div className="beats-muted">Нажмите на обложку</div>
                     </td>
@@ -485,7 +525,9 @@ function BeatsTable() {
                         onClick={() => toggleFavorite(b.id)}
                         title="Избранное"
                       >
-                        {favorites.has(b.id) ? '♥' : '♡'}
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                        </svg>
                       </button>
                       {b.purchased || Number(b.price) === 0 ? (
                         <button className="beats-download icon" onClick={() => downloadBeat(b)}>

@@ -29,11 +29,14 @@ const authenticateToken = async (req, res, next) => {
   try {
     const payload = jwt.verify(token, JWT_SECRET);
     const dbUser = await queryOne(
-      "SELECT id, email, name, role FROM users WHERE id = ?",
+      "SELECT id, email, name, role, blocked FROM users WHERE id = ?",
       [payload.id]
     );
     if (!dbUser) {
       return res.status(401).json({ error: 'Пользователь не найден' });
+    }
+    if (dbUser.blocked) {
+      return res.status(403).json({ error: 'Аккаунт заблокирован' });
     }
     req.user = dbUser;
     next();

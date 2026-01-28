@@ -1,7 +1,9 @@
+/* App wrapper */
 .app {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background: #fff;
 }
 
 .main-content {
@@ -9,34 +11,14 @@
   width: 100%;
 }
 
-/* give room so footer doesn't feel glued to content */
-.main-content {
-  padding-bottom: 24px;
-}
-
 .loading-screen {
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   min-height: 100vh;
-  color: #fff;
-  font-size: 1.5rem;
-}
-
-.page-container {
-  max-width: 1200px;
-  margin: 2rem auto;
-  padding: 0 2rem;
-  text-align: center;
-  color: #fff;
-  }
-
-.page-container h2 {
-  font-size: 2.5rem;
-  margin-bottom: 1rem;
-}
-
-.page-container p {
-  font-size: 1.2rem;
-  color: #aaa;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #666;
 }

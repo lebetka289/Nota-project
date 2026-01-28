@@ -100,6 +100,10 @@ exports.login = async (req, res) => {
       });
     }
 
+    if (user.blocked) {
+      return res.status(403).json({ error: 'Аккаунт заблокирован' });
+    }
+
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET);
     res.json({ 
       token, 

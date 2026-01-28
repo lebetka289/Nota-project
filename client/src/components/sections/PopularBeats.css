@@ -1,0 +1,409 @@
+/* ASOS-Style Popular Beats Section */
+.popular-beats-section {
+  padding: 5rem 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  background: var(--asos-gray);
+}
+
+.section-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.section-header h2 {
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  font-weight: 900;
+  color: var(--text);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  font-style: italic;
+}
+
+.section-subtitle {
+  font-size: 0.875rem;
+  color: var(--muted);
+  margin: 0.5rem 0 0 0;
+  flex-basis: 100%;
+}
+
+.view-all-btn {
+  background: var(--asos-black);
+  color: var(--asos-white);
+  border: none;
+  padding: 0.875rem 2rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+.view-all-btn:hover {
+  background: var(--muted);
+}
+
+/* Beats Grid */
+.popular-beats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .popular-beats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .popular-beats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Beat Card */
+.popular-beat-card {
+  background: var(--asos-white);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid var(--border);
+}
+
+.popular-beat-card:hover {
+  border-color: var(--asos-black);
+  box-shadow: var(--shadow);
+}
+
+.beat-card-cover {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: var(--asos-gray);
+}
+
+.beat-card-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.popular-beat-card:hover .beat-card-cover img {
+  transform: scale(1.05);
+}
+
+.beat-card-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  color: var(--muted-2);
+}
+
+.beat-card-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.popular-beat-card:hover .beat-card-overlay {
+  opacity: 1;
+}
+
+.beat-play-icon {
+  font-size: 3rem;
+  color: var(--asos-white);
+}
+
+.beat-play-count {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: var(--asos-black);
+  color: var(--asos-white);
+  padding: 4px 8px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* Beat Card Info */
+.beat-card-info {
+  padding: 1rem;
+}
+
+.beat-card-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 0.75rem 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.popular-beat-card:hover .beat-card-title {
+  text-decoration: underline;
+}
+
+.beat-card-meta {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.beat-card-genre,
+.beat-card-bpm {
+  background: var(--asos-gray);
+  color: var(--text);
+  padding: 4px 8px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.beat-card-price {
+  font-size: 1rem;
+  font-weight: 900;
+  color: var(--text);
+}
+
+.beat-card-price.sale {
+  color: var(--accent-2);
+}
+
+/* Inline Player */
+.popular-beats-player {
+  background: var(--asos-white);
+  border: 1px solid var(--border);
+  padding: 1rem;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.popular-beats-player-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.popular-beats-player-cover {
+  width: 60px;
+  height: 60px;
+  flex-shrink: 0;
+  background: var(--asos-gray);
+  overflow: hidden;
+}
+
+.popular-beats-player-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.popular-beats-player-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: var(--muted-2);
+}
+
+.popular-beats-player-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.popular-beats-player-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 0.25rem 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.popular-beats-player-meta {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+.popular-beats-player-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  max-width: 500px;
+}
+
+.popular-beats-player-play-btn {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--asos-black);
+  color: var(--asos-white);
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.popular-beats-player-play-btn:hover {
+  background: var(--muted);
+}
+
+.popular-beats-player-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.popular-beats-player-time {
+  font-size: 0.7rem;
+  color: var(--muted);
+  min-width: 40px;
+  font-variant-numeric: tabular-nums;
+}
+
+.popular-beats-player-range {
+  flex: 1;
+  height: 4px;
+  background: var(--asos-gray);
+  outline: none;
+  cursor: pointer;
+}
+
+.popular-beats-player-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  background: var(--asos-black);
+  cursor: pointer;
+}
+
+.popular-beats-player-range::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  background: var(--asos-black);
+  cursor: pointer;
+  border: none;
+}
+
+.popular-beats-player-volume {
+  width: 120px;
+  display: flex;
+  align-items: center;
+}
+
+.popular-beats-player-volume-range {
+  width: 100%;
+  height: 4px;
+  background: var(--asos-gray);
+  outline: none;
+  cursor: pointer;
+}
+
+.popular-beats-player-volume-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  background: var(--asos-black);
+  cursor: pointer;
+}
+
+.popular-beats-player-volume-range::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  background: var(--asos-black);
+  cursor: pointer;
+  border: none;
+}
+
+.popular-beat-card.active {
+  border-color: var(--asos-black);
+  border-width: 2px;
+}
+
+.popular-beat-card.active .beat-card-overlay {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+/* Loading */
+.popular-beats-loading {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+@media (max-width: 768px) {
+  .popular-beats-section {
+    padding: 3rem 1rem;
+  }
+
+  .popular-beats-grid {
+    gap: 1rem;
+  }
+  
+  .beat-card-info {
+    padding: 0.75rem;
+  }
+
+  .popular-beats-player {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .popular-beats-player-info {
+    width: 100%;
+  }
+
+  .popular-beats-player-controls {
+    width: 100%;
+    max-width: none;
+  }
+
+  .popular-beats-player-volume {
+    width: 100%;
+  }
+}

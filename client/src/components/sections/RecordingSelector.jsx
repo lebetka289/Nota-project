@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import './RecordingSelector.css';
+import Alert from '../widgets/Alert';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -9,6 +10,7 @@ function RecordingSelector({ onNavigate }) {
   const [activeTab, setActiveTab] = useState(null);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState(null);
+  const [alert, setAlert] = useState(null);
 
   const tabs = [
     {
@@ -29,42 +31,12 @@ function RecordingSelector({ onNavigate }) {
   ];
 
   const musicStyles = [
-    {
-      id: 'hyperpop',
-      name: 'Хайпер поп',
-      icon: '🎵',
-      color: '#FF6B9D'
-    },
-    {
-      id: 'pop-rock',
-      name: 'Поп рок',
-      icon: '🎸',
-      color: '#4ECDC4'
-    },
-    {
-      id: 'indie',
-      name: 'Инди',
-      icon: '🎹',
-      color: '#95E1D3'
-    },
-    {
-      id: 'lofi',
-      name: 'Low-fi',
-      icon: '☕',
-      color: '#F38181'
-    },
-    {
-      id: 'russian-rap',
-      name: 'Русский реп',
-      icon: '🎤',
-      color: '#AA96DA'
-    },
-    {
-      id: 'funk',
-      name: 'Фонк',
-      icon: '🎺',
-      color: '#FCBAD3'
-    }
+    { id: 'hyperpop', name: 'Хайпер поп', icon: 'HP', color: '#FF6B9D' },
+    { id: 'pop-rock', name: 'Поп рок', icon: 'PR', color: '#4ECDC4' },
+    { id: 'indie', name: 'Инди', icon: 'IN', color: '#95E1D3' },
+    { id: 'lofi', name: 'Low-fi', icon: 'LF', color: '#F38181' },
+    { id: 'russian-rap', name: 'Русский реп', icon: 'RR', color: '#AA96DA' },
+    { id: 'funk', name: 'Фонк', icon: 'FN', color: '#FCBAD3' }
   ];
 
   const handleTabClick = (tabId) => {
@@ -89,7 +61,7 @@ function RecordingSelector({ onNavigate }) {
     setSelectedStyle(styleId);
     
     if (!user) {
-      alert('Войдите в аккаунт, чтобы продолжить');
+      setAlert({ message: 'Войдите в аккаунт, чтобы продолжить', type: 'warning' });
       if (onNavigate) {
         onNavigate('auth');
       }
@@ -136,6 +108,7 @@ function RecordingSelector({ onNavigate }) {
 
   return (
     <div className="recording-selector-section">
+      {alert && <Alert message={alert.message} type={alert.type} onClose={() => setAlert(null)} />}
       <div className="recording-selector-header">
         <h2>Выбор записи</h2>
         <p className="recording-subtitle">Выберите тип записи, который вам подходит</p>
@@ -185,7 +158,7 @@ function RecordingSelector({ onNavigate }) {
               onClick={closePopup}
               aria-label="Закрыть"
             >
-              ✕
+              ×
             </button>
 
             <div className="popup-header-content">
@@ -215,7 +188,7 @@ function RecordingSelector({ onNavigate }) {
                     <div className="style-icon">{style.icon}</div>
                     <div className="style-name">{style.name}</div>
                     {selectedStyle === style.id && (
-                      <div className="style-check">✓</div>
+                      <div className="style-check">OK</div>
                     )}
                   </div>
                 ))}

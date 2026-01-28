@@ -1,60 +1,26 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import './HomeRecording.css';
+import Alert from '../widgets/Alert';
 
 function HomeRecording({ onNavigate }) {
   const { user } = useAuth();
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState(null);
+  const [alert, setAlert] = useState(null);
 
   const musicStyles = [
-    {
-      id: 'hyperpop',
-      name: 'Хайпер поп',
-      icon: '🎵',
-      color: '#FF6B9D',
-      description: 'Современный электронный поп с яркими синтезаторами'
-    },
-    {
-      id: 'pop-rock',
-      name: 'Поп рок',
-      icon: '🎸',
-      color: '#4ECDC4',
-      description: 'Энергичный поп с элементами рока'
-    },
-    {
-      id: 'indie',
-      name: 'Инди',
-      icon: '🎹',
-      color: '#95E1D3',
-      description: 'Независимая музыка с уникальным звучанием'
-    },
-    {
-      id: 'lofi',
-      name: 'Low-fi',
-      icon: '☕',
-      color: '#F38181',
-      description: 'Расслабляющая музыка с винтажным звуком'
-    },
-    {
-      id: 'russian-rap',
-      name: 'Русский реп',
-      icon: '🎤',
-      color: '#AA96DA',
-      description: 'Русскоязычный хип-хоп и рэп'
-    },
-    {
-      id: 'funk',
-      name: 'Фонк',
-      icon: '🎺',
-      color: '#FCBAD3',
-      description: 'Фанк-музыка с грувом и басовыми линиями'
-    }
+    { id: 'hyperpop', name: 'Хайпер поп', icon: 'HP', color: '#FF6B9D', description: 'Современный электронный поп с яркими синтезаторами' },
+    { id: 'pop-rock', name: 'Поп рок', icon: 'PR', color: '#4ECDC4', description: 'Энергичный поп с элементами рока' },
+    { id: 'indie', name: 'Инди', icon: 'IN', color: '#95E1D3', description: 'Независимая музыка с уникальным звучанием' },
+    { id: 'lofi', name: 'Low-fi', icon: 'LF', color: '#F38181', description: 'Расслабляющая музыка с винтажным звуком' },
+    { id: 'russian-rap', name: 'Русский реп', icon: 'RR', color: '#AA96DA', description: 'Русскоязычный хип-хоп и рэп' },
+    { id: 'funk', name: 'Фонк', icon: 'FN', color: '#FCBAD3', description: 'Фанк-музыка с грувом и басовыми линиями' }
   ];
 
   const handleOpenPopup = () => {
     if (!user) {
-      alert('Войдите в аккаунт, чтобы использовать запись из дома');
+      setAlert({ message: 'Войдите в аккаунт, чтобы использовать запись из дома', type: 'warning' });
       if (onNavigate) {
         onNavigate('auth');
       }
@@ -92,18 +58,19 @@ function HomeRecording({ onNavigate }) {
 
   return (
     <div className="home-recording-section">
+      {alert && <Alert message={alert.message} type={alert.type} onClose={() => setAlert(null)} />}
       <div className="home-recording-card" onClick={handleOpenPopup}>
         <div className="card-content">
-          <div className="card-icon">🏠</div>
+          <div className="card-icon">HOME</div>
           <h3 className="card-title">Запись из дома</h3>
           <p className="card-description">
             Профессиональная сводка трека по жанрам. 
             Загрузите свою демо-запись и получите качественную обработку.
           </p>
           <div className="card-features">
-            <span className="feature">✓ Сводка по жанру</span>
-            <span className="feature">✓ Обработка вокала</span>
-            <span className="feature">✓ Мастеринг</span>
+            <span className="feature">Сводка по жанру</span>
+            <span className="feature">Обработка вокала</span>
+            <span className="feature">Мастеринг</span>
           </div>
         </div>
         <div className="card-arrow">→</div>
@@ -128,7 +95,7 @@ function HomeRecording({ onNavigate }) {
               onClick={closePopup}
               aria-label="Закрыть"
             >
-              ✕
+              ×
             </button>
 
             <div className="popup-header-content">
@@ -161,7 +128,7 @@ function HomeRecording({ onNavigate }) {
                     <div className="style-name">{style.name}</div>
                     <div className="style-description">{style.description}</div>
                     {selectedStyle === style.id && (
-                      <div className="style-check">✓</div>
+                      <div className="style-check">OK</div>
                     )}
                   </div>
                 ))}

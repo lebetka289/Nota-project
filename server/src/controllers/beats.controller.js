@@ -19,7 +19,7 @@ exports.getAllBeats = async (req, res) => {
 
     const { genre, q } = req.query;
     const params = [];
-    let sql = "SELECT id, title, genre, bpm, price, cover_path, file_path, created_at FROM beats";
+    let sql = "SELECT id, title, genre, bpm, price, cover_path, file_path, play_count, created_at FROM beats";
     const where = [];
 
     if (genre && genre !== 'all') {
@@ -40,7 +40,8 @@ exports.getAllBeats = async (req, res) => {
       ...b,
       file_url: `${protocol}://${host}/api/beats/${b.id}/stream`,
       cover_url: b.cover_path ? `${protocol}://${host}/uploads/${b.cover_path}` : null,
-      purchased: purchasedSet ? purchasedSet.has(b.id) : false
+      purchased: purchasedSet ? purchasedSet.has(b.id) : false,
+      play_count: b.play_count || 0
     }));
     res.json(mapped);
   } catch (e) {
@@ -108,6 +109,44 @@ exports.createBeat = async (req, res) => {
   } catch (e) {
     console.error('Ошибка загрузки бита:', e);
     res.status(500).json({ error: 'Ошибка загрузки бита' });
+  }
+};
+
+// Увеличить счетчик прослушиваний
+exports.incrementPlayCount = async (req, res) => {
+  try {
+    await query("UPDATE beats SET play_count = COALESCE(play_count, 0) + 1 WHERE id = ?", [req.params.id]);
+    res.json({ success: true });
+  } catch (e) {
+    console.error('Ошибка увеличения счетчика:', e);
+    res.status(500).json({ error: 'Ошибка обновления счетчика' });
+  }
+};
+
+// Получить купленные биты пользователя
+exports.getPurchasedBeats = async (req, res) => {
+  try {
+    const rows = await query(
+      `SELECT b.id, b.title, b.genre, b.bpm, b.price, b.cover_path, b.file_path, b.play_count, bp.paid_at
+       FROM beat_purchases bp
+       JOIN beats b ON bp.beat_id = b.id
+       WHERE bp.user_id = ? AND bp.status = 'paid'
+       ORDER BY bp.paid_at DESC`,
+      [req.user.id]
+    );
+    const host = req.get('host');
+    const protocol = req.protocol;
+    res.json(
+      rows.map((b) => ({
+        ...b,
+        file_url: `${protocol}://${host}/api/beats/${b.id}/stream`,
+        cover_url: b.cover_path ? `${protocol}://${host}/uploads/${b.cover_path}` : null,
+        play_count: b.play_count || 0
+      }))
+    );
+  } catch (e) {
+    console.error('Ошибка получения купленных битов:', e);
+    res.status(500).json({ error: 'Ошибка получения битов' });
   }
 };
 

@@ -1,63 +1,80 @@
+/* ASOS-Style Studio Info Section */
 .studio-info-section {
-  max-width: 1200px;
-  margin: 3rem auto;
-  padding: 0 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .studio-info-header {
   text-align: center;
   margin-bottom: 3rem;
+  max-width: 600px;
 }
 
 .studio-info-header h2 {
-  font-size: 2.5rem;
-  color: #fff;
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  color: var(--text);
   margin-bottom: 1rem;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--text);
+  letter-spacing: -0.02em;
+  font-weight: 900;
+  font-style: italic;
 }
 
 .studio-subtitle {
-  color: #aaa;
-  font-size: 1.1rem;
+  color: var(--muted);
+  font-size: 0.875rem;
   margin: 0;
+  line-height: 1.6;
 }
 
-/* Галерея фотографий */
+/* Gallery */
 .studio-gallery {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
   margin-bottom: 2rem;
+  width: 100%;
+}
+
+@media (max-width: 1024px) {
+  .studio-gallery {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .studio-gallery {
+    grid-template-columns: 1fr;
+  }
 }
 
 .studio-image-card {
   position: relative;
-  border-radius: var(--radius);
   overflow: hidden;
   cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
-  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  background: var(--asos-gray);
+  border: 1px solid var(--border);
 }
 
 .studio-image-card:hover {
-  transform: translateY(-10px) scale(1.02);
-  box-shadow: 0 15px 40px rgba(225, 6, 47, 0.22);
-  border-color: rgba(225, 6, 47, 0.55);
+  border-color: var(--asos-black);
+  box-shadow: var(--shadow);
 }
 
 .studio-image-card:focus {
   outline: none;
   box-shadow: var(--ring);
-  outline-offset: 2px;
 }
 
 .image-wrapper {
   position: relative;
   width: 100%;
-  height: 300px;
+  aspect-ratio: 4/3;
   overflow: hidden;
 }
 
@@ -65,11 +82,11 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.5s ease;
+  transition: transform 0.6s cubic-bezier(0.33, 1, 0.68, 1);
 }
 
 .studio-image-card:hover .studio-image {
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
 .image-overlay {
@@ -78,11 +95,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0) 0%,
-    rgba(0, 0, 0, 0.7) 100%
-  );
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.7) 100%);
   display: flex;
   align-items: flex-end;
   padding: 1.5rem;
@@ -96,30 +109,35 @@
 
 .overlay-content {
   width: 100%;
-  color: #fff;
+  color: var(--asos-white);
 }
 
 .image-title {
-  font-size: 1.3rem;
+  font-size: 1rem;
   margin: 0 0 0.5rem 0;
-  font-weight: 600;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .image-description {
-  font-size: 0.9rem;
-  margin: 0 0 0.5rem 0;
-  color: #ddd;
+  font-size: 0.8rem;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .view-more {
-  font-size: 0.85rem;
-  color: var(--accent);
-  font-weight: 500;
+  font-size: 0.7rem;
+  color: var(--asos-white);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
   display: inline-block;
-  margin-top: 0.5rem;
+  margin-top: 0.75rem;
+  text-decoration: underline;
 }
 
-/* Попап окно */
+/* Popup */
 .studio-popup-overlay {
   position: fixed;
   top: 0;
@@ -132,34 +150,29 @@
   justify-content: center;
   z-index: 1000;
   padding: 2rem;
-  animation: fadeIn 0.3s ease;
+  animation: fadeIn 0.2s ease;
   overflow-y: auto;
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .studio-popup-content {
-  background-color: #1a1a1a;
-  border-radius: 16px;
-  max-width: 1200px;
+  background: var(--asos-white);
+  max-width: 1000px;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
   animation: slideUp 0.3s ease;
-  border: 2px solid #444;
+  border: 1px solid var(--border);
 }
 
 @keyframes slideUp {
   from {
-    transform: translateY(50px);
+    transform: translateY(30px);
     opacity: 0;
   }
   to {
@@ -172,63 +185,72 @@
   position: absolute;
   top: 1rem;
   right: 1rem;
-  background-color: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: #fff;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
   width: 40px;
   height: 40px;
-  border-radius: 50%;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   cursor: pointer;
   z-index: 10;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .popup-close-btn:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-  transform: rotate(90deg);
+  background: var(--asos-black);
+  color: var(--asos-white);
+  border-color: var(--asos-black);
 }
 
 .popup-header {
   padding: 2rem;
-  border-bottom: 2px solid #444;
+  border-bottom: 1px solid var(--border);
 }
 
 .popup-studio-name {
-  font-size: 2.5rem;
-  color: #fff;
+  font-size: 1.5rem;
+  color: var(--text);
   margin: 0 0 1.5rem 0;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.05em;
+  font-weight: 900;
+  font-style: italic;
 }
 
 .popup-studio-info {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .popup-studio-info {
+    grid-template-columns: 1fr;
+  }
 }
 
 .info-item {
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
-  color: #ddd;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
 }
 
 .info-icon {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   flex-shrink: 0;
 }
 
 .info-text {
-  font-size: 1rem;
+  font-size: 0.875rem;
   line-height: 1.6;
 }
 
-/* Контейнер с главным изображением */
+/* Popup Image Container */
 .popup-image-container {
   position: relative;
   padding: 2rem;
@@ -240,15 +262,14 @@
 .popup-main-image {
   flex: 1;
   position: relative;
-  border-radius: 12px;
   overflow: hidden;
-  background-color: #2a2a2a;
+  background-color: var(--asos-gray);
 }
 
 .popup-image {
   width: 100%;
   height: auto;
-  max-height: 60vh;
+  max-height: 50vh;
   object-fit: contain;
   display: block;
 }
@@ -260,30 +281,31 @@
   right: 0;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
   padding: 2rem 1.5rem 1.5rem;
-  color: #fff;
+  color: var(--asos-white);
 }
 
 .popup-image-info h3 {
-  font-size: 1.5rem;
+  font-size: 1rem;
   margin: 0 0 0.5rem 0;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .popup-image-info p {
-  font-size: 1rem;
+  font-size: 0.875rem;
   margin: 0;
-  color: #ddd;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .popup-nav-btn {
-  background-color: rgba(225, 6, 47, 0.80);
-  color: #fff;
+  background-color: var(--asos-black);
+  color: var(--asos-white);
   border: none;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  font-size: 2rem;
+  width: 44px;
+  height: 44px;
+  font-size: 1.5rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -291,79 +313,51 @@
 }
 
 .popup-nav-btn:hover {
-  background-color: rgba(225, 6, 47, 1);
-  transform: scale(1.1);
+  background-color: var(--muted);
 }
 
-.popup-nav-btn:active {
-  transform: scale(0.95);
-}
-
-/* Миниатюры */
+/* Thumbnails */
 .popup-thumbnails {
   display: flex;
   gap: 0.5rem;
   padding: 1rem 2rem;
   overflow-x: auto;
-  border-top: 2px solid #444;
-  border-bottom: 2px solid #444;
-}
-
-.popup-thumbnails::-webkit-scrollbar {
-  height: 6px;
-}
-
-.popup-thumbnails::-webkit-scrollbar-track {
-  background: #2a2a2a;
-}
-
-.popup-thumbnails::-webkit-scrollbar-thumb {
-  background: var(--accent);
-  border-radius: 3px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }
 
 .thumbnail {
-  width: 80px;
-  height: 80px;
+  width: 64px;
+  height: 64px;
   object-fit: cover;
-  border-radius: 8px;
   cursor: pointer;
-  border: 3px solid transparent;
-  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
   flex-shrink: 0;
 }
 
 .thumbnail:hover {
-  border-color: var(--accent);
-  transform: scale(1.1);
+  border-color: var(--asos-black);
 }
 
 .thumbnail.active {
-  border-color: var(--accent);
-  box-shadow: 0 0 15px rgba(225, 6, 47, 0.28);
+  border-color: var(--asos-black);
 }
 
-/* Счетчик */
+/* Counter */
 .popup-counter {
   text-align: center;
   padding: 1rem;
-  color: #aaa;
-  font-size: 0.9rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
-/* Адаптивность */
-@media (max-width: 968px) {
-  .studio-gallery {
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1rem;
-  }
-
-  .image-wrapper {
-    height: 250px;
-  }
-
-  .popup-studio-info {
-    grid-template-columns: 1fr;
+/* Responsive */
+@media (max-width: 768px) {
+  .studio-info-section {
+    padding: 3rem 1rem;
   }
 
   .popup-image-container {
@@ -378,11 +372,11 @@
   }
 
   .popup-nav-btn.prev {
-    left: 1rem;
+    left: 0.5rem;
   }
 
   .popup-nav-btn.next {
-    right: 1rem;
+    right: 0.5rem;
   }
 
   .popup-thumbnails {
@@ -390,41 +384,7 @@
   }
 
   .thumbnail {
-    width: 60px;
-    height: 60px;
-  }
-}
-
-@media (max-width: 768px) {
-  .studio-info-section {
-    padding: 0 1rem;
-  }
-
-  .studio-info-header h2 {
-    font-size: 2rem;
-  }
-
-  .studio-gallery {
-    grid-template-columns: 1fr;
-  }
-
-  .studio-popup-overlay {
-    padding: 1rem;
-  }
-
-  .popup-header {
-    padding: 1.5rem;
-  }
-
-  .popup-studio-name {
-    font-size: 2rem;
-  }
-
-  .popup-image-info {
-    padding: 1.5rem 1rem 1rem;
-  }
-
-  .popup-image-info h3 {
-    font-size: 1.2rem;
+    width: 48px;
+    height: 48px;
   }
 }

@@ -1,12 +1,13 @@
+const bcrypt = require('bcryptjs');
 const { query, queryOne } = require('../../config/database');
 
 // Получить всех пользователей
 exports.getAllUsers = async (req, res) => {
   try {
     const users = await query(
-      "SELECT id, email, name, role, created_at FROM users ORDER BY created_at DESC"
+      "SELECT id, email, name, role, blocked, created_at FROM users ORDER BY created_at DESC"
     );
-    res.json(users);
+    res.json(users.map((u) => ({ ...u, blocked: !!u.blocked })));
   } catch (error) {
     console.error('Ошибка получения пользователей:', error);
     res.status(500).json({ error: 'Ошибка получения пользователей' });
@@ -28,14 +29,63 @@ exports.updateUserRole = async (req, res) => {
     );
     
     const user = await queryOne(
-      "SELECT id, email, name, role FROM users WHERE id = ?",
+      "SELECT id, email, name, role, blocked FROM users WHERE id = ?",
       [req.params.id]
     );
     
-    res.json(user);
+    res.json({ ...user, blocked: !!user.blocked });
   } catch (error) {
     console.error('Ошибка обновления роли:', error);
     res.status(500).json({ error: 'Ошибка обновления роли' });
+  }
+};
+
+// Заблокировать / разблокировать пользователя
+exports.updateUserBlock = async (req, res) => {
+  const { blocked } = req.body;
+  if (typeof blocked !== 'boolean') {
+    return res.status(400).json({ error: 'Укажите blocked: true или false' });
+  }
+  const targetId = Number(req.params.id);
+  if (req.user.id === targetId && blocked) {
+    return res.status(400).json({ error: 'Нельзя заблокировать себя' });
+  }
+
+  try {
+    await query(
+      "UPDATE users SET blocked = ? WHERE id = ?",
+      [blocked ? 1 : 0, targetId]
+    );
+    
+    const user = await queryOne(
+      "SELECT id, email, name, role, blocked FROM users WHERE id = ?",
+      [targetId]
+    );
+    if (!user) return res.status(404).json({ error: 'Пользователь не найден' });
+    
+    res.json({ ...user, blocked: !!user.blocked });
+  } catch (error) {
+    console.error('Ошибка блокировки:', error);
+    res.status(500).json({ error: 'Ошибка обновления блокировки' });
+  }
+};
+
+// Сменить пароль пользователя (админ)
+exports.updateUserPassword = async (req, res) => {
+  const { password } = req.body;
+  if (!password || String(password).length < 6) {
+    return res.status(400).json({ error: 'Пароль не менее 6 символов' });
+  }
+
+  try {
+    const hashed = await bcrypt.hash(String(password), 10);
+    await query("UPDATE users SET password = ? WHERE id = ?", [hashed, req.params.id]);
+    const user = await queryOne("SELECT id, email, name, role FROM users WHERE id = ?", [req.params.id]);
+    if (!user) return res.status(404).json({ error: 'Пользователь не найден' });
+    res.json({ message: 'Пароль обновлен', user });
+  } catch (error) {
+    console.error('Ошибка смены пароля:', error);
+    res.status(500).json({ error: 'Ошибка смены пароля' });
   }
 };
 

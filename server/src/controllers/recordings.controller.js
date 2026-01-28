@@ -3,22 +3,55 @@ const { sendTrackToUser } = require('../services/email.service');
 const path = require('path');
 const fs = require('fs');
 
+// Получить скидку пользователя на основе количества оплаченных записей
+const getUserDiscount = async (userId) => {
+  const paidCount = await queryOne(
+    "SELECT COUNT(*) as count FROM user_recordings WHERE user_id = ? AND status IN ('paid', 'in-progress', 'completed')",
+    [userId]
+  );
+  const count = paidCount?.count || 0;
+  // Скидка 50% при 3+ оплаченных записях
+  return count >= 3 ? 50 : 0;
+};
+
 // Создать запись
 exports.createRecording = async (req, res) => {
-  const { recording_type, music_style, price } = req.body;
+  const { recording_type, music_style, price, purchased_beat_id } = req.body;
 
   if (!recording_type || !music_style) {
     return res.status(400).json({ error: 'Тип записи и стиль музыки обязательны' });
   }
 
   try {
+    // Проверяем, что purchased_beat_id принадлежит пользователю
+    if (purchased_beat_id) {
+      const purchase = await queryOne(
+        "SELECT beat_id FROM beat_purchases WHERE user_id = ? AND beat_id = ? AND status = 'paid'",
+        [req.user.id, purchased_beat_id]
+      );
+      if (!purchase) {
+        return res.status(400).json({ error: 'Выбранный бит не куплен или не найден' });
+      }
+    }
+
+    // Получаем скидку пользователя
+    const discountPercent = await getUserDiscount(req.user.id);
+    const finalPrice = price ?? null;
+
     const result = await query(
-      "INSERT INTO user_recordings (user_id, recording_type, music_style, price, status) VALUES (?, ?, ?, ?, 'pending')",
-      [req.user.id, recording_type, music_style, price ?? null]
+      "INSERT INTO user_recordings (user_id, recording_type, music_style, price, status, purchased_beat_id, discount_percent) VALUES (?, ?, ?, ?, 'pending', ?, ?)",
+      [req.user.id, recording_type, music_style, finalPrice, purchased_beat_id || null, discountPercent]
     );
     res.json({
       id: result.insertId,
-      recording: { id: result.insertId, recording_type, music_style, status: 'pending' }
+      recording: { 
+        id: result.insertId, 
+        recording_type, 
+        music_style, 
+        status: 'pending',
+        purchased_beat_id: purchased_beat_id || null,
+        discount_percent: discountPercent
+      }
     });
   } catch (error) {
     console.error('Ошибка сохранения записи:', error);

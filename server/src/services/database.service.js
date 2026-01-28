@@ -32,6 +32,7 @@ async function initDatabase() {
   await ensureColumn('users', 'email_verified', "TINYINT(1) DEFAULT 0");
   await ensureColumn('users', 'verification_code', "VARCHAR(6) NULL");
   await ensureColumn('users', 'verification_code_expires', "TIMESTAMP NULL");
+  await ensureColumn('users', 'blocked', "TINYINT(1) DEFAULT 0");
 
   // Таблица товаров
   await query(`CREATE TABLE IF NOT EXISTS products (
@@ -156,6 +157,8 @@ async function initDatabase() {
   await ensureColumn('user_recordings', 'payment_status', "VARCHAR(50) NULL");
   await ensureColumn('user_recordings', 'paid_at', "TIMESTAMP NULL");
   await ensureColumn('user_recordings', 'track_file_path', "VARCHAR(255) NULL");
+  await ensureColumn('user_recordings', 'purchased_beat_id', "INT NULL");
+  await ensureColumn('user_recordings', 'discount_percent', "DECIMAL(5, 2) DEFAULT 0");
 
   // Чат: диалоги
   await query(`CREATE TABLE IF NOT EXISTS chat_conversations (
@@ -201,6 +204,7 @@ async function initDatabase() {
   )`);
 
   await ensureColumn('beats', 'cover_path', "VARCHAR(255) NULL");
+  await ensureColumn('beats', 'play_count', "INT DEFAULT 0");
 
   // Покупки битов
   await query(`CREATE TABLE IF NOT EXISTS beat_purchases (

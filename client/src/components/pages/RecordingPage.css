@@ -188,6 +188,7 @@
   padding: 3rem 3rem 2rem;
   text-align: center;
   border-bottom: 2px solid #444;
+  flex-shrink: 0;
 }
 
 .popup-title {
@@ -202,6 +203,135 @@
   font-size: 1.2rem;
   color: #aaa;
   margin: 0;
+}
+
+/* Purchased beats dropdown */
+.purchased-beats-selector {
+  margin: 0 3rem 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.purchased-beats-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.purchased-beats-dropdown {
+  position: relative;
+}
+
+.purchased-beats-dropdown-btn {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 0.875rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.2s;
+}
+
+.purchased-beats-dropdown-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.purchased-beats-dropdown-btn svg {
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.purchased-beats-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.purchased-beats-dropdown-item {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  transition: background 0.2s;
+}
+
+.purchased-beats-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.purchased-beats-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.purchased-beats-dropdown-item.selected {
+  background: rgba(225, 6, 47, 0.2);
+}
+
+.purchased-beats-dropdown-cover {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+
+.purchased-beats-dropdown-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.purchased-beats-dropdown-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.purchased-beats-dropdown-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.purchased-beats-dropdown-title {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.purchased-beats-dropdown-meta {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .music-styles-container {

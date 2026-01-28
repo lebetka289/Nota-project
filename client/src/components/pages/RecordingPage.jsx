@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import Alert from '../widgets/Alert';
 import './RecordingPage.css';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 function RecordingPage({ onNavigate }) {
   const { user, token } = useAuth();
+  const [alert, setAlert] = useState(null);
   const [selectedType, setSelectedType] = useState(null);
   const [selectedStyle, setSelectedStyle] = useState(null);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
@@ -25,72 +27,29 @@ function RecordingPage({ onNavigate }) {
   const [videoItemsPerView, setVideoItemsPerView] = useState(2);
   const [playingVideoId, setPlayingVideoId] = useState(null);
   const videoRefs = useRef({});
+  const [purchasedBeats, setPurchasedBeats] = useState([]);
+  const [selectedBeatId, setSelectedBeatId] = useState(null);
+  const [showBeatDropdown, setShowBeatDropdown] = useState(false);
+  const beatDropdownRef = useRef(null);
 
   const recordingTypes = [
-    {
-      id: 'own-music',
-      title: 'Запись на свою музыку',
-      description: 'Запишите свой вокал на уже готовую музыку',
-      icon: '🎵'
-    },
-    {
-      id: 'with-music',
-      title: 'Запись с покупкой музыки',
-      description: 'Выберите бит и запишите на него свой вокал',
-      icon: '🎤'
-    },
-    {
-      id: 'buy-music',
-      title: 'Покупка музыки',
-      description: 'Приобретите готовые биты для ваших проектов',
-      icon: '💿'
-    }
+    { id: 'with-music', title: 'Запись с покупкой музыки', description: 'Выберите бит и запишите на него свой вокал', icon: 'MIC' },
+    { id: 'home-recording', title: 'Запись на дому', description: 'Профессиональная сводка трека по жанрам', icon: 'HOME' }
   ];
 
   const musicStyles = [
-    {
-      id: 'hyperpop',
-      name: 'Хайпер поп',
-      icon: '🎵',
-      color: '#FF6B9D'
-    },
-    {
-      id: 'pop-rock',
-      name: 'Поп рок',
-      icon: '🎸',
-      color: '#4ECDC4'
-    },
-    {
-      id: 'indie',
-      name: 'Инди',
-      icon: '🎹',
-      color: '#95E1D3'
-    },
-    {
-      id: 'lofi',
-      name: 'Low-fi',
-      icon: '☕',
-      color: '#F38181'
-    },
-    {
-      id: 'russian-rap',
-      name: 'Русский реп',
-      icon: '🎤',
-      color: '#AA96DA'
-    },
-    {
-      id: 'funk',
-      name: 'Фонк',
-      icon: '🎺',
-      color: '#FCBAD3'
-    }
+    { id: 'hyperpop', name: 'Хайпер поп', icon: 'HP', color: '#FF6B9D' },
+    { id: 'pop-rock', name: 'Поп рок', icon: 'PR', color: '#4ECDC4' },
+    { id: 'indie', name: 'Инди', icon: 'IN', color: '#95E1D3' },
+    { id: 'lofi', name: 'Low-fi', icon: 'LF', color: '#F38181' },
+    { id: 'russian-rap', name: 'Русский реп', icon: 'RR', color: '#AA96DA' },
+    { id: 'funk', name: 'Фонк', icon: 'FN', color: '#FCBAD3' }
   ];
 
   const recordingTypeNames = {
     'own-music': 'Запись на свою музыку',
     'with-music': 'Запись с покупкой музыки',
-    'buy-music': 'Покупка музыки',
-    'home-recording': 'Запись из дома',
+    'home-recording': 'Запись на дому',
     'video-clip': 'Съёмка видеоклипа'
   };
 
@@ -118,6 +77,38 @@ function RecordingPage({ onNavigate }) {
     completed: 'Завершено',
     cancelled: 'Отменено'
   };
+
+  // Загрузка купленных битов для with-music
+  useEffect(() => {
+    if (selectedType === 'with-music' && user && token) {
+      const loadPurchasedBeats = async () => {
+        try {
+          const response = await fetch(`${API_URL}/beats/purchased`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setPurchasedBeats(Array.isArray(data) ? data : []);
+          }
+        } catch (error) {
+          console.error('Ошибка загрузки купленных битов:', error);
+        }
+      };
+      loadPurchasedBeats();
+    }
+  }, [selectedType, user, token]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (beatDropdownRef.current && !beatDropdownRef.current.contains(e.target)) {
+        setShowBeatDropdown(false);
+      }
+    };
+    if (showBeatDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showBeatDropdown]);
 
   useEffect(() => {
     const loadReviews = async () => {
@@ -193,55 +184,52 @@ function RecordingPage({ onNavigate }) {
         video.pause();
       }
     });
-    setPlayingVideoId(null);
   };
 
-  useEffect(() => {
+  const handleVideoToggle = (videoId) => {
     pauseAllVideos();
-  }, [videoSlideIndex, videoItemsPerView]);
-
-  const handleVideoPrev = () => {
-    setVideoSlideIndex((prev) => (prev <= 0 ? maxVideoSlide : prev - 1));
-  };
-
-  const handleVideoNext = () => {
-    setVideoSlideIndex((prev) => (prev >= maxVideoSlide ? 0 : prev + 1));
-  };
-
-  const handleVideoToggle = async (videoId) => {
     const video = videoRefs.current[videoId];
     if (!video) return;
 
-    if (!video.paused) {
+    if (playingVideoId === videoId) {
       video.pause();
       setPlayingVideoId(null);
-      return;
-    }
-
-    pauseAllVideos();
-    try {
-      await video.play();
+    } else {
+      video.play().catch((error) => {
+        console.error('Ошибка воспроизведения видео:', error);
+      });
       setPlayingVideoId(videoId);
-    } catch (error) {
-      console.error('Не удалось запустить видео:', error);
     }
   };
 
-  useEffect(() => {
-    if (!profileUserId) {
-      return;
-    }
+  const handleVideoPrev = () => {
+    setVideoSlideIndex((prev) => Math.max(0, prev - 1));
+  };
 
+  const handleVideoNext = () => {
+    setVideoSlideIndex((prev) => Math.min(maxVideoSlide, prev + 1));
+  };
+
+  useEffect(() => {
     let isActive = true;
 
     const loadProfile = async () => {
+      if (!profileUserId) return;
+
       setProfileLoading(true);
       setProfileError('');
+
       try {
         const [profileRes, recordingsRes, purchasesRes] = await Promise.all([
-          fetch(`${API_URL}/users/${profileUserId}`),
-          fetch(`${API_URL}/users/${profileUserId}/recordings`),
-          fetch(`${API_URL}/users/${profileUserId}/purchases`)
+          fetch(`${API_URL}/users/${profileUserId}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined
+          }),
+          fetch(`${API_URL}/recordings?user_id=${profileUserId}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined
+          }),
+          fetch(`${API_URL}/beats/purchased?user_id=${profileUserId}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined
+          })
         ]);
 
         if (!profileRes.ok) {
@@ -280,11 +268,13 @@ function RecordingPage({ onNavigate }) {
     setSelectedType(typeId);
     setIsPopupOpen(true);
     document.body.style.overflow = 'hidden';
+    setSelectedBeatId(null);
   };
 
   const closePopup = () => {
     setIsPopupOpen(false);
     setSelectedStyle(null);
+    setSelectedBeatId(null);
     document.body.style.overflow = 'auto';
   };
 
@@ -292,7 +282,7 @@ function RecordingPage({ onNavigate }) {
     setSelectedStyle(styleId);
     
     if (!user) {
-      alert('Войдите в аккаунт, чтобы продолжить');
+      setAlert({ message: 'Войдите в аккаунт, чтобы продолжить', type: 'warning' });
       if (onNavigate) {
         onNavigate('auth');
       }
@@ -303,11 +293,18 @@ function RecordingPage({ onNavigate }) {
     const style = musicStyles.find(s => s.id === styleId);
     
     // Сохраняем данные в localStorage
-    localStorage.setItem('recordingData', JSON.stringify({
+    const recordingData = {
       recordingType: selectedType,
       musicStyle: styleId,
       styleName: style.name
-    }));
+    };
+
+    // Для with-music добавляем выбранный бит
+    if (selectedType === 'with-music' && selectedBeatId) {
+      recordingData.purchasedBeatId = selectedBeatId;
+    }
+
+    localStorage.setItem('recordingData', JSON.stringify(recordingData));
 
     // Сохраняем в БД
     try {
@@ -319,7 +316,8 @@ function RecordingPage({ onNavigate }) {
         },
         body: JSON.stringify({
           recording_type: selectedType,
-          music_style: styleId
+          music_style: styleId,
+          purchased_beat_id: selectedType === 'with-music' ? selectedBeatId : null
         })
       });
     } catch (error) {
@@ -342,7 +340,7 @@ function RecordingPage({ onNavigate }) {
         className={`review-star ${index < value ? 'filled' : ''}`}
         aria-hidden="true"
       >
-        ★
+        *
       </span>
     ));
   };
@@ -351,7 +349,7 @@ function RecordingPage({ onNavigate }) {
     event.preventDefault();
 
     if (!user) {
-      alert('Войдите в аккаунт, чтобы оставить отзыв');
+      setAlert({ message: 'Войдите в аккаунт, чтобы оставить отзыв', type: 'warning' });
       if (onNavigate) {
         onNavigate('auth');
       }
@@ -402,7 +400,7 @@ function RecordingPage({ onNavigate }) {
 
   const handleVideoOrder = () => {
     if (!user) {
-      alert('Войдите в аккаунт, чтобы продолжить');
+      setAlert({ message: 'Войдите в аккаунт, чтобы продолжить', type: 'warning' });
       if (onNavigate) {
         onNavigate('auth');
       }
@@ -447,9 +445,11 @@ function RecordingPage({ onNavigate }) {
   };
 
   const currentType = recordingTypes.find(type => type.id === selectedType);
+  const selectedBeat = purchasedBeats.find(b => b.id === selectedBeatId);
 
   return (
     <div className="recording-page">
+      {alert && <Alert message={alert.message} type={alert.type} onClose={() => setAlert(null)} />}
       <div className="recording-page-header">
         <h1>Запись</h1>
         <p>Выберите тип записи и стиль музыки</p>
@@ -589,7 +589,7 @@ function RecordingPage({ onNavigate }) {
                         onClick={() => setReviewRating(index + 1)}
                         aria-label={`Оценка ${index + 1}`}
                       >
-                        ★
+                        *
                       </button>
                     ))}
                   </div>
@@ -690,13 +690,69 @@ function RecordingPage({ onNavigate }) {
               onClick={closePopup}
               aria-label="Закрыть"
             >
-              ✕
+              ×
             </button>
 
             <div className="popup-header-content">
               <h2 className="popup-title">{currentType?.title}</h2>
               <p className="popup-description">{currentType?.description}</p>
             </div>
+
+            {/* Выбор купленного бита для with-music */}
+            {selectedType === 'with-music' && purchasedBeats.length > 0 && (
+              <div className="purchased-beats-selector" ref={beatDropdownRef}>
+                <label className="purchased-beats-label">Использовать купленный бит:</label>
+                <div className="purchased-beats-dropdown">
+                  <button
+                    type="button"
+                    className="purchased-beats-dropdown-btn"
+                    onClick={() => setShowBeatDropdown(!showBeatDropdown)}
+                  >
+                    {selectedBeat ? selectedBeat.title : 'Выберите бит'}
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M6 9l6 6 6-6" />
+                    </svg>
+                  </button>
+                  {showBeatDropdown && (
+                    <div className="purchased-beats-dropdown-menu">
+                      <button
+                        type="button"
+                        className={`purchased-beats-dropdown-item ${!selectedBeatId ? 'selected' : ''}`}
+                        onClick={() => {
+                          setSelectedBeatId(null);
+                          setShowBeatDropdown(false);
+                        }}
+                      >
+                        Не использовать купленный бит
+                      </button>
+                      {purchasedBeats.map((beat) => (
+                        <button
+                          key={beat.id}
+                          type="button"
+                          className={`purchased-beats-dropdown-item ${selectedBeatId === beat.id ? 'selected' : ''}`}
+                          onClick={() => {
+                            setSelectedBeatId(beat.id);
+                            setShowBeatDropdown(false);
+                          }}
+                        >
+                          <div className="purchased-beats-dropdown-cover">
+                            {beat.cover_url ? (
+                              <img src={beat.cover_url} alt={beat.title} />
+                            ) : (
+                              <div className="purchased-beats-dropdown-placeholder">—</div>
+                            )}
+                          </div>
+                          <div className="purchased-beats-dropdown-info">
+                            <div className="purchased-beats-dropdown-title">{beat.title}</div>
+                            <div className="purchased-beats-dropdown-meta">{beat.genre} • BPM {beat.bpm}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="music-styles-container">
               <h3 className="styles-title">Выберите стиль музыки</h3>
@@ -720,7 +776,7 @@ function RecordingPage({ onNavigate }) {
                     <div className="style-icon">{style.icon}</div>
                     <div className="style-name">{style.name}</div>
                     {selectedStyle === style.id && (
-                      <div className="style-check">✓</div>
+                      <div className="style-check">OK</div>
                     )}
                   </div>
                 ))}
@@ -730,6 +786,7 @@ function RecordingPage({ onNavigate }) {
         </div>
       )}
 
+      {/* Profile modal - остальной код без изменений */}
       {profileUserId && (
         <div
           className="profile-modal-overlay"
@@ -748,7 +805,7 @@ function RecordingPage({ onNavigate }) {
               onClick={closeProfile}
               aria-label="Закрыть"
             >
-              ✕
+              ×
             </button>
 
             {profileLoading ? (
@@ -777,26 +834,23 @@ function RecordingPage({ onNavigate }) {
                     {profileRecordings.length === 0 ? (
                       <div className="profile-empty">Нет записей</div>
                     ) : (
-                      <div className="profile-list">
+                      <div className="profile-recordings">
                         {profileRecordings.map((recording) => (
-                          <div key={recording.id} className="profile-card">
-                            <div className="profile-card-title">
-                              {recordingTypeNames[recording.recording_type] || recording.recording_type}
-                            </div>
-                            <div className="profile-card-meta">
-                              <span className="profile-chip">
+                          <div key={recording.id} className="profile-recording-item">
+                            <div className="recording-info">
+                              <div className="recording-type">
+                                {recordingTypeNames[recording.recording_type] || recording.recording_type}
+                              </div>
+                              <div className="recording-style">
                                 {musicStyleNames[recording.music_style] || recording.music_style}
-                              </span>
-                              <span className="profile-chip">
-                                {statusNames[recording.status] || recording.status}
-                              </span>
-                              {recording.price && (
-                                <span className="profile-chip">
-                                  {Number(recording.price).toLocaleString('ru-RU')} ₽
-                                </span>
-                              )}
-                              <span className="profile-date">
+                              </div>
+                              <div className="recording-date">
                                 {new Date(recording.created_at).toLocaleDateString('ru-RU')}
+                              </div>
+                            </div>
+                            <div className="recording-status">
+                              <span className={`status-badge status-${recording.status}`}>
+                                {statusNames[recording.status] || recording.status}
                               </span>
                             </div>
                           </div>
@@ -806,34 +860,30 @@ function RecordingPage({ onNavigate }) {
                   </div>
 
                   <div className="profile-section">
-                    <h4>Купленные биты</h4>
+                    <h4>Покупки</h4>
                     {profilePurchases.length === 0 ? (
                       <div className="profile-empty">Нет покупок</div>
                     ) : (
-                      <div className="profile-list">
+                      <div className="profile-purchases">
                         {profilePurchases.map((purchase) => (
-                          <div key={purchase.purchase_id} className="profile-card purchase-card">
+                          <div key={purchase.id} className="profile-purchase-item">
                             <div className="purchase-cover">
-                              {resolveCoverUrl(purchase.cover_path) ? (
+                              {purchase.cover_url ? (
                                 <img
                                   src={resolveCoverUrl(purchase.cover_path)}
                                   alt={purchase.title}
                                 />
                               ) : (
-                                <div className="purchase-cover-placeholder">🎵</div>
+                                <div className="purchase-cover-placeholder">—</div>
                               )}
                             </div>
                             <div className="purchase-info">
-                              <div className="profile-card-title">{purchase.title}</div>
-                              <div className="profile-card-meta">
-                                <span className="profile-chip">{purchase.genre}</span>
-                                <span className="profile-chip">{purchase.bpm} BPM</span>
-                                <span className="profile-chip">
-                                  {Number(purchase.price).toLocaleString('ru-RU')} ₽
-                                </span>
-                                <span className="profile-date">
-                                  {new Date(purchase.paid_at || purchase.created_at).toLocaleDateString('ru-RU')}
-                                </span>
+                              <div className="purchase-title">{purchase.title}</div>
+                              <div className="purchase-meta">
+                                {purchase.genre} • BPM {purchase.bpm}
+                              </div>
+                              <div className="purchase-date">
+                                Куплено {new Date(purchase.purchased_at).toLocaleDateString('ru-RU')}
                               </div>
                             </div>
                           </div>
@@ -843,9 +893,7 @@ function RecordingPage({ onNavigate }) {
                   </div>
                 </div>
               </>
-            ) : (
-              <div className="profile-empty">Профиль не найден</div>
-            )}
+            ) : null}
           </div>
         </div>
       )}

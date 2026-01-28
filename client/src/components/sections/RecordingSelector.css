@@ -1,43 +1,51 @@
+/* ASOS-Style Recording Selector */
 .recording-selector-section {
-  max-width: 1200px;
-  margin: 3rem auto;
-  padding: 0 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .recording-selector-header {
   text-align: center;
   margin-bottom: 3rem;
+  max-width: 600px;
 }
 
 .recording-selector-header h2 {
-  font-size: 2.5rem;
-  color: #fff;
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  color: var(--text);
   margin-bottom: 1rem;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--text);
+  letter-spacing: -0.02em;
+  font-weight: 900;
+  font-style: italic;
 }
 
 .recording-subtitle {
-  color: #aaa;
-  font-size: 1.1rem;
+  color: var(--muted);
+  font-size: 0.875rem;
   margin: 0;
+  line-height: 1.6;
 }
 
-/* Табы */
+/* Tabs */
 .recording-tabs {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
+  width: 100%;
+  max-width: 800px;
 }
 
 .recording-tab {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+  background: var(--asos-white);
   border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 2rem;
+  padding: 1.5rem 2rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -52,7 +60,7 @@
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(225, 6, 47, 0.10), transparent);
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.03), transparent);
   transition: left 0.5s ease;
 }
 
@@ -61,21 +69,19 @@
 }
 
 .recording-tab:hover {
-  border-color: rgba(225, 6, 47, 0.55);
-  transform: translateX(10px);
-  box-shadow: var(--shadow);
+  border-color: var(--asos-black);
+  transform: translateX(4px);
 }
 
 .recording-tab.active {
-  border-color: rgba(225, 6, 47, 0.75);
-  background: linear-gradient(180deg, rgba(225, 6, 47, 0.16), rgba(255, 255, 255, 0.03));
-  box-shadow: 0 0 40px rgba(225, 6, 47, 0.22);
+  border-color: var(--asos-black);
+  border-width: 2px;
+  background: var(--asos-gray);
 }
 
 .recording-tab:focus {
   outline: none;
   box-shadow: var(--ring);
-  outline-offset: 2px;
 }
 
 .tab-content {
@@ -83,67 +89,62 @@
 }
 
 .tab-title {
-  font-size: 1.5rem;
-  color: #fff;
+  font-size: 1rem;
+  color: var(--text);
   margin: 0 0 0.5rem 0;
   font-weight: 900;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
 .tab-description {
-  font-size: 1rem;
-  color: #aaa;
+  font-size: 0.875rem;
+  color: var(--muted);
   margin: 0;
   line-height: 1.5;
 }
 
 .tab-arrow {
-  font-size: 2rem;
-  color: var(--accent);
-  transition: transform 0.3s ease;
+  font-size: 1.5rem;
+  color: var(--text);
+  transition: transform 0.2s ease;
   margin-left: 1rem;
 }
 
 .recording-tab:hover .tab-arrow {
-  transform: translateX(5px);
+  transform: translateX(4px);
 }
 
-/* Попап окно */
+/* Popup */
 .recording-popup-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.9);
+  background-color: rgba(0, 0, 0, 0.8);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   padding: 2rem;
-  animation: fadeIn 0.3s ease;
+  animation: fadeIn 0.2s ease;
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .recording-popup-content {
-  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
-  border-radius: 20px;
-  width: 1600px;
-  max-width: 95vw;
-  height: 800px;
-  max-height: 95vh;
+  background: var(--asos-white);
+  width: 100%;
+  max-width: 1200px;
+  height: 90vh;
+  max-height: 800px;
   position: relative;
-  border: 2px solid #444;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
   animation: slideUp 0.3s ease;
   display: flex;
   flex-direction: column;
@@ -152,275 +153,224 @@
 
 @keyframes slideUp {
   from {
-    transform: translateY(50px) scale(0.95);
+    transform: translateY(30px);
     opacity: 0;
   }
   to {
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
     opacity: 1;
   }
 }
 
 .recording-popup-close {
   position: absolute;
-  top: 1.5rem;
-  right: 1.5rem;
-  background-color: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: #fff;
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  font-size: 1.5rem;
+  top: 1rem;
+  right: 1rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  width: 40px;
+  height: 40px;
+  font-size: 1.25rem;
   cursor: pointer;
   z-index: 10;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .recording-popup-close:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-  transform: rotate(90deg) scale(1.1);
+  background: var(--asos-black);
+  color: var(--asos-white);
+  border-color: var(--asos-black);
 }
 
 .popup-header-content {
-  padding: 3rem 3rem 2rem;
+  padding: 2rem 2rem 1.5rem;
   text-align: center;
-  border-bottom: 2px solid #444;
+  border-bottom: 1px solid var(--border);
 }
 
 .popup-title {
-  font-size: 2.5rem;
-  color: #fff;
-  margin: 0 0 1rem 0;
+  font-size: 1.5rem;
+  color: var(--text);
+  margin: 0 0 0.5rem 0;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.05em;
+  font-weight: 900;
+  font-style: italic;
 }
 
 .popup-description {
-  font-size: 1.2rem;
-  color: #aaa;
+  font-size: 0.875rem;
+  color: var(--muted);
   margin: 0;
 }
 
-/* Контейнер стилей музыки */
+/* Music styles container */
 .music-styles-container {
   flex: 1;
-  padding: 3rem;
+  padding: 2rem;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
 }
 
-.music-styles-container::-webkit-scrollbar {
-  width: 8px;
-}
-
-.music-styles-container::-webkit-scrollbar-track {
-  background: #1a1a1a;
-}
-
-.music-styles-container::-webkit-scrollbar-thumb {
-  background: var(--accent);
-  border-radius: 4px;
-}
-
 .styles-title {
-  font-size: 1.8rem;
-  color: #fff;
-  margin: 0 0 2rem 0;
+  font-size: 0.75rem;
+  color: var(--text);
+  margin: 0 0 1.5rem 0;
   text-align: center;
-  font-weight: 600;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
 }
 
-/* Сетка стилей музыки */
+/* Music styles grid */
 .music-styles-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 2rem;
+  gap: 1rem;
   flex: 1;
 }
 
+@media (max-width: 1024px) {
+  .music-styles-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .music-styles-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .music-style-card {
-  background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
-  border: 3px solid #444;
-  border-radius: 16px;
-  padding: 2.5rem;
+  background: var(--asos-white);
+  border: 1px solid var(--border);
+  padding: 2rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   position: relative;
-  min-height: 200px;
-  overflow: hidden;
-}
-
-.music-style-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, var(--style-color, var(--accent)), transparent);
-  opacity: 0;
-  transition: opacity 0.3s ease;
+  min-height: 160px;
+  text-align: center;
 }
 
 .music-style-card:hover {
-  border-color: var(--style-color, var(--accent));
-  transform: translateY(-10px) scale(1.05);
-  box-shadow: 0 15px 40px rgba(225, 6, 47, 0.20);
-}
-
-.music-style-card:hover::before {
-  opacity: 0.2;
+  border-color: var(--asos-black);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow);
 }
 
 .music-style-card.selected {
-  border-color: var(--style-color, var(--accent));
-  background: linear-gradient(135deg, rgba(225, 6, 47, 0.12), rgba(255, 255, 255, 0.03));
-  box-shadow: 0 0 30px rgba(225, 6, 47, 0.22);
-  transform: scale(1.05);
+  border-color: var(--asos-black);
+  border-width: 2px;
+  background: var(--asos-gray);
 }
 
 .music-style-card:focus {
-  outline: 3px solid var(--style-color, var(--accent));
+  outline: 2px solid var(--asos-black);
   outline-offset: 2px;
 }
 
 .style-icon {
-  font-size: 4rem;
+  font-size: 2.5rem;
   margin-bottom: 1rem;
-  position: relative;
-  z-index: 1;
-  transition: transform 0.3s ease;
+  transition: transform 0.2s ease;
 }
 
 .music-style-card:hover .style-icon {
-  transform: scale(1.2) rotate(5deg);
+  transform: scale(1.1);
 }
 
 .style-name {
-  font-size: 1.5rem;
-  color: #fff;
-  font-weight: 600;
-  text-align: center;
-  position: relative;
-  z-index: 1;
+  font-size: 0.875rem;
+  color: var(--text);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
 .style-check {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background-color: var(--style-color, var(--accent));
-  color: #fff;
-  width: 35px;
-  height: 35px;
-  border-radius: 50%;
+  top: 0.75rem;
+  right: 0.75rem;
+  background-color: var(--asos-black);
+  color: var(--asos-white);
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  font-size: 0.875rem;
   font-weight: bold;
-  animation: checkAppear 0.3s ease;
-  z-index: 2;
+  animation: checkAppear 0.2s ease;
 }
 
 @keyframes checkAppear {
   from {
-    transform: scale(0) rotate(-180deg);
+    transform: scale(0);
     opacity: 0;
   }
   to {
-    transform: scale(1) rotate(0deg);
+    transform: scale(1);
     opacity: 1;
   }
 }
 
-/* Адаптивность */
-@media (max-width: 1200px) {
-  .recording-popup-content {
-    width: 95vw;
-    height: 90vh;
-  }
-
-  .music-styles-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
-  }
-}
-
+/* Responsive */
 @media (max-width: 768px) {
   .recording-selector-section {
-    padding: 0 1rem;
-  }
-
-  .recording-selector-header h2 {
-    font-size: 2rem;
+    padding: 3rem 1rem;
   }
 
   .recording-tab {
-    padding: 1.5rem;
+    padding: 1.25rem 1.5rem;
   }
 
   .tab-title {
-    font-size: 1.2rem;
+    font-size: 0.875rem;
   }
 
   .tab-description {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
   }
 
   .recording-popup-content {
     width: 100vw;
     height: 100vh;
-    border-radius: 0;
     max-width: 100vw;
     max-height: 100vh;
   }
 
   .popup-header-content {
-    padding: 2rem 1.5rem 1.5rem;
+    padding: 1.5rem 1rem;
   }
 
   .popup-title {
-    font-size: 1.8rem;
-  }
-
-  .popup-description {
-    font-size: 1rem;
+    font-size: 1.25rem;
   }
 
   .music-styles-container {
-    padding: 1.5rem;
-  }
-
-  .styles-title {
-    font-size: 1.4rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .music-styles-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
+    padding: 1rem;
   }
 
   .music-style-card {
-    min-height: 150px;
-    padding: 2rem;
+    min-height: 120px;
+    padding: 1.5rem;
   }
 
   .style-icon {
-    font-size: 3rem;
+    font-size: 2rem;
   }
 
   .style-name {
-    font-size: 1.2rem;
+    font-size: 0.75rem;
   }
 }

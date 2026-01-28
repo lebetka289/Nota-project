@@ -1,0 +1,215 @@
+/* ============================================
+   ASOS-STYLE BUTTON SYSTEM
+   ============================================ */
+
+:root {
+  /* Button colors */
+  --btn-primary-bg: var(--accent);
+  --btn-primary-hover: var(--accent-hover);
+  --btn-secondary-bg: transparent;
+  --btn-secondary-hover: var(--asos-black);
+  --btn-outline-border: var(--asos-black);
+  
+  /* Button sizes */
+  --btn-padding-sm: 0.625rem 1.25rem;
+  --btn-padding-md: 0.875rem 2rem;
+  --btn-padding-lg: 1.125rem 3rem;
+  
+  /* ASOS Style - No rounded corners */
+  --btn-radius: 0;
+  --btn-radius-sm: 0;
+  --btn-radius-lg: 0;
+}
+
+/* Base button style */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: none;
+  border-radius: var(--btn-radius);
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  margin: 0;
+}
+
+.btn:focus {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Button sizes */
+.btn-sm {
+  padding: var(--btn-padding-sm);
+  font-size: 0.65rem;
+}
+
+.btn-md {
+  padding: var(--btn-padding-md);
+  font-size: 0.7rem;
+}
+
+.btn-lg {
+  padding: var(--btn-padding-lg);
+  font-size: 0.75rem;
+}
+
+/* Primary button (Green) */
+.btn-primary {
+  background: var(--btn-primary-bg);
+  color: var(--asos-white);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--btn-primary-hover);
+}
+
+/* Secondary button (Black) */
+.btn-secondary {
+  background: var(--asos-black);
+  color: var(--asos-white);
+  border: none;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--muted);
+}
+
+/* Outline button */
+.btn-outline {
+  background: transparent;
+  color: var(--asos-black);
+  border: 2px solid var(--btn-outline-border);
+}
+
+.btn-outline:hover:not(:disabled) {
+  background: var(--asos-black);
+  color: var(--asos-white);
+}
+
+/* Text button */
+.btn-text {
+  background: transparent;
+  color: var(--text);
+  border: none;
+  padding: 0.5rem 1rem;
+  text-decoration: underline;
+}
+
+.btn-text:hover:not(:disabled) {
+  text-decoration: none;
+  color: var(--muted);
+  background: transparent;
+}
+
+/* Sale button (Pink) */
+.btn-sale {
+  background: var(--accent-2);
+  color: var(--asos-white);
+  border: none;
+}
+
+.btn-sale:hover:not(:disabled) {
+  background: #b8103c;
+}
+
+/* Icon button */
+.btn-icon {
+  padding: 0.75rem;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Full width */
+.btn-block {
+  width: 100%;
+  display: flex;
+}
+
+/* Center button */
+.btn-center {
+  margin: 0 auto;
+  display: block;
+}
+
+/* Button group */
+.btn-group {
+  display: inline-flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-group .btn {
+  margin: 0;
+}
+
+/* Loading state */
+.btn-loading {
+  position: relative;
+  color: transparent;
+  pointer-events: none;
+}
+
+.btn-loading::after {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  top: 50%;
+  left: 50%;
+  margin-left: -9px;
+  margin-top: -9px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: var(--asos-white);
+  animation: btn-spin 0.6s linear infinite;
+}
+
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .btn {
+    font-size: 0.65rem;
+    padding: 0.75rem 1.5rem;
+  }
+  
+  .btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.6rem;
+  }
+  
+  .btn-lg {
+    padding: 1rem 2rem;
+    font-size: 0.7rem;
+  }
+  
+  .btn-group {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .btn-group .btn {
+    width: 100%;
+  }
+}

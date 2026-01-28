@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import './SupportPanel.css';
+import Alert from '../widgets/Alert';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -11,6 +12,7 @@ function SupportPanel() {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(true);
+  const [alert, setAlert] = useState(null);
 
   const selected = useMemo(
     () => conversations.find((c) => c.id === selectedId) || null,
@@ -32,6 +34,8 @@ function SupportPanel() {
     }
   };
 
+  const chatBodyRef = useRef(null);
+
   const loadMessages = async (id) => {
     if (!token || !id) return;
     const r = await fetch(`${API_URL}/chat/conversations/${id}/messages`, {
@@ -40,6 +44,13 @@ function SupportPanel() {
     if (!r.ok) return;
     const data = await r.json();
     setMessages(data);
+    
+    // Автоскролл вниз после загрузки сообщений
+    setTimeout(() => {
+      if (chatBodyRef.current) {
+        chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
+      }
+    }, 100);
   };
 
   useEffect(() => {
@@ -58,17 +69,47 @@ function SupportPanel() {
   const send = async () => {
     const value = text.trim();
     if (!value || !token || !selectedId) return;
+    
+    // Оптимистичное обновление UI
+    const tempMessage = {
+      id: `temp-${Date.now()}`,
+      sender_role: 'support',
+      body: value,
+      created_at: new Date().toISOString()
+    };
+    setMessages((prev) => [...prev, tempMessage]);
     setText('');
-    await fetch(`${API_URL}/chat/conversations/${selectedId}/messages`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ body: value })
-    });
-    await loadMessages(selectedId);
-    await loadConversations();
+    
+    // Автоскролл
+    setTimeout(() => {
+      if (chatBodyRef.current) {
+        chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
+      }
+    }, 100);
+
+    try {
+      const response = await fetch(`${API_URL}/chat/conversations/${selectedId}/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ body: value })
+      });
+      
+      if (response.ok) {
+        await loadMessages(selectedId);
+        await loadConversations();
+      } else {
+        // Удаляем временное сообщение при ошибке
+        setMessages((prev) => prev.filter((m) => m.id !== tempMessage.id));
+        setAlert({ message: 'Не удалось отправить сообщение. Попробуйте еще раз.', type: 'error' });
+      }
+    } catch (error) {
+      console.error('Ошибка отправки сообщения:', error);
+      setMessages((prev) => prev.filter((m) => m.id !== tempMessage.id));
+      setAlert({ message: 'Не удалось отправить сообщение. Проверьте подключение к интернету.', type: 'error' });
+    }
   };
 
   if (!user) {
@@ -89,6 +130,7 @@ function SupportPanel() {
 
   return (
     <div className="support-panel page">
+      {alert && <Alert message={alert.message} type={alert.type} onClose={() => setAlert(null)} />}
       <div className="sp-header">
         <h1>Панель поддержки</h1>
         <button className="sp-refresh" onClick={loadConversations}>
@@ -113,9 +155,24 @@ function SupportPanel() {
                 >
                   <div className="sp-item-top">
                     <div className="sp-item-name">{c.user_name}</div>
-                    <div className="sp-item-id">#{c.id}</div>
+                    <div className="sp-item-right">
+                      {c.unread_count > 0 && (
+                        <span className="sp-unread-badge">{c.unread_count}</span>
+                      )}
+                      <div className="sp-item-id">#{c.id}</div>
+                    </div>
                   </div>
                   <div className="sp-item-sub">{c.user_email}</div>
+                  {c.last_message_at && (
+                    <div className="sp-item-time">
+                      {new Date(c.last_message_at).toLocaleDateString('ru-RU', {
+                        day: 'numeric',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </div>
+                  )}
                 </button>
               ))}
             </div>
@@ -140,28 +197,35 @@ function SupportPanel() {
             )}
           </div>
 
-          <div className="sp-chat-body">
-            {messages.map((m) => (
-              <div
-                key={m.id}
-                className={`sp-msg ${m.sender_role === 'user' ? 'user' : 'support'}`}
-              >
-                <div className="sp-bubble">
-                  <div className="sp-bubble-top">
-                    <span className="sp-role">
-                      {m.sender_role === 'user' ? 'USER' : m.sender_role.toUpperCase()}
-                    </span>
-                    <span className="sp-time">
-                      {new Date(m.created_at).toLocaleTimeString('ru-RU', {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </span>
-                  </div>
-                  <div className="sp-text">{m.body}</div>
-                </div>
+          <div className="sp-chat-body" ref={chatBodyRef}>
+            {messages.length === 0 ? (
+              <div className="sp-empty-chat">
+                <div className="sp-empty-icon">Chat</div>
+                <div className="sp-empty-text">Начните диалог с пользователем</div>
               </div>
-            ))}
+            ) : (
+              messages.map((m) => (
+                <div
+                  key={m.id}
+                  className={`sp-msg ${m.sender_role === 'user' ? 'user' : 'support'}`}
+                >
+                  <div className="sp-bubble">
+                    <div className="sp-bubble-top">
+                      <span className="sp-role">
+                        {m.sender_role === 'user' ? 'USER' : m.sender_role.toUpperCase()}
+                      </span>
+                      <span className="sp-time">
+                        {new Date(m.created_at).toLocaleTimeString('ru-RU', {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                    </div>
+                    <div className="sp-text">{m.body}</div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
 
           <div className="sp-chat-foot">
