@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Header from './components/layout/Header'
+import MarqueeStrip from './components/sections/MarqueeStrip'
 import Slider from './components/sections/Slider'
 import CategoryGridAsos from './components/sections/CategoryGridAsos'
 import StudioInfo from './components/sections/StudioInfo'
@@ -21,6 +22,9 @@ import Auth from './components/pages/Auth'
 import Cart from './components/pages/Cart'
 import Favorites from './components/pages/Favorites'
 import AdminPanel from './components/pages/AdminPanel'
+import NewsPage from './components/pages/NewsPage'
+import ReporterPanel from './components/pages/ReporterPanel'
+import StudioBookingPage from './components/pages/StudioBookingPage'
 import { useAuth } from './context/AuthContext'
 import './App.css'
 
@@ -61,26 +65,33 @@ function App() {
       case 'recording':
         return <RecordingPage onNavigate={setCurrentPage} />
       case 'payment':
-        return <PaymentPage />
+        return <PaymentPage onNavigate={setCurrentPage} />
       case 'profile':
         return <UserProfile />
       case 'support':
         return <SupportPanel />
       case 'beatmaker':
         return <BeatmakerPanel />
+      case 'news':
+        return <NewsPage />
+      case 'reporter':
+        return <ReporterPanel />
+      case 'studio-booking':
+        return <StudioBookingPage onNavigate={handleNavigate} />
       case 'home':
       default:
         return (
           <>
+            <MarqueeStrip />
             <Slider />
             <CategoryGridAsos onNavigate={setCurrentPage} />
             <Stats />
             <RecordingSelector onNavigate={setCurrentPage} />
             <Features />
-            <PopularBeats />
+            <PopularBeats onNavigate={setCurrentPage} />
             <HomeRecording onNavigate={setCurrentPage} />
             <Testimonials />
-            <StudioInfo />
+            <StudioInfo onNavigate={handleNavigate} />
           </>
         )
     }

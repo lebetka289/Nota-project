@@ -56,6 +56,40 @@ function Cart() {
     }
   };
 
+  const handlePaySingleBeat = async (beatId) => {
+    if (!token) return setAlert({ message: 'Войдите, чтобы оплатить', type: 'warning' });
+    try {
+      setPaying(true);
+      const response = await fetch(`${API_URL}/payments/beat/pay`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ beat_id: beatId })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Ошибка создания платежа');
+      }
+
+      if (data.free || data.mock) {
+        setAlert({ message: 'Оплата проведена в тестовом режиме.', type: 'success' });
+        window.dispatchEvent(new Event('nota:cart-updated'));
+        fetchCart();
+      } else if (data.confirmation_url) {
+        window.location.href = data.confirmation_url;
+      } else {
+        setAlert({ message: 'Платеж создан, но нет ссылки на оплату', type: 'error' });
+      }
+    } catch (error) {
+      setAlert({ message: error.message || 'Ошибка оплаты', type: 'error' });
+    } finally {
+      setPaying(false);
+    }
+  };
+
   const handleClear = async () => {
     if (!confirm('Вы уверены, что хотите очистить корзину?')) {
       return;
@@ -156,9 +190,15 @@ function Cart() {
                     <button className="remove-button" onClick={() => setActiveBeat(item)} style={{ marginRight: 10 }}>
                       Плеер
                     </button>
-                    <span style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 700, fontSize: 12 }}>
-                      Скачивание будет доступно после оплаты
-                    </span>
+                    {!item.purchased && Number(item.price) > 0 && (
+                      <button
+                        className="pay-single-beat-btn"
+                        onClick={() => handlePaySingleBeat(item.beat_id)}
+                        disabled={paying}
+                      >
+                        {paying ? 'Обработка...' : 'Оплатить'}
+                      </button>
+                    )}
                   </div>
                 </div>
                 <button

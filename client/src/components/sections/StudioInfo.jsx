@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import './StudioInfo.css';
 
-function StudioInfo() {
+function StudioInfo({ onNavigate }) {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 

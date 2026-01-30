@@ -1,16 +1,28 @@
 const { query, queryOne } = require('../../config/database');
 
 // Получить отзывы
-exports.getReviews = async (_req, res) => {
+exports.getReviews = async (req, res) => {
   try {
-    const reviews = await query(
+    const rows = await query(
       `SELECT r.id, r.rating, r.comment, r.created_at,
-              u.id as user_id, u.name as user_name, u.role as user_role
+              u.id as user_id, u.name as user_name, u.role as user_role, u.avatar_path as user_avatar_path
        FROM reviews r
        INNER JOIN users u ON u.id = r.user_id
        ORDER BY r.created_at DESC
        LIMIT 50`
     );
+    const host = req.get('host');
+    const protocol = req.protocol || 'https';
+    const reviews = rows.map((r) => ({
+      id: r.id,
+      rating: r.rating,
+      comment: r.comment,
+      created_at: r.created_at,
+      user_id: r.user_id,
+      user_name: r.user_name,
+      user_role: r.user_role,
+      avatar_url: r.user_avatar_path ? `${protocol}://${host}/uploads/${r.user_avatar_path}` : null
+    }));
     res.json(reviews);
   } catch (error) {
     console.error('Ошибка получения отзывов:', error);
@@ -35,14 +47,26 @@ exports.createReview = async (req, res) => {
       "INSERT INTO reviews (user_id, rating, comment) VALUES (?, ?, ?)",
       [req.user.id, rating, comment]
     );
-    const review = await queryOne(
+    const row = await queryOne(
       `SELECT r.id, r.rating, r.comment, r.created_at,
-              u.id as user_id, u.name as user_name, u.role as user_role
+              u.id as user_id, u.name as user_name, u.role as user_role, u.avatar_path as user_avatar_path
        FROM reviews r
        INNER JOIN users u ON u.id = r.user_id
        WHERE r.id = ?`,
       [result.insertId]
     );
+    const host = req.get('host');
+    const protocol = req.protocol || 'https';
+    const review = {
+      id: row.id,
+      rating: row.rating,
+      comment: row.comment,
+      created_at: row.created_at,
+      user_id: row.user_id,
+      user_name: row.user_name,
+      user_role: row.user_role,
+      avatar_url: row.user_avatar_path ? `${protocol}://${host}/uploads/${row.user_avatar_path}` : null
+    };
     res.json(review);
   } catch (error) {
     console.error('Ошибка создания отзыва:', error);

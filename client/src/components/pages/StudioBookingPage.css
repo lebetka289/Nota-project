@@ -1,0 +1,269 @@
+/* ASOS-Style Studio Booking Page */
+.studio-booking-page {
+  min-height: 60vh;
+  background: var(--asos-light-gray, #f8f8f8);
+  padding: 2rem 0 3rem;
+}
+
+.studio-booking-container {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 var(--container-padding, 1.5rem);
+  width: 100%;
+}
+
+.studio-booking-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.studio-booking-header h1 {
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  color: var(--text);
+  margin: 0 0 0.75rem 0;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  font-weight: 900;
+  font-style: italic;
+}
+
+.studio-booking-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-muted, #666);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.studio-booking-form {
+  background: var(--asos-white);
+  border: 1px solid var(--border);
+  padding: 2rem 2rem 2.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+/* Sections */
+.booking-section {
+  margin-bottom: 2rem;
+}
+
+.booking-section:last-of-type {
+  margin-bottom: 0;
+}
+
+.booking-section-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text);
+  margin: 0 0 1.25rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.booking-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.booking-fields:last-child {
+  margin-bottom: 0;
+}
+
+.booking-fields-inline {
+  flex-direction: row;
+  gap: 1rem;
+}
+
+.booking-fields-inline .form-group {
+  flex: 1;
+}
+
+.booking-phone-row {
+  flex-direction: row;
+  gap: 1rem;
+}
+
+.booking-phone-row .form-group:first-child {
+  flex: 1;
+}
+
+.booking-intl {
+  max-width: 100px;
+}
+
+/* Form groups */
+.booking-section .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.booking-section .form-group label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text);
+}
+
+.booking-section .form-group input,
+.booking-section .form-group select,
+.booking-section .form-group textarea {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background: var(--asos-white);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 0.875rem;
+  font-family: inherit;
+  transition: border-color 0.2s ease;
+}
+
+.booking-section .form-group input:focus,
+.booking-section .form-group select:focus,
+.booking-section .form-group textarea:focus {
+  outline: none;
+  border-color: var(--asos-black);
+}
+
+.booking-section .form-group textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.form-group-narrow {
+  max-width: 140px;
+}
+
+.field-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted, #666);
+  margin-top: 0.25rem;
+}
+
+/* Radio group */
+.booking-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.booking-radio-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.booking-radio-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text);
+}
+
+.booking-radio-hint {
+  margin-bottom: 0.25rem;
+}
+
+.booking-radio-options {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.booking-radio-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.booking-radio-opt input {
+  width: auto;
+  margin: 0;
+  accent-color: var(--asos-black);
+}
+
+/* Submit */
+.booking-submit-wrap {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.booking-submit-btn {
+  width: 100%;
+  padding: 1rem 1.5rem;
+  background: var(--asos-black);
+  color: var(--asos-white);
+  border: none;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.booking-submit-btn:hover:not(:disabled) {
+  background: var(--asos-mid-gray, #3d3d3d);
+}
+
+.booking-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.studio-booking-back {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.booking-back-link {
+  background: none;
+  border: none;
+  font-size: 0.8rem;
+  color: var(--text-muted, #666);
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.booking-back-link:hover {
+  color: var(--text);
+}
+
+/* Alert spacing */
+.studio-booking-page .alert-wrap {
+  margin-bottom: 1.5rem;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .studio-booking-form {
+    padding: 1.5rem 1.25rem;
+  }
+
+  .booking-fields-inline {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .booking-phone-row {
+    flex-direction: column;
+  }
+
+  .booking-intl {
+    max-width: none;
+  }
+
+  .form-group-narrow {
+    max-width: none;
+  }
+}

@@ -5,8 +5,9 @@ import './PaymentPage.css';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
-function PaymentPage({ recordingType, musicStyle }) {
+function PaymentPage({ recordingType, musicStyle, onNavigate }) {
   const { user, token } = useAuth();
+  const summaryOnly = typeof window !== 'undefined' && localStorage.getItem('paymentPageSummaryOnly') === '1';
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [mockPaid, setMockPaid] = useState(false);
@@ -23,6 +24,7 @@ function PaymentPage({ recordingType, musicStyle }) {
   const finalType = recordingType || recordingData.recordingType || 'unknown';
   const finalStyle = musicStyle || recordingData.musicStyle || 'unknown';
   const purchasedBeatIdFromStorage = recordingData.purchasedBeatId || null;
+  const studioBookingIdFromStorage = recordingData.studioBookingId || null;
 
   const musicStylesNames = {
     'hyperpop': 'Хайпер поп',
@@ -160,7 +162,8 @@ function PaymentPage({ recordingType, musicStyle }) {
         body: JSON.stringify({
           recording_type: finalType,
           music_style: finalStyle,
-          purchased_beat_id: finalType === 'with-music' ? (selectedBeatId || null) : null
+          purchased_beat_id: finalType === 'with-music' ? (selectedBeatId || null) : null,
+          studio_booking_id: finalType === 'with-music' ? studioBookingIdFromStorage || null : null
         })
       });
 
@@ -352,16 +355,52 @@ function PaymentPage({ recordingType, musicStyle }) {
         </div>
 
         <div className="payment-actions">
-          <button
-            className="asos-payment-button"
-            onClick={handlePayment}
-            disabled={loading}
-          >
-            {loading ? 'Обработка...' : 'Перейти к оплате'}
-          </button>
-          <p className="payment-note">
-            После оплаты с вами свяжется менеджер для согласования времени записи
-          </p>
+          {summaryOnly ? (
+            <>
+              <p className="payment-summary-hint">
+                Оплату можно оформить в личном кабинете — там отображаются скидки и кнопка «Оплатить».
+              </p>
+              <div className="payment-summary-links">
+                {onNavigate && (
+                  <>
+                    <button
+                      type="button"
+                      className="payment-summary-link payment-summary-link-home"
+                      onClick={() => {
+                        localStorage.removeItem('paymentPageSummaryOnly');
+                        onNavigate('home');
+                      }}
+                    >
+                      На главную
+                    </button>
+                    <button
+                      type="button"
+                      className="payment-summary-link payment-summary-link-profile"
+                      onClick={() => {
+                        localStorage.removeItem('paymentPageSummaryOnly');
+                        onNavigate('profile');
+                      }}
+                    >
+                      В личный кабинет
+                    </button>
+                  </>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <button
+                className="asos-payment-button"
+                onClick={handlePayment}
+                disabled={loading}
+              >
+                {loading ? 'Обработка...' : 'Перейти к оплате'}
+              </button>
+              <p className="payment-note">
+                После оплаты с вами свяжется менеджер для согласования времени записи
+              </p>
+            </>
+          )}
         </div>
 
         <div className="info-section">

@@ -33,6 +33,7 @@ async function initDatabase() {
   await ensureColumn('users', 'verification_code', "VARCHAR(6) NULL");
   await ensureColumn('users', 'verification_code_expires', "TIMESTAMP NULL");
   await ensureColumn('users', 'blocked', "TINYINT(1) DEFAULT 0");
+  await ensureColumn('users', 'avatar_path', "VARCHAR(255) NULL");
 
   // Таблица товаров
   await query(`CREATE TABLE IF NOT EXISTS products (
@@ -159,6 +160,7 @@ async function initDatabase() {
   await ensureColumn('user_recordings', 'track_file_path', "VARCHAR(255) NULL");
   await ensureColumn('user_recordings', 'purchased_beat_id', "INT NULL");
   await ensureColumn('user_recordings', 'discount_percent', "DECIMAL(5, 2) DEFAULT 0");
+  await ensureColumn('user_recordings', 'studio_booking_id', 'INT NULL');
 
   // Чат: диалоги
   await query(`CREATE TABLE IF NOT EXISTS chat_conversations (
@@ -185,6 +187,33 @@ async function initDatabase() {
     FOREIGN KEY (conversation_id) REFERENCES chat_conversations(id) ON DELETE CASCADE,
     FOREIGN KEY (sender_user_id) REFERENCES users(id) ON DELETE SET NULL
   )`);
+
+  // Заявки на запись в студию (форма записи)
+  await query(`CREATE TABLE IF NOT EXISTS studio_bookings (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    first_name VARCHAR(255) NOT NULL,
+    last_name VARCHAR(255) NOT NULL,
+    phone VARCHAR(50) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    intl_prefix VARCHAR(20) NULL,
+    website VARCHAR(500) NULL,
+    music_genre VARCHAR(100) NOT NULL,
+    songs_count INT NOT NULL,
+    music_details TEXT NULL,
+    date_start DATE NOT NULL,
+    date_end DATE NOT NULL,
+    has_musicians TINYINT(1) NOT NULL,
+    need_session_musicians TINYINT(1) NOT NULL,
+    need_producer TINYINT(1) NOT NULL,
+    need_engineer TINYINT(1) NOT NULL,
+    additional_info TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )`);
+  await ensureColumn('studio_bookings', 'status', "VARCHAR(50) DEFAULT 'new'");
+  await ensureColumn('studio_bookings', 'source', "VARCHAR(50) DEFAULT 'form'");
+  await ensureColumn('studio_bookings', 'beat_id', 'INT NULL');
+  await ensureColumn('studio_bookings', 'user_id', 'INT NULL');
+  await ensureColumn('studio_bookings', 'recording_id', 'INT NULL');
 
   // Биты (магазин)
   await query(`CREATE TABLE IF NOT EXISTS beats (
@@ -259,6 +288,21 @@ async function initDatabase() {
     comment TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  )`);
+
+  // Новости
+  await query(`CREATE TABLE IF NOT EXISTS news (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    image_url VARCHAR(500) NULL,
+    author_id INT NOT NULL,
+    published TINYINT(1) DEFAULT 0,
+    published_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE,
+    KEY idx_published (published, published_at)
   )`);
 }
 

@@ -5,7 +5,7 @@ import './Header.css';
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 function Header({ onNavigate }) {
-  const { user, token, logout, isAdmin, isSupport, isBeatmaker } = useAuth();
+  const { user, token, logout, isAdmin, isSupport, isBeatmaker, isReporter } = useAuth();
   const [showMenu, setShowMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -157,6 +157,13 @@ function Header({ onNavigate }) {
             </button>
             <button
               type="button"
+              onClick={() => handleNav('news')}
+              className="asos-nav-link"
+            >
+              Новости
+            </button>
+            <button
+              type="button"
               onClick={() => handleNav('recording')}
               className="asos-nav-link"
             >
@@ -224,18 +231,26 @@ function Header({ onNavigate }) {
               <div className="asos-profile-wrap" ref={menuRef}>
                 <button
                   type="button"
-                  className="asos-icon-btn"
+                  className="asos-icon-btn asos-profile-btn"
                   onClick={() => setShowMenu(!showMenu)}
                   aria-label="Аккаунт"
                 >
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
+                  {user.avatar_url ? (
+                    <img src={user.avatar_url} alt="" className="asos-header-avatar" />
+                  ) : (
+                    <span className="asos-header-avatar-letter">{(user.name || user.email || '?').trim().charAt(0).toUpperCase()}</span>
+                  )}
                 </button>
                 {showMenu && (
                   <div className="asos-dropdown">
                     <div className="asos-dropdown-info">
+                      <div className="asos-dropdown-avatar">
+                        {user.avatar_url ? (
+                          <img src={user.avatar_url} alt="" />
+                        ) : (
+                          <span>{(user.name || user.email || '?').trim().charAt(0).toUpperCase()}</span>
+                        )}
+                      </div>
                       <div className="asos-dropdown-email">{user.email}</div>
                       <div className="asos-dropdown-role">{user.role}</div>
                     </div>
@@ -258,6 +273,11 @@ function Header({ onNavigate }) {
                           Админ
                         </button>
                       )}
+                      {isReporter && (
+                        <button type="button" className="asos-dropdown-item" onClick={() => handleNav('reporter')}>
+                          Репортер
+                        </button>
+                      )}
                     </div>
                     <button type="button" className="asos-dropdown-logout" onClick={() => { logout(); setShowMenu(false); }}>
                       Выйти
@@ -268,14 +288,11 @@ function Header({ onNavigate }) {
             ) : (
               <button
                 type="button"
-                className="asos-icon-btn"
+                className="asos-icon-btn asos-profile-btn"
                 onClick={() => handleNav('auth')}
                 aria-label="Войти"
               >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
+                <span className="asos-header-avatar-letter">?</span>
               </button>
             )}
             <button
@@ -312,6 +329,7 @@ function Header({ onNavigate }) {
         <button type="button" className="asos-mobile-close" onClick={() => setMobileOpen(false)}>×</button>
         <button type="button" className="asos-mobile-link" onClick={() => handleNav('home')}>Главная</button>
         <button type="button" className="asos-mobile-link" onClick={() => handleNav('shop')}>Биты</button>
+        <button type="button" className="asos-mobile-link" onClick={() => handleNav('news')}>Новости</button>
         <button type="button" className="asos-mobile-link" onClick={() => handleNav('recording')}>Запись</button>
         <button type="button" className="asos-mobile-link" onClick={() => handleNav('profile')}>Кабинет</button>
       </div>

@@ -53,7 +53,7 @@ exports.getUserDiscountInfo = async (req, res) => {
 
 // Создать платеж для записи
 exports.createRecordingPayment = async (req, res) => {
-  const { recording_id, recording_type, music_style, purchased_beat_id } = req.body;
+  const { recording_id, recording_type, music_style, purchased_beat_id, studio_booking_id } = req.body;
 
   try {
     let recording = null;
@@ -88,8 +88,8 @@ exports.createRecordingPayment = async (req, res) => {
       const finalPrice = basePrice - discountAmount;
 
       const r = await query(
-        "INSERT INTO user_recordings (user_id, recording_type, music_style, price, status, purchased_beat_id, discount_percent) VALUES (?, ?, ?, ?, 'pending', ?, ?)",
-        [req.user.id, recording_type, music_style, finalPrice, purchased_beat_id || null, discountPercent]
+        "INSERT INTO user_recordings (user_id, recording_type, music_style, price, status, purchased_beat_id, discount_percent, studio_booking_id) VALUES (?, ?, ?, ?, 'pending', ?, ?, ?)",
+        [req.user.id, recording_type, music_style, finalPrice, purchased_beat_id || null, discountPercent, studio_booking_id || null]
       );
       recording = await queryOne(
         "SELECT * FROM user_recordings WHERE id = ? AND user_id = ?",
@@ -106,6 +106,13 @@ exports.createRecordingPayment = async (req, res) => {
         "UPDATE user_recordings SET payment_provider = ?, payment_id = ?, payment_status = ?, status = 'paid', paid_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?",
         ['mock', mockPaymentId, 'succeeded', recording.id, req.user.id]
       );
+      const bookingId = recording.studio_booking_id ? Number(recording.studio_booking_id) : null;
+      if (bookingId) {
+        await query(
+          'UPDATE studio_bookings SET user_id = ?, recording_id = ? WHERE id = ?',
+          [req.user.id, recording.id, bookingId]
+        );
+      }
       return res.json({
         confirmation_url: null,
         payment_id: mockPaymentId,
@@ -215,6 +222,78 @@ exports.createCartPayment = async (req, res) => {
   }
 };
 
+// Оплата отдельного бита
+exports.paySingleBeat = async (req, res) => {
+  const { beat_id } = req.body;
+  if (!beat_id) {
+    return res.status(400).json({ error: 'beat_id обязателен' });
+  }
+
+  try {
+    // Проверяем, не куплен ли уже бит
+    const existing = await queryOne(
+      "SELECT id FROM beat_purchases WHERE user_id = ? AND beat_id = ? AND status = 'paid'",
+      [req.user.id, beat_id]
+    );
+    if (existing) {
+      return res.status(400).json({ error: 'Бит уже куплен' });
+    }
+
+    // Получаем информацию о бите
+    const beat = await queryOne("SELECT id, price, title FROM beats WHERE id = ?", [beat_id]);
+    if (!beat) {
+      return res.status(404).json({ error: 'Бит не найден' });
+    }
+
+    const price = Number(beat.price || 0);
+    const returnUrl = process.env.PAYMENT_RETURN_URL || 'http://localhost:5173/';
+
+    if (price <= 0) {
+      await query(
+        "INSERT IGNORE INTO beat_purchases (user_id, beat_id, payment_provider, payment_id, payment_status, status, paid_at) VALUES (?, ?, 'free', NULL, 'succeeded', 'paid', CURRENT_TIMESTAMP)",
+        [req.user.id, beat_id]
+      );
+      return res.json({ ok: true, free: true });
+    }
+
+    if (process.env.PAYMENT_SKIP_CONFIRMATION === 'true') {
+      const mockPaymentId = `mock_${Date.now()}_${beat_id}`;
+      await query(
+        "INSERT INTO beat_purchases (user_id, beat_id, payment_provider, payment_id, payment_status, status, paid_at) VALUES (?, ?, 'mock', ?, 'succeeded', 'paid', CURRENT_TIMESTAMP) ON DUPLICATE KEY UPDATE payment_provider='mock', payment_id=VALUES(payment_id), payment_status='succeeded', status='paid', paid_at=CURRENT_TIMESTAMP",
+        [req.user.id, beat_id, mockPaymentId]
+      );
+      return res.json({ ok: true, mock: true });
+    }
+
+    const payment = await createRedirectPayment({
+      amountRub: price,
+      description: `Nota Studio: покупка бита "${beat.title}"`,
+      returnUrl,
+      metadata: {
+        type: 'single_beat',
+        user_id: String(req.user.id),
+        beat_id: String(beat_id)
+      }
+    });
+
+    await query(
+      `INSERT INTO beat_purchases (user_id, beat_id, payment_provider, payment_id, payment_status, status)
+       VALUES (?, ?, 'yookassa', ?, ?, 'pending')
+       ON DUPLICATE KEY UPDATE payment_provider='yookassa', payment_id=VALUES(payment_id), payment_status=VALUES(payment_status), status='pending'`,
+      [req.user.id, beat_id, payment.id, payment.status]
+    );
+
+    res.json({
+      confirmation_url: payment.confirmation?.confirmation_url,
+      payment_id: payment.id,
+      total_rub: price
+    });
+  } catch (e) {
+    console.error('Ошибка оплаты бита:', e);
+    res.status(500).json({ error: e.message || 'Ошибка оплаты бита' });
+  }
+};
+
 // Webhook YooKassa
 exports.yookassaWebhook = async (req, res) => {
   try {
@@ -242,6 +321,16 @@ exports.yookassaWebhook = async (req, res) => {
       const metaType = payment?.metadata?.type;
       if (metaUserId && metaType === 'beat_cart') {
         await query("DELETE FROM beat_cart WHERE user_id = ?", [metaUserId]);
+      }
+      const recording = await queryOne(
+        "SELECT id, user_id, studio_booking_id FROM user_recordings WHERE payment_id = ?",
+        [paymentId]
+      );
+      if (recording && recording.studio_booking_id) {
+        await query(
+          'UPDATE studio_bookings SET user_id = ?, recording_id = ? WHERE id = ?',
+          [recording.user_id, recording.id, recording.studio_booking_id]
+        );
       }
     }
 

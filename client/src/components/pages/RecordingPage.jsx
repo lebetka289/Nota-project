@@ -32,10 +32,49 @@ function RecordingPage({ onNavigate }) {
   const [showBeatDropdown, setShowBeatDropdown] = useState(false);
   const beatDropdownRef = useRef(null);
 
+  // Форма уточнения для «Запись с покупкой музыки» (передаётся битмейкеру)
+  const [wmFirstName, setWmFirstName] = useState('');
+  const [wmLastName, setWmLastName] = useState('');
+  const [wmPhone, setWmPhone] = useState('');
+  const [wmIntlPrefix, setWmIntlPrefix] = useState('+7');
+  const [wmMusicGenre, setWmMusicGenre] = useState('');
+  const [wmSongsCount, setWmSongsCount] = useState('');
+  const [wmMusicDetails, setWmMusicDetails] = useState('');
+  const [wmDateStart, setWmDateStart] = useState('');
+  const [wmDateEnd, setWmDateEnd] = useState('');
+  const [wmHasMusicians, setWmHasMusicians] = useState('');
+  const [wmNeedSessionMusicians, setWmNeedSessionMusicians] = useState('');
+  const [wmNeedProducer, setWmNeedProducer] = useState('');
+  const [wmNeedEngineer, setWmNeedEngineer] = useState('');
+  const [wmAdditionalInfo, setWmAdditionalInfo] = useState('');
+  const [wmFormSubmitting, setWmFormSubmitting] = useState(false);
+  const [wmFormSent, setWmFormSent] = useState(false);
+
   const recordingTypes = [
     { id: 'with-music', title: 'Запись с покупкой музыки', description: 'Выберите бит и запишите на него свой вокал', icon: 'MIC' },
     { id: 'home-recording', title: 'Запись на дому', description: 'Профессиональная сводка трека по жанрам', icon: 'HOME' }
   ];
+
+  const formatPhone = (v) => {
+    const digits = v.replace(/\D/g, '');
+    if (digits.length === 0) return '';
+    if (digits[0] === '8' || digits[0] === '7') {
+      const d = digits.slice(0, 11);
+      if (d.length <= 1) return '+7';
+      if (d.length <= 4) return `+7 (${d.slice(1)}`;
+      if (d.length <= 7) return `+7 (${d.slice(1, 4)}) ${d.slice(4)}`;
+      return `+7 (${d.slice(1, 4)}) ${d.slice(4, 7)}-${d.slice(7, 9)}-${d.slice(9, 11)}`;
+    }
+    const d = digits.slice(0, 10);
+    if (d.length <= 3) return d ? `+7 (${d}` : '+7';
+    if (d.length <= 6) return `+7 (${d.slice(0, 3)}) ${d.slice(3)}`;
+    return `+7 (${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6, 8)}-${d.slice(8, 10)}`;
+  };
+
+  const handleWmPhoneChange = (e) => {
+    const formatted = formatPhone(e.target.value);
+    setWmPhone(formatted);
+  };
 
   const musicStyles = [
     { id: 'hyperpop', name: 'Хайпер поп', icon: 'HP', color: '#FF6B9D' },
@@ -275,45 +314,47 @@ function RecordingPage({ onNavigate }) {
     setIsPopupOpen(false);
     setSelectedStyle(null);
     setSelectedBeatId(null);
+    setWmFormSent(false);
+    setWmFirstName('');
+    setWmLastName('');
+    setWmPhone('');
+    setWmIntlPrefix('+7');
+    setWmMusicGenre('');
+    setWmSongsCount('');
+    setWmMusicDetails('');
+    setWmDateStart('');
+    setWmDateEnd('');
+    setWmHasMusicians('');
+    setWmNeedSessionMusicians('');
+    setWmNeedProducer('');
+    setWmNeedEngineer('');
+    setWmAdditionalInfo('');
     document.body.style.overflow = 'auto';
   };
 
-  const handleStyleSelect = async (styleId) => {
-    setSelectedStyle(styleId);
-    
+  const proceedToPayment = async () => {
+    if (!selectedStyle) return;
     if (!user) {
       setAlert({ message: 'Войдите в аккаунт, чтобы продолжить', type: 'warning' });
-      if (onNavigate) {
-        onNavigate('auth');
-      }
+      if (onNavigate) onNavigate('auth');
       closePopup();
       return;
     }
-
+    const styleId = selectedStyle;
     const style = musicStyles.find(s => s.id === styleId);
-    
-    // Сохраняем данные в localStorage
     const recordingData = {
       recordingType: selectedType,
       musicStyle: styleId,
       styleName: style.name
     };
-
-    // Для with-music добавляем выбранный бит
     if (selectedType === 'with-music' && selectedBeatId) {
       recordingData.purchasedBeatId = selectedBeatId;
     }
-
     localStorage.setItem('recordingData', JSON.stringify(recordingData));
-
-    // Сохраняем в БД
     try {
       await fetch(`${API_URL}/recordings`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({
           recording_type: selectedType,
           music_style: styleId,
@@ -323,14 +364,90 @@ function RecordingPage({ onNavigate }) {
     } catch (error) {
       console.error('Ошибка сохранения:', error);
     }
-
-    // Переход на страницу оплаты
     setTimeout(() => {
-      if (onNavigate) {
-        onNavigate('payment');
-      }
+      if (onNavigate) onNavigate('payment');
       closePopup();
-    }, 500);
+    }, 300);
+  };
+
+  const handleStyleSelect = (styleId) => {
+    setSelectedStyle(styleId);
+    if (selectedType === 'with-music') {
+      setWmMusicGenre(styleId);
+      return;
+    }
+    if (!user) {
+      setAlert({ message: 'Войдите в аккаунт, чтобы продолжить', type: 'warning' });
+      if (onNavigate) onNavigate('auth');
+      closePopup();
+      return;
+    }
+    proceedToPayment();
+  };
+
+  const handleWithMusicFormSubmit = async (e) => {
+    e.preventDefault();
+    if (!wmFirstName.trim()) { setAlert({ message: 'Укажите имя', type: 'error' }); return; }
+    if (!wmLastName.trim()) { setAlert({ message: 'Укажите фамилию', type: 'error' }); return; }
+    if (!wmPhone.trim()) { setAlert({ message: 'Укажите телефон', type: 'error' }); return; }
+    if (!wmMusicGenre && !selectedStyle) { setAlert({ message: 'Выберите стиль музыки (кнопками выше)', type: 'error' }); return; }
+    const count = Number(wmSongsCount);
+    if (!Number.isInteger(count) || count < 1) { setAlert({ message: 'Укажите количество песен (не менее 1)', type: 'error' }); return; }
+    if (!wmDateStart) { setAlert({ message: 'Укажите дату начала', type: 'error' }); return; }
+    if (!wmDateEnd) { setAlert({ message: 'Укажите дату окончания', type: 'error' }); return; }
+    if (new Date(wmDateEnd) < new Date(wmDateStart)) { setAlert({ message: 'Дата окончания не может быть раньше даты начала', type: 'error' }); return; }
+    if (wmHasMusicians === '') { setAlert({ message: 'Ответьте: есть ли музыканты или группа?', type: 'error' }); return; }
+    if (wmNeedSessionMusicians === '') { setAlert({ message: 'Ответьте: нужны ли сессионные музыканты?', type: 'error' }); return; }
+    if (wmNeedProducer === '') { setAlert({ message: 'Ответьте: нужен ли продюсер?', type: 'error' }); return; }
+    if (wmNeedEngineer === '') { setAlert({ message: 'Ответьте: нужен ли звукорежиссёр?', type: 'error' }); return; }
+
+    setWmFormSubmitting(true);
+    setAlert(null);
+    try {
+      const r = await fetch(`${API_URL}/studio-booking/with-music`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: wmFirstName.trim(),
+          lastName: wmLastName.trim(),
+          phone: wmPhone.trim(),
+          intlPrefix: wmIntlPrefix.trim() || undefined,
+          musicGenre: wmMusicGenre || selectedStyle,
+          songsCount: Number(wmSongsCount),
+          musicDetails: wmMusicDetails.trim() || undefined,
+          dateStart: wmDateStart,
+          dateEnd: wmDateEnd,
+          hasMusicians: wmHasMusicians === 'yes',
+          needSessionMusicians: wmNeedSessionMusicians === 'yes',
+          needProducer: wmNeedProducer === 'yes',
+          needEngineer: wmNeedEngineer === 'yes',
+          additionalInfo: wmAdditionalInfo.trim() || undefined,
+          beatId: selectedBeatId || undefined
+        })
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.message || data.error || 'Ошибка отправки');
+      if (data.bookingId) {
+        const prev = JSON.parse(localStorage.getItem('recordingData') || '{}');
+        localStorage.setItem('recordingData', JSON.stringify({
+          ...prev,
+          recordingType: 'with-music',
+          musicStyle: wmMusicGenre || selectedStyle,
+          studioBookingId: data.bookingId,
+          purchasedBeatId: selectedBeatId || undefined
+        }));
+        localStorage.setItem('pendingStudioBookingId', String(data.bookingId));
+        localStorage.setItem('paymentPageSummaryOnly', '1');
+      }
+      setWmFormSent(true);
+      setAlert({ message: 'Заявка отправлена.', type: 'success' });
+      closePopup();
+      if (onNavigate) onNavigate('payment');
+    } catch (err) {
+      setAlert({ message: err.message || 'Не удалось отправить данные', type: 'error' });
+    } finally {
+      setWmFormSubmitting(false);
+    }
   };
 
   const renderStars = (value) => {
@@ -562,30 +679,27 @@ function RecordingPage({ onNavigate }) {
         </div>
       </section>
 
-      <section className="reviews-section">
-        <div className="reviews-card">
-          <div className="reviews-header">
-            <div>
-              <h2>Отзывы покупателей</h2>
-              <p>Поделитесь впечатлением и посмотрите, что думают другие</p>
-            </div>
-            <div className="reviews-badge">
-              {reviews.length} отзывов
-            </div>
+      <section className="reviews-section-asos">
+        <div className="reviews-asos-inner">
+          <div className="reviews-asos-header">
+            <div className="reviews-asos-badge">ОТЗЫВЫ</div>
+            <h2 className="reviews-asos-title">Отзывы покупателей</h2>
+            <p className="reviews-asos-sub">Поделитесь впечатлением и посмотрите, что думают другие</p>
+            <div className="reviews-asos-count">{reviews.length} отзывов</div>
           </div>
 
-          <div className="reviews-body">
-            <div className="reviews-form">
-              <h3>Оставить отзыв</h3>
-              <form onSubmit={handleReviewSubmit}>
-                <div className="review-rating">
-                  <span className="rating-label">Оценка:</span>
-                  <div className="rating-stars">
+          <div className="reviews-asos-body">
+            <div className="reviews-asos-form-wrap">
+              <h3 className="reviews-asos-form-title">Оставить отзыв</h3>
+              <form className="reviews-asos-form" onSubmit={handleReviewSubmit}>
+                <div className="reviews-asos-rating">
+                  <span className="reviews-asos-rating-label">Оценка</span>
+                  <div className="reviews-asos-stars">
                     {Array.from({ length: 5 }, (_, index) => (
                       <button
                         key={`rating-${index}`}
                         type="button"
-                        className={`rating-star-btn ${index < reviewRating ? 'active' : ''}`}
+                        className={`reviews-asos-star-btn ${index < reviewRating ? 'active' : ''}`}
                         onClick={() => setReviewRating(index + 1)}
                         aria-label={`Оценка ${index + 1}`}
                       >
@@ -594,74 +708,60 @@ function RecordingPage({ onNavigate }) {
                     ))}
                   </div>
                 </div>
-
-                <div className="review-textarea">
+                <div className="reviews-asos-field">
                   <textarea
                     value={reviewComment}
                     onChange={(e) => setReviewComment(e.target.value)}
                     placeholder="Напишите ваш отзыв..."
                     maxLength={1500}
                     rows={5}
+                    className="reviews-asos-textarea"
                   />
-                  <div className="review-counter">
-                    {reviewComment.length}/1500
-                  </div>
+                  <div className="reviews-asos-counter">{reviewComment.length}/1500</div>
                 </div>
-
-                {reviewsError && (
-                  <div className="review-error">{reviewsError}</div>
-                )}
-
-                <button
-                  type="submit"
-                  className="review-submit"
-                  disabled={reviewSubmitting}
-                >
+                {reviewsError && <div className="reviews-asos-error">{reviewsError}</div>}
+                <button type="submit" className="reviews-asos-submit" disabled={reviewSubmitting}>
                   {reviewSubmitting ? 'Отправка...' : 'Опубликовать'}
                 </button>
               </form>
             </div>
 
-            <div className="reviews-divider" aria-hidden="true" />
-
-            <div className="reviews-list">
-              <h3>Отзывы</h3>
+            <div className="reviews-asos-list-wrap">
+              <h3 className="reviews-asos-list-title">Отзывы</h3>
               {reviewsLoading ? (
-                <div className="review-loading">Загрузка...</div>
+                <div className="reviews-asos-loading">Загрузка...</div>
               ) : reviews.length === 0 ? (
-                <div className="review-empty">Пока нет отзывов</div>
+                <div className="reviews-asos-empty">Пока нет отзывов</div>
               ) : (
-                <div className="review-items">
+                <div className="reviews-asos-grid">
                   {reviews.map((review) => (
-                    <div key={review.id} className="review-item">
-                      <div className="review-top">
-                        <div className="review-user-block">
-                          <div className="review-avatar">
-                            {(review.user_name || 'Покупатель').trim().charAt(0).toUpperCase()}
-                          </div>
-                          <div className="review-user-info">
-                            <button
-                              type="button"
-                              className="review-user"
-                              onClick={() => handleOpenProfile(review.user_id)}
-                            >
-                              {review.user_name || 'Покупатель'}
-                            </button>
-                            <div className="review-meta">
-                              <span className="review-role">
-                                {roleNames[review.user_role] || 'Покупатель'}
-                              </span>
-                              <span className="review-date">
-                                {new Date(review.created_at).toLocaleDateString('ru-RU')}
-                              </span>
-                            </div>
-                          </div>
+                    <div key={review.id} className="reviews-asos-card">
+                      <div className="reviews-asos-card-header">
+                        <div className="reviews-asos-avatar">
+                          {review.avatar_url ? (
+                            <img src={review.avatar_url} alt="" />
+                          ) : (
+                            (review.user_name || 'П').trim().charAt(0).toUpperCase()
+                          )}
                         </div>
-                        <div className="review-stars">
-                          {renderStars(review.rating)}
+                        <div className="reviews-asos-card-user">
+                          <button
+                            type="button"
+                            className="reviews-asos-card-name"
+                            onClick={() => handleOpenProfile(review.user_id)}
+                          >
+                            {review.user_name || 'Покупатель'}
+                          </button>
+                          <div className="reviews-asos-card-meta">
+                            <span className="reviews-asos-role">{roleNames[review.user_role] || 'Покупатель'}</span>
+                            <span className="reviews-asos-date">
+                              {new Date(review.created_at).toLocaleDateString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' })}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                      <p className="review-comment">{review.comment}</p>
+                      <div className="reviews-asos-card-stars">{renderStars(review.rating)}</div>
+                      <p className="reviews-asos-card-text">{review.comment}</p>
                     </div>
                   ))}
                 </div>
@@ -782,6 +882,96 @@ function RecordingPage({ onNavigate }) {
                 ))}
               </div>
             </div>
+
+            {/* Форма уточнения для «Запись с покупкой музыки» — передаётся битмейкеру */}
+            {selectedType === 'with-music' && selectedStyle && (
+              <div className="popup-wm-form-wrap">
+                <form className="popup-wm-form" onSubmit={handleWithMusicFormSubmit}>
+                  <h3 className="popup-wm-form-title">Уточнение для битмейкера</h3>
+                  <div className="popup-wm-form-grid">
+                    <div className="popup-wm-row popup-wm-row-inline">
+                      <div className="popup-wm-field">
+                        <label>Имя *</label>
+                        <input type="text" placeholder="Имя" value={wmFirstName} onChange={(e) => setWmFirstName(e.target.value)} />
+                      </div>
+                      <div className="popup-wm-field">
+                        <label>Фамилия *</label>
+                        <input type="text" placeholder="Фамилия" value={wmLastName} onChange={(e) => setWmLastName(e.target.value)} />
+                      </div>
+                    </div>
+                    <div className="popup-wm-row popup-wm-row-inline">
+                      <div className="popup-wm-field">
+                        <label>Телефон *</label>
+                        <input type="tel" placeholder="+7 (999) 123-45-67" value={wmPhone} onChange={handleWmPhoneChange} />
+                      </div>
+                      <div className="popup-wm-field popup-wm-intl">
+                        <label>Межд. префикс</label>
+                        <input type="text" placeholder="+7" value={wmIntlPrefix} onChange={(e) => setWmIntlPrefix(e.target.value)} />
+                      </div>
+                    </div>
+                    <div className="popup-wm-row">
+                      <div className="popup-wm-field">
+                        <label>Количество песен *</label>
+                        <input type="number" min={1} placeholder="1" value={wmSongsCount} onChange={(e) => setWmSongsCount(e.target.value)} />
+                        <span className="popup-wm-hint">Сколько песен планируете записать?</span>
+                      </div>
+                    </div>
+                    <div className="popup-wm-row">
+                      <div className="popup-wm-field">
+                        <label>О вашей музыке</label>
+                        <textarea rows={3} placeholder="Опишите стиль и по возможности приложите ссылки на треки." value={wmMusicDetails} onChange={(e) => setWmMusicDetails(e.target.value)} />
+                      </div>
+                    </div>
+                    <div className="popup-wm-row">
+                      <span className="popup-wm-section-label">Когда хотите записаться?</span>
+                    </div>
+                    <div className="popup-wm-row popup-wm-row-inline">
+                      <div className="popup-wm-field">
+                        <label>Начало *</label>
+                        <input type="date" value={wmDateStart} onChange={(e) => setWmDateStart(e.target.value)} />
+                      </div>
+                      <div className="popup-wm-field">
+                        <label>Окончание *</label>
+                        <input type="date" value={wmDateEnd} onChange={(e) => setWmDateEnd(e.target.value)} />
+                      </div>
+                    </div>
+                    <div className="popup-wm-row popup-wm-radio-row">
+                      <span className="popup-wm-label">У вас есть музыканты или группа? *</span>
+                      <label className="popup-wm-radio"><input type="radio" name="wmHasMusicians" value="yes" checked={wmHasMusicians === 'yes'} onChange={() => setWmHasMusicians('yes')} /> Да</label>
+                      <label className="popup-wm-radio"><input type="radio" name="wmHasMusicians" value="no" checked={wmHasMusicians === 'no'} onChange={() => setWmHasMusicians('no')} /> Нет</label>
+                    </div>
+                    <div className="popup-wm-row popup-wm-radio-row">
+                      <span className="popup-wm-label">Нужны сессионные музыканты? *</span>
+                      <label className="popup-wm-radio"><input type="radio" name="wmNeedSession" value="yes" checked={wmNeedSessionMusicians === 'yes'} onChange={() => setWmNeedSessionMusicians('yes')} /> Да</label>
+                      <label className="popup-wm-radio"><input type="radio" name="wmNeedSession" value="no" checked={wmNeedSessionMusicians === 'no'} onChange={() => setWmNeedSessionMusicians('no')} /> Нет</label>
+                    </div>
+                    <div className="popup-wm-row popup-wm-radio-row">
+                      <span className="popup-wm-label">Нужен продюсер? *</span>
+                      <span className="popup-wm-hint">Рекомендуем «Да», если сомневаетесь.</span>
+                      <label className="popup-wm-radio"><input type="radio" name="wmNeedProducer" value="yes" checked={wmNeedProducer === 'yes'} onChange={() => setWmNeedProducer('yes')} /> Да</label>
+                      <label className="popup-wm-radio"><input type="radio" name="wmNeedProducer" value="no" checked={wmNeedProducer === 'no'} onChange={() => setWmNeedProducer('no')} /> Нет</label>
+                    </div>
+                    <div className="popup-wm-row popup-wm-radio-row">
+                      <span className="popup-wm-label">Нужен звукорежиссёр? *</span>
+                      <span className="popup-wm-hint">Рекомендуем «Да», если сомневаетесь.</span>
+                      <label className="popup-wm-radio"><input type="radio" name="wmNeedEngineer" value="yes" checked={wmNeedEngineer === 'yes'} onChange={() => setWmNeedEngineer('yes')} /> Да</label>
+                      <label className="popup-wm-radio"><input type="radio" name="wmNeedEngineer" value="no" checked={wmNeedEngineer === 'no'} onChange={() => setWmNeedEngineer('no')} /> Нет</label>
+                    </div>
+                    <div className="popup-wm-row">
+                      <div className="popup-wm-field">
+                        <label>Всё остальное</label>
+                        <textarea rows={2} placeholder="Пожелания, особые запросы" value={wmAdditionalInfo} onChange={(e) => setWmAdditionalInfo(e.target.value)} />
+                      </div>
+                    </div>
+                    <div className="popup-wm-row popup-wm-submit-row">
+                      <button type="submit" className="popup-wm-submit" disabled={wmFormSubmitting}>
+                        {wmFormSubmitting ? 'Отправка…' : 'Отправить'}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            )}
           </div>
         </div>
       )}

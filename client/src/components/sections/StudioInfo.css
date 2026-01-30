@@ -31,6 +31,24 @@
   line-height: 1.6;
 }
 
+.studio-booking-cta {
+  margin-top: 1.25rem;
+  padding: 0.875rem 1.75rem;
+  background: var(--asos-black);
+  color: var(--asos-white);
+  border: none;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.studio-booking-cta:hover {
+  background: var(--asos-mid-gray);
+}
+
 /* Gallery */
 .studio-gallery {
   display: grid;

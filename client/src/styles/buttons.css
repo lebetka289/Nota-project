@@ -74,6 +74,7 @@
 .btn-primary {
   background: var(--btn-primary-bg);
   color: var(--asos-white);
+  border: none;
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -212,4 +213,41 @@
   .btn-group .btn {
     width: 100%;
   }
+}
+
+/* ============================================
+   КНОПКИ «В КОРЗИНУ» И БЕЛЫЕ КНОПКИ — ВИДИМЫЙ СТИЛЬ
+   (чёрная обводка и чёрный текст, чтобы были видны на светлом фоне)
+   ============================================ */
+.beats-buy,
+.add-to-cart-btn,
+.beats-download,
+.beats-fav {
+  background: var(--asos-white) !important;
+  color: var(--asos-black) !important;
+  border: 2px solid var(--asos-black) !important;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.beats-buy:hover:not(:disabled),
+.add-to-cart-btn:hover,
+.beats-download:hover,
+.beats-fav:hover {
+  background: var(--asos-black) !important;
+  color: var(--asos-white) !important;
+  border-color: var(--asos-black) !important;
+}
+
+.beats-fav.active {
+  background: var(--accent-2) !important;
+  color: var(--asos-white) !important;
+  border-color: var(--accent-2) !important;
+}
+
+.beats-fav.active:hover {
+  background: #b8103c !important;
+  border-color: #b8103c !important;
 }

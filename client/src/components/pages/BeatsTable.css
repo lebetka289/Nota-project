@@ -177,6 +177,40 @@
   min-width: 0;
 }
 
+.beats-title-author {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.beats-author-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.beats-author-letter {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--asos-black);
+  color: var(--asos-white);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.beats-author-name {
+  font-weight: 600;
+  color: var(--text);
+}
+
 .beats-title-sub {
   margin-top: 0.25rem;
   color: var(--muted);

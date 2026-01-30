@@ -82,7 +82,7 @@ exports.login = async (req, res) => {
   }
 
   try {
-    const user = await queryOne("SELECT * FROM users WHERE email = ?", [email]);
+    const user = await queryOne("SELECT id, email, password, name, role, email_verified, blocked, avatar_path FROM users WHERE email = ?", [email]);
     if (!user) {
       return res.status(401).json({ error: 'Неверный email или пароль' });
     }
@@ -105,9 +105,12 @@ exports.login = async (req, res) => {
     }
 
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET);
-    res.json({ 
-      token, 
-      user: { id: user.id, email: user.email, name: user.name, role: user.role } 
+    const host = req.get('host');
+    const protocol = req.protocol || 'https';
+    const avatar_url = user.avatar_path ? `${protocol}://${host}/uploads/${user.avatar_path}` : null;
+    res.json({
+      token,
+      user: { id: user.id, email: user.email, name: user.name, role: user.role, avatar_url }
     });
   } catch (error) {
     console.error('Ошибка авторизации:', error);
@@ -125,7 +128,7 @@ exports.verifyEmail = async (req, res) => {
 
   try {
     const user = await queryOne(
-      "SELECT id, email, name, role, verification_code, verification_code_expires FROM users WHERE email = ?",
+      "SELECT id, email, name, role, avatar_path, verification_code, verification_code_expires FROM users WHERE email = ?",
       [email]
     );
 
@@ -135,9 +138,12 @@ exports.verifyEmail = async (req, res) => {
 
     if (user.email_verified) {
       const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET);
-      return res.json({ 
-        token, 
-        user: { id: user.id, email: user.email, name: user.name, role: user.role },
+      const host = req.get('host');
+      const protocol = req.protocol || 'https';
+      const avatar_url = user.avatar_path ? `${protocol}://${host}/uploads/${user.avatar_path}` : null;
+      return res.json({
+        token,
+        user: { id: user.id, email: user.email, name: user.name, role: user.role, avatar_url },
         message: 'Email уже подтвержден'
       });
     }
@@ -156,9 +162,12 @@ exports.verifyEmail = async (req, res) => {
     );
 
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET);
-    res.json({ 
-      token, 
-      user: { id: user.id, email: user.email, name: user.name, role: user.role },
+    const host = req.get('host');
+    const protocol = req.protocol || 'https';
+    const avatar_url = user.avatar_path ? `${protocol}://${host}/uploads/${user.avatar_path}` : null;
+    res.json({
+      token,
+      user: { id: user.id, email: user.email, name: user.name, role: user.role, avatar_url },
       message: 'Email успешно подтвержден'
     });
   } catch (error) {
@@ -220,11 +229,14 @@ exports.resendVerificationCode = async (req, res) => {
 // Получение текущего пользователя
 exports.getMe = async (req, res) => {
   try {
-    const user = await queryOne("SELECT id, email, name, role FROM users WHERE id = ?", [req.user.id]);
+    const user = await queryOne("SELECT id, email, name, role, avatar_path FROM users WHERE id = ?", [req.user.id]);
     if (!user) {
       return res.status(404).json({ error: 'Пользователь не найден' });
     }
-    res.json(user);
+    const host = req.get('host');
+    const protocol = req.protocol || 'https';
+    const avatar_url = user.avatar_path ? `${protocol}://${host}/uploads/${user.avatar_path}` : null;
+    res.json({ id: user.id, email: user.email, name: user.name, role: user.role, avatar_url });
   } catch (error) {
     console.error('Ошибка получения пользователя:', error);
     res.status(500).json({ error: 'Ошибка сервера' });

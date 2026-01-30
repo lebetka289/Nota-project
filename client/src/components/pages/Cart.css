@@ -195,6 +195,40 @@
 .item-unit-price {
   color: var(--muted);
   font-size: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.pay-single-beat-btn {
+  padding: 0.5rem 1rem;
+  background: var(--asos-black);
+  color: var(--asos-white);
+  border: none;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pay-single-beat-btn:hover:not(:disabled) {
+  background: #333;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.pay-single-beat-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.pay-single-beat-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .cart-item-actions {

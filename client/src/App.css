@@ -1,9 +1,9 @@
-/* App wrapper */
+/* App wrapper — полупрозрачный фон, чтобы был виден центральный рисунок с надписью */
 .app {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.92);
 }
 
 .main-content {

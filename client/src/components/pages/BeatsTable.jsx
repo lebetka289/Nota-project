@@ -401,7 +401,7 @@ function BeatsTable({ initialSearch = '' }) {
                 if (expanded) {
                   return (
                     <tr key={b.id} className="beats-tr-expanded">
-                      <td colSpan={6}>
+                      <td colSpan={7}>
                         <div className="beats-expanded">
                           <div className="beats-expanded-left" onClick={() => openBeat(b)} role="button" tabIndex={0}>
                             <div className="beats-cover expanded">
@@ -409,6 +409,14 @@ function BeatsTable({ initialSearch = '' }) {
                             </div>
                             <div className="beats-title-text">
                               <div className="beats-title-main">{b.title}</div>
+                              <div className="beats-title-author">
+                                {b.author_avatar_url ? (
+                                  <img src={b.author_avatar_url} alt="" className="beats-author-avatar" />
+                                ) : (
+                                  <span className="beats-author-letter">{(b.author_name || 'А').charAt(0)}</span>
+                                )}
+                                <span className="beats-author-name">{b.author_name || 'Автор'}</span>
+                              </div>
                             </div>
                           </div>
 
@@ -495,6 +503,14 @@ function BeatsTable({ initialSearch = '' }) {
                         </div>
                         <div className="beats-title-text">
                           <div className="beats-title-main">{b.title}</div>
+                          <div className="beats-title-author">
+                            {b.author_avatar_url ? (
+                              <img src={b.author_avatar_url} alt="" className="beats-author-avatar" />
+                            ) : (
+                              <span className="beats-author-letter">{(b.author_name || 'А').charAt(0)}</span>
+                            )}
+                            <span className="beats-author-name">{b.author_name || 'Автор'}</span>
+                          </div>
                           <div className="beats-title-sub">ID: #{b.id}</div>
                         </div>
                       </div>

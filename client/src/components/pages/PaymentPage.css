@@ -253,6 +253,52 @@
   font-size: 0.75rem;
 }
 
+.payment-summary-hint {
+  color: var(--muted);
+  font-size: 0.875rem;
+  text-align: center;
+  margin: 0 0 1rem;
+  max-width: 420px;
+}
+
+.payment-summary-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.payment-summary-link {
+  padding: 1rem 1.75rem;
+  font-size: 0.75rem;
+  font-weight: 900;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.payment-summary-link:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--accent);
+}
+
+.payment-summary-link-profile {
+  background: var(--asos-green);
+  border-color: var(--asos-green);
+  color: var(--asos-white);
+}
+
+.payment-summary-link-profile:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
 .purchased-beats-section {
   width: 100%;
   margin-bottom: 2rem;

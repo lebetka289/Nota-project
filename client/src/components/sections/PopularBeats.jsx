@@ -12,8 +12,8 @@ const formatTime = (sec) => {
   return `${m}:${String(r).padStart(2, '0')}`;
 };
 
-function PopularBeats() {
-  const { token } = useAuth();
+function PopularBeats({ onNavigate }) {
+  const { token, user } = useAuth();
   const [beats, setBeats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeBeatId, setActiveBeatId] = useState(null);
@@ -21,6 +21,7 @@ function PopularBeats() {
   const [current, setCurrent] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(0.85);
+  const [favorites, setFavorites] = useState(new Set());
   const audioRef = useRef(null);
   const playCountTrackedRef = useRef(new Set());
 
@@ -32,10 +33,10 @@ function PopularBeats() {
         });
         if (response.ok) {
           const data = await response.json();
-          // Сортируем по play_count и берем топ-6
+          // Сортируем по play_count и берем максимум 8 самых популярных
           const popular = [...data]
             .sort((a, b) => (b.play_count || 0) - (a.play_count || 0))
-            .slice(0, 6);
+            .slice(0, 8);
           setBeats(popular);
         }
       } catch (error) {
@@ -46,7 +47,43 @@ function PopularBeats() {
     };
 
     fetchPopularBeats();
+    fetchFavorites();
   }, [token]);
+
+  const fetchFavorites = async () => {
+    if (!token) return setFavorites(new Set());
+    try {
+      const r = await fetch(`${API_URL}/favorites`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!r.ok) return setFavorites(new Set());
+      const data = await r.json();
+      const s = new Set((Array.isArray(data) ? data : []).map((x) => x.beat_id));
+      setFavorites(s);
+    } catch {
+      setFavorites(new Set());
+    }
+  };
+
+  const toggleFavorite = async (beatId) => {
+    if (!token || !user) return;
+    const isFav = favorites.has(beatId);
+    try {
+      const r = await fetch(`${API_URL}/favorites${isFav ? `/${beatId}` : ''}`, {
+        method: isFav ? 'DELETE' : 'POST',
+        headers: {
+          ...(isFav ? {} : { 'Content-Type': 'application/json' }),
+          Authorization: `Bearer ${token}`
+        },
+        body: isFav ? undefined : JSON.stringify({ beat_id: beatId })
+      });
+      if (r.ok) {
+        await fetchFavorites();
+      }
+    } catch (error) {
+      console.error('Ошибка избранного:', error);
+    }
+  };
 
   const incrementPlayCount = async (beatId) => {
     // Отслеживаем, чтобы не отправлять повторные запросы для одного бита
@@ -107,17 +144,44 @@ function PopularBeats() {
     const a = audioRef.current;
     if (!a) return;
 
-    const onTimeUpdate = () => setCurrent(a.currentTime || 0);
-    const onLoadedMetadata = () => setDuration(a.duration || 0);
+    const onTimeUpdate = () => {
+      const time = a.currentTime || 0;
+      setCurrent(time);
+    };
+    
+    const onLoadedMetadata = () => {
+      const dur = a.duration;
+      if (dur && isFinite(dur) && dur > 0) {
+        setDuration(dur);
+      }
+    };
+    
+    const onLoadedData = () => {
+      const dur = a.duration;
+      if (dur && isFinite(dur) && dur > 0) {
+        setDuration(dur);
+      }
+    };
+    
+    const onCanPlay = () => {
+      const dur = a.duration;
+      if (dur && isFinite(dur) && dur > 0) {
+        setDuration(dur);
+      }
+    };
+    
     const onEnded = () => {
       setPlaying(false);
       setCurrent(0);
     };
+    
     const onPlay = () => setPlaying(true);
     const onPause = () => setPlaying(false);
 
     a.addEventListener('timeupdate', onTimeUpdate);
     a.addEventListener('loadedmetadata', onLoadedMetadata);
+    a.addEventListener('loadeddata', onLoadedData);
+    a.addEventListener('canplay', onCanPlay);
     a.addEventListener('ended', onEnded);
     a.addEventListener('play', onPlay);
     a.addEventListener('pause', onPause);
@@ -125,6 +189,8 @@ function PopularBeats() {
     return () => {
       a.removeEventListener('timeupdate', onTimeUpdate);
       a.removeEventListener('loadedmetadata', onLoadedMetadata);
+      a.removeEventListener('loadeddata', onLoadedData);
+      a.removeEventListener('canplay', onCanPlay);
       a.removeEventListener('ended', onEnded);
       a.removeEventListener('play', onPlay);
       a.removeEventListener('pause', onPause);
@@ -146,6 +212,8 @@ function PopularBeats() {
     if (!beat) return;
 
     a.pause();
+    setCurrent(0);
+    setDuration(0);
     a.src = beat.file_url;
     a.load();
     if (playing) {
@@ -157,8 +225,34 @@ function PopularBeats() {
     const a = audioRef.current;
     if (!a) return;
     const next = Number(value);
-    a.currentTime = next;
-    setCurrent(next);
+    if (isNaN(next) || next < 0) return;
+    
+    // Проверяем duration из audio элемента напрямую
+    const audioDuration = a.duration;
+    if (audioDuration && isFinite(audioDuration) && next > audioDuration) {
+      return;
+    }
+    
+    try {
+      a.currentTime = next;
+      setCurrent(next);
+    } catch (error) {
+      console.error('Ошибка прокрутки трека:', error);
+    }
+  };
+
+  const handleSeekChange = (e) => {
+    e.stopPropagation();
+    seek(e.target.value);
+  };
+
+  const handleSeekInput = (e) => {
+    e.stopPropagation();
+    // Обновляем визуально во время перетаскивания
+    const next = Number(e.target.value);
+    if (!isNaN(next) && next >= 0) {
+      setCurrent(next);
+    }
   };
 
   if (loading) {
@@ -191,13 +285,19 @@ function PopularBeats() {
         <div className="popular-beats-player">
           <audio ref={audioRef} />
           <div className="popular-beats-player-info">
-            <div className="popular-beats-player-cover">
+            <button
+              type="button"
+              className="popular-beats-player-cover popular-beats-player-cover-btn"
+              onClick={() => onNavigate?.('shop')}
+              aria-label="Перейти на страницу битов"
+              title="Перейти на страницу битов"
+            >
               {activeBeat.cover_url ? (
                 <img src={activeBeat.cover_url} alt={activeBeat.title} />
               ) : (
                 <div className="popular-beats-player-placeholder">—</div>
               )}
-            </div>
+            </button>
             <div className="popular-beats-player-details">
               <div className="popular-beats-player-title">{activeBeat.title}</div>
               <div className="popular-beats-player-meta">
@@ -222,18 +322,27 @@ function PopularBeats() {
                 </svg>
               )}
             </button>
-            <div className="popular-beats-player-progress">
-              <div className="popular-beats-player-time">{formatTime(current)}</div>
-              <input
-                type="range"
-                min="0"
-                max={duration || 0}
-                step="0.01"
-                value={Math.min(current, duration || 0)}
-                onChange={(e) => seek(e.target.value)}
-                className="popular-beats-player-range"
-              />
-              <div className="popular-beats-player-time">{formatTime(duration)}</div>
+            <div className="popular-beats-player-progress-wrap">
+              <div className="popular-beats-player-time-row">
+                <span className="popular-beats-player-time" aria-hidden="true">{formatTime(current)}</span>
+                <span className="popular-beats-player-time-sep">/</span>
+                <span className="popular-beats-player-time popular-beats-player-time-total" aria-hidden="true">{formatTime(duration)}</span>
+              </div>
+              <div className="popular-beats-player-progress">
+                <input
+                  type="range"
+                  min="0"
+                  max={duration && duration > 0 ? duration : 100}
+                  step="0.01"
+                  value={duration && duration > 0 ? Math.min(Math.max(current, 0), duration) : 0}
+                  onChange={handleSeekChange}
+                  onInput={handleSeekInput}
+                  className="popular-beats-player-range"
+                  disabled={!duration || duration === 0 || !isFinite(duration)}
+                  aria-label="Перемотка трека"
+                  title="Перемотка"
+                />
+              </div>
             </div>
 
             <div className="popular-beats-player-volume">
@@ -248,6 +357,21 @@ function PopularBeats() {
                 aria-label="Громкость"
               />
             </div>
+            {user && (
+              <button
+                className={`popular-beats-player-favorite ${favorites.has(activeBeat.id) ? 'active' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleFavorite(activeBeat.id);
+                }}
+                aria-label={favorites.has(activeBeat.id) ? 'Удалить из избранного' : 'Добавить в избранное'}
+                title={favorites.has(activeBeat.id) ? 'Удалить из избранного' : 'Добавить в избранное'}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill={favorites.has(activeBeat.id) ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -285,6 +409,14 @@ function PopularBeats() {
             </div>
             <div className="beat-card-info">
               <h3 className="beat-card-title">{beat.title}</h3>
+              <div className="beat-card-author">
+                {beat.author_avatar_url ? (
+                  <img src={beat.author_avatar_url} alt="" className="beat-card-author-avatar" />
+                ) : (
+                  <span className="beat-card-author-letter">{(beat.author_name || 'А').charAt(0)}</span>
+                )}
+                <span className="beat-card-author-name">{beat.author_name || 'Автор'}</span>
+              </div>
               <div className="beat-card-meta">
                 <span className="beat-card-genre">{beat.genre}</span>
                 <span className="beat-card-bpm">BPM {beat.bpm}</span>

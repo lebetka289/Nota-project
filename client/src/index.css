@@ -38,6 +38,11 @@ body {
   min-width: 320px;
   overflow-x: hidden;
   background: var(--bg);
+  background-image: url('/bg-center.png');
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
+  background-attachment: fixed;
 }
 
 #root {

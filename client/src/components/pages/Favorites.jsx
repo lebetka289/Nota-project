@@ -79,6 +79,36 @@ function Favorites() {
     }
   };
 
+  const handlePayBeat = async (beatId) => {
+    if (!token) return setAlert({ message: 'Войдите, чтобы оплатить', type: 'warning' });
+    try {
+      const response = await fetch(`${API_URL}/payments/beat/pay`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ beat_id: beatId })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Ошибка создания платежа');
+      }
+
+      if (data.free || data.mock) {
+        setAlert({ message: 'Оплата проведена в тестовом режиме.', type: 'success' });
+        fetchFavorites();
+      } else if (data.confirmation_url) {
+        window.location.href = data.confirmation_url;
+      } else {
+        setAlert({ message: 'Платеж создан, но нет ссылки на оплату', type: 'error' });
+      }
+    } catch (error) {
+      setAlert({ message: error.message || 'Ошибка оплаты', type: 'error' });
+    }
+  };
+
   const downloadBeat = async (item) => {
     if (!token) return setAlert({ message: 'Войдите, чтобы скачать', type: 'warning' });
     if (!item.purchased && Number(item.price) > 0) return setAlert({ message: 'Скачивание доступно только после покупки', type: 'warning' });
@@ -148,20 +178,30 @@ function Favorites() {
                   <p className="favorite-description">Жанр: {item.genre} • BPM: {item.bpm}</p>
                   <div className="favorite-footer">
                     <div className="favorite-price">{item.price} ₽</div>
-                    <button
-                      className="add-to-cart-btn"
-                      onClick={() => handleAddToCart(item.beat_id)}
-                    >
-                      В корзину
-                    </button>
-                    <button className="add-to-cart-btn" onClick={() => setActiveBeat(item)}>
-                      Плеер
-                    </button>
-                    {item.purchased || Number(item.price) === 0 ? (
-                      <button className="add-to-cart-btn" onClick={() => downloadBeat(item)}>
-                        Скачать
+                    <div className="favorite-actions">
+                      {!item.purchased && Number(item.price) > 0 && (
+                        <button
+                          className="pay-beat-btn-fav"
+                          onClick={() => handlePayBeat(item.beat_id)}
+                        >
+                          Оплатить
+                        </button>
+                      )}
+                      <button
+                        className="add-to-cart-btn"
+                        onClick={() => handleAddToCart(item.beat_id)}
+                      >
+                        В корзину
                       </button>
-                    ) : null}
+                      <button className="add-to-cart-btn" onClick={() => setActiveBeat(item)}>
+                        Плеер
+                      </button>
+                      {item.purchased || Number(item.price) === 0 ? (
+                        <button className="add-to-cart-btn" onClick={() => downloadBeat(item)}>
+                          Скачать
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
               </div>

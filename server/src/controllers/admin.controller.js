@@ -18,7 +18,7 @@ exports.getAllUsers = async (req, res) => {
 exports.updateUserRole = async (req, res) => {
   const { role } = req.body;
   
-  if (!['user', 'admin', 'support', 'beatmaker'].includes(role)) {
+  if (!['user', 'admin', 'support', 'beatmaker', 'reporter'].includes(role)) {
     return res.status(400).json({ error: 'Неверная роль' });
   }
 

@@ -33,6 +33,79 @@
   text-align: center;
 }
 
+.profile-user-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.5rem;
+  text-align: left;
+}
+
+.profile-avatar-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.profile-avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--asos-light-gray, #f0f0f0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-avatar-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.profile-avatar-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--asos-black);
+  color: var(--asos-white);
+  border: 1px solid var(--asos-black);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.profile-avatar-btn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.profile-avatar-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.profile-user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-user-info h2,
 .user-info-card h2 {
   font-size: 1.25rem;
   color: var(--text);
@@ -69,6 +142,127 @@
   font-weight: 900;
   text-transform: uppercase;
   font-style: italic;
+}
+
+.profile-section-hint {
+  font-size: 0.875rem;
+  color: var(--muted);
+  margin: -0.75rem 0 1rem 0;
+}
+
+/* Вкладки личного кабинета */
+.profile-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  border-bottom: 2px solid var(--border);
+  margin-top: 1.5rem;
+  margin-bottom: 0;
+}
+
+.profile-tab {
+  padding: 0.75rem 1.25rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+  position: relative;
+}
+
+.profile-tab:hover {
+  color: var(--text);
+}
+
+.profile-tab.active {
+  color: var(--text);
+  border-bottom-color: var(--asos-black);
+}
+
+.profile-tab-count {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.15rem 0.4rem;
+  font-size: 0.65rem;
+  background: var(--asos-black);
+  color: var(--asos-white);
+  min-width: 1.2em;
+  text-align: center;
+}
+
+.profile-tab-panel {
+  margin-top: 1.5rem;
+}
+
+/* Таблица неоплаченных битов */
+.unpaid-beats-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+}
+
+.unpaid-beats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.unpaid-beats-table th,
+.unpaid-beats-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.unpaid-beats-table th {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+.unpaid-beats-title {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.unpaid-beats-price {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.unpaid-beats-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.unpaid-beats-check input {
+  width: auto;
+  margin: 0;
+}
+
+.pay-beat-btn-row {
+  padding: 0.5rem 1rem;
+  font-size: 0.7rem;
+}
+
+.unpaid-beats-actions {
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.unpaid-beats-actions .pay-recording-btn {
+  min-width: 200px;
 }
 
 .loading {
@@ -316,6 +510,38 @@
   color: var(--muted-2);
   font-size: 0.7rem;
   margin-left: auto;
+}
+
+.pay-beat-btn {
+  margin-top: 0.75rem;
+  padding: 0.6rem 1.5rem;
+  background: var(--asos-black);
+  color: var(--asos-white);
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  align-self: flex-start;
+}
+
+.pay-beat-btn:hover:not(:disabled) {
+  background: #333;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.pay-beat-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.pay-beat-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .auth-required {
