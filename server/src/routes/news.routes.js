@@ -1,12 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const newsController = require('../controllers/news.controller');
-const { authenticateToken } = require('../middlewares/auth');
+const { authenticateToken, optionalAuthenticateToken } = require('../middlewares/auth');
 const { upload } = require('../utils/upload');
 
-// Публичные маршруты
-router.get('/', newsController.getAllNews);
+// Публичные маршруты (GET / с опциональным токеном для user_has_liked)
+router.get('/', optionalAuthenticateToken, newsController.getAllNews);
+router.get('/:id/comments', newsController.getComments);
+router.get('/:id/like-state', authenticateToken, newsController.getNewsLikesState);
 router.get('/:id', newsController.getNewsById);
+router.post('/:id/view', newsController.incrementView);
+
+// Лайки и комментарии (требуется авторизация)
+router.post('/:id/likes', authenticateToken, newsController.toggleLike);
+router.post('/:id/comments', authenticateToken, newsController.addComment);
 
 // Защищенные маршруты (репортер/админ)
 const isReporterOrAdmin = (req, res, next) => {

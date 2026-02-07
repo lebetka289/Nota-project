@@ -209,7 +209,7 @@
 
 .pay-beat-btn-fav {
   padding: 0.625rem 1rem;
-  background: var(--asos-black);
+  background: var(--purchase-bg);
   color: var(--asos-white);
   border: none;
   cursor: pointer;
@@ -220,13 +220,12 @@
   transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.2s ease;
   will-change: transform;
   white-space: nowrap;
-  border-radius: 6px;
 }
 
 .pay-beat-btn-fav:hover {
-  background: #333;
+  background: var(--purchase-bg-hover);
   transform: translateY(-1px);
-  box-shadow: 0 10px 22px rgba(0,0,0,0.14);
+  box-shadow: 0 10px 22px rgba(1, 136, 73, 0.25);
 }
 
 .pay-beat-btn-fav:active {
@@ -236,7 +235,7 @@
 
 .add-to-cart-btn {
   padding: 0.625rem 1rem;
-  background: var(--accent);
+  background: var(--purchase-bg);
   color: var(--asos-white);
   border: none;
   cursor: pointer;
@@ -250,9 +249,9 @@
 }
 
 .add-to-cart-btn:hover {
-  background: var(--accent-hover);
+  background: var(--purchase-bg-hover);
   transform: translateY(-1px);
-  box-shadow: 0 10px 22px rgba(0,0,0,0.14);
+  box-shadow: 0 10px 22px rgba(1, 136, 73, 0.25);
 }
 
 .add-to-cart-btn:active {

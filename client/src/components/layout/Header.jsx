@@ -54,18 +54,18 @@ function Header({ onNavigate }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  const handleNav = (page, searchParam = null) => {
+  const handleNav = (page, searchParam = null, state = null) => {
     if (searchParam !== null) {
-      onNavigate?.(page, searchParam);
+      onNavigate?.(page, searchParam, state);
     } else {
-      onNavigate?.(page);
+      onNavigate?.(page, null, state);
     }
     setShowMenu(false);
     setMobileOpen(false);
     setShowSearchResults(false);
   };
 
-  const searchBeats = async (query) => {
+  const searchBeatsAndNews = async (query) => {
     if (!query.trim()) {
       setSearchResults([]);
       setShowSearchResults(false);
@@ -73,14 +73,20 @@ function Header({ onNavigate }) {
     }
 
     try {
-      const response = await fetch(`${API_URL}/beats?q=${encodeURIComponent(query)}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setSearchResults(Array.isArray(data) ? data.slice(0, 5) : []);
-        setShowSearchResults(true);
-      }
+      const [beatsRes, newsRes] = await Promise.all([
+        fetch(`${API_URL}/beats?q=${encodeURIComponent(query)}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined
+        }),
+        fetch(`${API_URL}/news?q=${encodeURIComponent(query)}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined
+        })
+      ]);
+      const beats = beatsRes.ok ? (await beatsRes.json()) : [];
+      const news = newsRes.ok ? (await newsRes.json()) : [];
+      const beatsList = Array.isArray(beats) ? beats.slice(0, 5).map((b) => ({ ...b, type: 'beat' })) : [];
+      const newsList = Array.isArray(news) ? news.slice(0, 5).map((n) => ({ ...n, type: 'news' })) : [];
+      setSearchResults([...beatsList, ...newsList].slice(0, 8));
+      setShowSearchResults(beatsList.length + newsList.length > 0);
     } catch (error) {
       console.error('Ошибка поиска:', error);
       setSearchResults([]);
@@ -90,7 +96,7 @@ function Header({ onNavigate }) {
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (searchQuery.trim()) {
-        searchBeats(searchQuery);
+        searchBeatsAndNews(searchQuery);
       } else {
         setSearchResults([]);
         setShowSearchResults(false);
@@ -111,6 +117,12 @@ function Header({ onNavigate }) {
 
   const handleBeatClick = (beat) => {
     handleNav('shop', beat.title);
+    setSearchQuery('');
+    setShowSearchResults(false);
+  };
+
+  const handleNewsClick = (news) => {
+    handleNav('news', null, { openNewsId: news.id });
     setSearchQuery('');
     setShowSearchResults(false);
   };
@@ -136,7 +148,7 @@ function Header({ onNavigate }) {
             onClick={() => handleNav('home')}
             className="asos-logo"
           >
-            NOTA STUDIO
+            Нота бель
           </button>
 
           {/* Navigation: Главная, Запись, Кабинет */}
@@ -184,11 +196,11 @@ function Header({ onNavigate }) {
               <input
                 type="search"
                 className="asos-search"
-                placeholder="Поиск битов..."
+                placeholder="Поиск битов и новостей..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => searchQuery.trim() && setShowSearchResults(true)}
-                aria-label="Поиск битов"
+                aria-label="Поиск битов и новостей"
               />
               <button type="submit" className="asos-search-btn" aria-label="Искать">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -198,31 +210,58 @@ function Header({ onNavigate }) {
               </button>
             </form>
             
-            {/* Search results dropdown */}
-            {showSearchResults && searchResults.length > 0 && (
-              <div className="asos-search-results" ref={searchResultsRef}>
-                {searchResults.map((beat) => (
-                  <button
-                    key={beat.id}
-                    type="button"
-                    className="asos-search-result-item"
-                    onClick={() => handleBeatClick(beat)}
-                  >
-                    <div className="asos-search-result-cover">
-                      {beat.cover_url ? (
-                        <img src={beat.cover_url} alt={beat.title} />
-                      ) : (
-                        <div className="asos-search-result-placeholder">—</div>
-                      )}
-                    </div>
-                    <div className="asos-search-result-info">
-                      <div className="asos-search-result-title">{beat.title}</div>
-                      <div className="asos-search-result-meta">{beat.genre} • BPM {beat.bpm}</div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
+            {/* Search results dropdown: биты, разделитель, новости */}
+            {showSearchResults && searchResults.length > 0 && (() => {
+              const beats = searchResults.filter((i) => i.type === 'beat');
+              const news = searchResults.filter((i) => i.type === 'news');
+              return (
+                <div className="asos-search-results" ref={searchResultsRef}>
+                  {beats.map((item) => (
+                    <button
+                      key={`beat-${item.id}`}
+                      type="button"
+                      className="asos-search-result-item"
+                      onClick={() => handleBeatClick(item)}
+                    >
+                      <div className="asos-search-result-cover">
+                        {item.cover_url ? (
+                          <img src={item.cover_url} alt={item.title} />
+                        ) : (
+                          <div className="asos-search-result-placeholder">—</div>
+                        )}
+                      </div>
+                      <div className="asos-search-result-info">
+                        <div className="asos-search-result-title">{item.title}</div>
+                        <div className="asos-search-result-meta">Бит</div>
+                      </div>
+                    </button>
+                  ))}
+                  {beats.length > 0 && news.length > 0 && (
+                    <div className="asos-search-results-divider" aria-hidden="true" />
+                  )}
+                  {news.map((item) => (
+                    <button
+                      key={`news-${item.id}`}
+                      type="button"
+                      className="asos-search-result-item"
+                      onClick={() => handleNewsClick(item)}
+                    >
+                      <div className="asos-search-result-cover">
+                        {item.image_url ? (
+                          <img src={item.image_url} alt={item.title} />
+                        ) : (
+                          <div className="asos-search-result-placeholder">—</div>
+                        )}
+                      </div>
+                      <div className="asos-search-result-info">
+                        <div className="asos-search-result-title">{item.title}</div>
+                        <div className="asos-search-result-meta">Новость</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Right icons */}

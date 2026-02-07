@@ -253,7 +253,7 @@ function SupportChat() {
         onClick={() => setOpen((v) => !v)}
         aria-label={open ? 'Закрыть чат' : 'Открыть чат поддержки'}
       >
-        <span className="fab-icon">{open ? '×' : 'Chat'}</span>
+        <span className="fab-icon">{open ? '×' : 'Чат'}</span>
         {unread > 0 && <span className="fab-badge">{unread}</span>}
       </button>
 
@@ -280,7 +280,7 @@ function SupportChat() {
               <div className="chat-loading">Загрузка сообщений...</div>
             ) : messages.length === 0 ? (
               <div className="chat-empty">
-                <div className="chat-empty-icon">Chat</div>
+                <div className="chat-empty-icon">Чат</div>
                 <div className="chat-empty-text">Начните диалог с поддержкой</div>
               </div>
             ) : (

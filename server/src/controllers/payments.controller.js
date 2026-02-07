@@ -1,49 +1,78 @@
 const { query, queryOne } = require('../../config/database');
 const { createRedirectPayment } = require('../../payments/yookassa');
 
-const recordingPriceRub = (recordingType) => {
+const VIDEO_CLIP_PRICE = 10000;
+const PRICE_PER_TRACK = 1000;
+const EXTRA_DAYS_FEE = 200;
+const EXTRA_DAYS_THRESHOLD = 7;
+
+const recordingPriceRub = (recordingType, opts = {}) => {
+  if (recordingType === 'video-clip') return VIDEO_CLIP_PRICE;
+  if (recordingType === 'with-music') {
+    const tracks = Math.max(0, parseInt(opts.songs_count, 10) || 0);
+    const start = opts.date_start ? new Date(opts.date_start) : null;
+    const end = opts.date_end ? new Date(opts.date_end) : null;
+    let days = 0;
+    if (start && end && !isNaN(start.getTime()) && !isNaN(end.getTime())) {
+      days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+    }
+    return tracks * PRICE_PER_TRACK + (days > EXTRA_DAYS_THRESHOLD ? EXTRA_DAYS_FEE : 0) || 7000;
+  }
   switch (recordingType) {
     case 'buy-music':
       return 3000;
     case 'home-recording':
       return 3500;
-    case 'video-clip':
-      return 15000;
-    case 'with-music':
-      return 7000;
     case 'own-music':
     default:
       return 5000;
   }
 };
 
-// Получить скидку пользователя на основе количества оплаченных записей
+// Скидка 50%: один раз при 3+ оплаченных записях; после использования снова появляется после следующих 3 оформленных записей
 const getUserDiscount = async (userId) => {
-  const paidCount = await queryOne(
-    "SELECT COUNT(*) as count FROM user_recordings WHERE user_id = ? AND status IN ('paid', 'in-progress', 'completed')",
-    [userId]
-  );
-  const count = paidCount?.count || 0;
-  // Скидка 50% при 3+ оплаченных записях
-  return count >= 3 ? 50 : 0;
+  const [paidRow, userRow] = await Promise.all([
+    queryOne(
+      "SELECT COUNT(*) as count FROM user_recordings WHERE user_id = ? AND status IN ('paid', 'in-progress', 'completed')",
+      [userId]
+    ),
+    queryOne('SELECT used_50_discount FROM users WHERE id = ?', [userId])
+  ]);
+  const count = paidRow?.count || 0;
+  const used50 = !!userRow?.used_50_discount;
+  if (count >= 6 && used50) {
+    await query('UPDATE users SET used_50_discount = 0 WHERE id = ?', [userId]);
+    return 50;
+  }
+  if (count >= 3 && !used50) return 50;
+  return 0;
 };
 
 // Получить информацию о скидке пользователя
 exports.getUserDiscountInfo = async (req, res) => {
   try {
-    const paidCount = await queryOne(
-      "SELECT COUNT(*) as count FROM user_recordings WHERE user_id = ? AND status IN ('paid', 'in-progress', 'completed')",
-      [req.user.id]
-    );
-    const count = paidCount?.count || 0;
-    const discountPercent = count >= 3 ? 50 : 0;
-    const recordsNeeded = Math.max(0, 3 - count);
-    
+    const [paidRow, userRow] = await Promise.all([
+      queryOne(
+        "SELECT COUNT(*) as count FROM user_recordings WHERE user_id = ? AND status IN ('paid', 'in-progress', 'completed')",
+        [req.user.id]
+      ),
+      queryOne('SELECT used_50_discount FROM users WHERE id = ?', [req.user.id])
+    ]);
+    const count = paidRow?.count || 0;
+    let used50 = !!userRow?.used_50_discount;
+    if (count >= 6 && used50) {
+      await query('UPDATE users SET used_50_discount = 0 WHERE id = ?', [req.user.id]);
+      used50 = false;
+    }
+    const hasDiscount = count >= 3 && !used50;
+    const discountPercent = hasDiscount ? 50 : 0;
+    const recordsNeeded = hasDiscount ? 0 : (used50 ? Math.max(0, 6 - count) : Math.max(0, 3 - count));
+
     res.json({
       discount_percent: discountPercent,
       paid_recordings_count: count,
       records_needed_for_discount: recordsNeeded,
-      has_discount: discountPercent > 0
+      has_discount: hasDiscount
     });
   } catch (error) {
     console.error('Ошибка получения информации о скидке:', error);
@@ -53,7 +82,8 @@ exports.getUserDiscountInfo = async (req, res) => {
 
 // Создать платеж для записи
 exports.createRecordingPayment = async (req, res) => {
-  const { recording_id, recording_type, music_style, purchased_beat_id, studio_booking_id } = req.body;
+  const { recording_id, recording_type, music_style, purchased_beat_id, studio_booking_id, songs_count, date_start, date_end } = req.body;
+  const priceOpts = { songs_count, date_start, date_end };
 
   try {
     let recording = null;
@@ -83,7 +113,7 @@ exports.createRecordingPayment = async (req, res) => {
 
       // Получаем скидку пользователя
       const discountPercent = await getUserDiscount(req.user.id);
-      const basePrice = recordingPriceRub(recording_type);
+      const basePrice = recordingPriceRub(recording_type, priceOpts);
       const discountAmount = (basePrice * discountPercent) / 100;
       const finalPrice = basePrice - discountAmount;
 
@@ -97,7 +127,7 @@ exports.createRecordingPayment = async (req, res) => {
       );
     }
 
-    const amountRub = Number(recording.price || recordingPriceRub(recording.recording_type));
+    const amountRub = Number(recording.price || recordingPriceRub(recording.recording_type, priceOpts));
     const returnUrl = process.env.PAYMENT_RETURN_URL || 'http://localhost:5173/';
 
     if (process.env.PAYMENT_SKIP_CONFIRMATION === 'true') {
@@ -106,6 +136,9 @@ exports.createRecordingPayment = async (req, res) => {
         "UPDATE user_recordings SET payment_provider = ?, payment_id = ?, payment_status = ?, status = 'paid', paid_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?",
         ['mock', mockPaymentId, 'succeeded', recording.id, req.user.id]
       );
+      if (Number(recording.discount_percent) >= 50) {
+        await query('UPDATE users SET used_50_discount = 1 WHERE id = ?', [req.user.id]);
+      }
       const bookingId = recording.studio_booking_id ? Number(recording.studio_booking_id) : null;
       if (bookingId) {
         await query(
@@ -323,14 +356,19 @@ exports.yookassaWebhook = async (req, res) => {
         await query("DELETE FROM beat_cart WHERE user_id = ?", [metaUserId]);
       }
       const recording = await queryOne(
-        "SELECT id, user_id, studio_booking_id FROM user_recordings WHERE payment_id = ?",
+        "SELECT id, user_id, studio_booking_id, discount_percent FROM user_recordings WHERE payment_id = ?",
         [paymentId]
       );
-      if (recording && recording.studio_booking_id) {
-        await query(
-          'UPDATE studio_bookings SET user_id = ?, recording_id = ? WHERE id = ?',
-          [recording.user_id, recording.id, recording.studio_booking_id]
-        );
+      if (recording) {
+        if (Number(recording.discount_percent) >= 50) {
+          await query('UPDATE users SET used_50_discount = 1 WHERE id = ?', [recording.user_id]);
+        }
+        if (recording.studio_booking_id) {
+          await query(
+            'UPDATE studio_bookings SET user_id = ?, recording_id = ? WHERE id = ?',
+            [recording.user_id, recording.id, recording.studio_booking_id]
+          );
+        }
       }
     }
 

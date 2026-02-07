@@ -178,6 +178,25 @@
   font-style: italic;
 }
 
+.price-breakdown {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.price-breakdown-line {
+  margin: 0 0 0.35rem 0;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.price-breakdown-desc {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
 .price-card {
   background: var(--asos-white);
   border: 2px solid var(--asos-black);

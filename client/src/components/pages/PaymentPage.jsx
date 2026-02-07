@@ -85,6 +85,30 @@ function PaymentPage({ recordingType, musicStyle, onNavigate }) {
     'video-clip': 15000
   };
 
+  const VIDEO_CLIP_PRICE = 10000;
+  const PRICE_PER_TRACK = 1000;
+  const EXTRA_DAYS_FEE = 200;
+  const EXTRA_DAYS_THRESHOLD = 7;
+
+  const recordingPriceBreakdown = (() => {
+    if (finalType === 'video-clip') {
+      return { type: 'video-clip', total: VIDEO_CLIP_PRICE, tracks: 0, days: 0, tracksTotal: 0, extraDaysFee: 0 };
+    }
+    if (finalType === 'with-music') {
+      const tracks = Math.max(0, parseInt(recordingData.songsCount, 10) || 0);
+      const start = recordingData.dateStart ? new Date(recordingData.dateStart) : null;
+      const end = recordingData.dateEnd ? new Date(recordingData.dateEnd) : null;
+      let days = 0;
+      if (start && end && !isNaN(start) && !isNaN(end)) {
+        days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+      }
+      const tracksTotal = tracks * PRICE_PER_TRACK;
+      const extraDaysFee = days > EXTRA_DAYS_THRESHOLD ? EXTRA_DAYS_FEE : 0;
+      return { type: 'with-music', total: tracksTotal + extraDaysFee, tracks, days, tracksTotal, extraDaysFee };
+    }
+    return null;
+  })();
+
   // Загрузка информации о скидке и купленных битах
   useEffect(() => {
     if (!user || !token) {
@@ -140,7 +164,7 @@ function PaymentPage({ recordingType, musicStyle, onNavigate }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showBeatDropdown]);
 
-  const basePrice = priceByType[finalType] || 5000;
+  const basePrice = recordingPriceBreakdown ? recordingPriceBreakdown.total : (priceByType[finalType] || 5000);
   const discountPercent = discountInfo?.discount_percent || 0;
   const finalPrice = Math.round(basePrice * (1 - discountPercent / 100));
 
@@ -163,7 +187,10 @@ function PaymentPage({ recordingType, musicStyle, onNavigate }) {
           recording_type: finalType,
           music_style: finalStyle,
           purchased_beat_id: finalType === 'with-music' ? (selectedBeatId || null) : null,
-          studio_booking_id: finalType === 'with-music' ? studioBookingIdFromStorage || null : null
+          studio_booking_id: finalType === 'with-music' ? studioBookingIdFromStorage || null : null,
+          songs_count: finalType === 'with-music' ? recordingData.songsCount : undefined,
+          date_start: finalType === 'with-music' ? recordingData.dateStart : undefined,
+          date_end: finalType === 'with-music' ? recordingData.dateEnd : undefined
         })
       });
 
@@ -319,6 +346,23 @@ function PaymentPage({ recordingType, musicStyle, onNavigate }) {
         <div className="pricing-section">
           <h2>Стоимость</h2>
           <div className="price-card">
+            {recordingPriceBreakdown && (
+              <div className="price-breakdown">
+                {recordingPriceBreakdown.type === 'video-clip' && (
+                  <>
+                    <p className="price-breakdown-line">Видеоклип: <strong>{VIDEO_CLIP_PRICE.toLocaleString('ru-RU')} ₽</strong></p>
+                    <p className="price-breakdown-desc">Как проходит: сценарий и съёмка клипа по вашей истории или песне.</p>
+                  </>
+                )}
+                {recordingPriceBreakdown.type === 'with-music' && (
+                  <>
+                    <p className="price-breakdown-line">Треки: {recordingPriceBreakdown.tracks} × {PRICE_PER_TRACK.toLocaleString('ru-RU')} ₽ = {recordingPriceBreakdown.tracksTotal.toLocaleString('ru-RU')} ₽</p>
+                    <p className="price-breakdown-line">Продолжительность: {recordingPriceBreakdown.days > 0 ? `${recordingPriceBreakdown.days} дн.` : '—'} {recordingPriceBreakdown.days > EXTRA_DAYS_THRESHOLD ? `(более ${EXTRA_DAYS_THRESHOLD} дней: +${EXTRA_DAYS_FEE} ₽)` : ''}</p>
+                    <p className="price-breakdown-desc">Как проходит: запись вокала на выбранный бит; при записи более 7 дней добавляется 200 ₽.</p>
+                  </>
+                )}
+              </div>
+            )}
             <div className="price-amount">
               <span className="price-label">От</span>
               {discountPercent > 0 ? (
@@ -348,7 +392,7 @@ function PaymentPage({ recordingType, musicStyle, onNavigate }) {
               </p>
             )}
             <p className="price-note">
-              Точная стоимость зависит от выбранного типа услуги и деталей проекта.
+              {!recordingPriceBreakdown && 'Точная стоимость зависит от выбранного типа услуги и деталей проекта. '}
               С вами свяжется менеджер для уточнения деталей.
             </p>
           </div>

@@ -214,6 +214,35 @@ function BeatmakerPanel() {
   const [takingBookingId, setTakingBookingId] = useState(null);
   const [alert, setAlert] = useState(null);
 
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [pageNew, setPageNew] = useState(1);
+  const [pageInWork, setPageInWork] = useState(1);
+  const PER_PAGE = 8;
+
+  const filterByDate = (list, dateKey = 'createdAt') => {
+    if (!dateFrom && !dateTo) return list;
+    return list.filter((item) => {
+      const d = item[dateKey] ? new Date(item[dateKey]) : null;
+      if (!d || isNaN(d.getTime())) return true;
+      if (dateFrom && d < new Date(dateFrom + 'T00:00:00')) return false;
+      if (dateTo && d > new Date(dateTo + 'T23:59:59')) return false;
+      return true;
+    });
+  };
+
+  const paginate = (list, page) => {
+    const start = (page - 1) * PER_PAGE;
+    return list.slice(start, start + PER_PAGE);
+  };
+
+  const filteredNew = filterByDate(formOrdersNew);
+  const filteredInWork = filterByDate(formOrdersInWork);
+  const totalPagesNew = Math.max(1, Math.ceil(filteredNew.length / PER_PAGE));
+  const totalPagesInWork = Math.max(1, Math.ceil(filteredInWork.length / PER_PAGE));
+  const paginatedNew = paginate(filteredNew, pageNew);
+  const paginatedInWork = paginate(filteredInWork, pageInWork);
+
   const [title, setTitle] = useState('');
   const [genre, setGenre] = useState('hyperpop');
   const [bpm, setBpm] = useState(140);
@@ -462,21 +491,38 @@ function BeatmakerPanel() {
       {activeTab === 'form-orders' && (
         <div className="bm-tab-panel">
           <div className="bm-list-title">Новые заявки с формы записи на студию</div>
+          <div className="bm-date-filter">
+            <label>
+              <span className="bm-date-label">Дата от</span>
+              <input type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setPageNew(1); }} className="bm-date-input" />
+            </label>
+            <label>
+              <span className="bm-date-label">Дата до</span>
+              <input type="date" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setPageNew(1); }} className="bm-date-input" />
+            </label>
+          </div>
           {bookingsLoading ? (
             <div className="bm-muted">Загрузка…</div>
-          ) : formOrdersNew.length === 0 ? (
-            <div className="bm-muted">Нет новых заявок</div>
+          ) : filteredNew.length === 0 ? (
+            <div className="bm-muted">Нет заявок по выбранным датам</div>
           ) : (
-            <div className="bm-booking-list">
-              {formOrdersNew.map((b) => (
-                <BookingCard
-                  key={b.id}
-                  booking={b}
-                  onTakeToWork={handleTakeToWork}
-                  takingId={takingBookingId}
-                />
-              ))}
-            </div>
+            <>
+              <div className="bm-booking-list">
+                {paginatedNew.map((b) => (
+                  <BookingCard
+                    key={b.id}
+                    booking={b}
+                    onTakeToWork={handleTakeToWork}
+                    takingId={takingBookingId}
+                  />
+                ))}
+              </div>
+              <div className="bm-pagination">
+                <button type="button" className="bm-pagination-btn" onClick={() => setPageNew((p) => Math.max(1, p - 1))} disabled={pageNew <= 1} aria-label="Предыдущая страница">←</button>
+                <span className="bm-pagination-info">Страница {pageNew} из {totalPagesNew}</span>
+                <button type="button" className="bm-pagination-btn" onClick={() => setPageNew((p) => Math.min(totalPagesNew, p + 1))} disabled={pageNew >= totalPagesNew} aria-label="Следующая страница">→</button>
+              </div>
+            </>
           )}
         </div>
       )}
@@ -484,24 +530,41 @@ function BeatmakerPanel() {
       {activeTab === 'in-work' && (
         <div className="bm-tab-panel">
           <div className="bm-list-title">Заявки в работе (с формы)</div>
+          <div className="bm-date-filter">
+            <label>
+              <span className="bm-date-label">Дата от</span>
+              <input type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setPageInWork(1); }} className="bm-date-input" />
+            </label>
+            <label>
+              <span className="bm-date-label">Дата до</span>
+              <input type="date" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setPageInWork(1); }} className="bm-date-input" />
+            </label>
+          </div>
           {bookingsLoading ? (
             <div className="bm-muted">Загрузка…</div>
-          ) : formOrdersInWork.length === 0 ? (
-            <div className="bm-muted">Нет заявок в работе</div>
+          ) : filteredInWork.length === 0 ? (
+            <div className="bm-muted">Нет заявок в работе по выбранным датам</div>
           ) : (
-            <div className="bm-booking-list">
-              {formOrdersInWork.map((b) => (
-                <BookingInWorkCard
-                  key={b.id}
-                  booking={b}
-                  onDownloadBeat={handleDownloadBeat}
-                  onUploadTrack={handleTrackUpload}
-                  onSendTrack={handleSendTrack}
+            <>
+              <div className="bm-booking-list">
+                {paginatedInWork.map((b) => (
+                  <BookingInWorkCard
+                    key={b.id}
+                    booking={b}
+                    onDownloadBeat={handleDownloadBeat}
+                    onUploadTrack={handleTrackUpload}
+                    onSendTrack={handleSendTrack}
                   uploadingId={uploadingTrackId}
                   sendingId={sendingTrackId}
                 />
               ))}
-            </div>
+              </div>
+              <div className="bm-pagination">
+                <button type="button" className="bm-pagination-btn" onClick={() => setPageInWork((p) => Math.max(1, p - 1))} disabled={pageInWork <= 1} aria-label="Предыдущая страница">←</button>
+                <span className="bm-pagination-info">Страница {pageInWork} из {totalPagesInWork}</span>
+                <button type="button" className="bm-pagination-btn" onClick={() => setPageInWork((p) => Math.min(totalPagesInWork, p + 1))} disabled={pageInWork >= totalPagesInWork} aria-label="Следующая страница">→</button>
+              </div>
+            </>
           )}
 
           <div className="bm-list" style={{ marginTop: '2rem' }}>

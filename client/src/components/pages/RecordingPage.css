@@ -796,7 +796,8 @@
   margin: 4rem 0 5rem;
   position: relative;
   z-index: 1;
-  padding: 4rem 0;
+  padding: 5rem 0 6rem;
+  min-height: 420px;
   background: var(--asos-light-gray, #f5f5f5);
 }
 
@@ -997,15 +998,15 @@
 
 .reviews-asos-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.75rem;
 }
 
 .reviews-asos-card {
   background: var(--asos-white);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 1.25rem;
+  border-radius: 10px;
+  padding: 1.5rem;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
@@ -1215,14 +1216,16 @@
 }
 
 .video-clip-btn.primary {
-  background: var(--accent);
-  color: #0b0c0f;
-  border-color: var(--accent);
+  background: var(--asos-white);
+  color: var(--text);
+  border-color: var(--border);
 }
 
-.video-clip-btn:hover {
+.video-clip-btn:hover,
+.video-clip-btn.primary:hover {
   transform: translateY(-2px);
-  border-color: var(--border-2);
+  border-color: var(--asos-black);
+  background: var(--asos-gray);
 }
 
 .video-clip-slider {
@@ -1359,21 +1362,50 @@
   margin-right: 0.6rem;
 }
 
+.video-clip-pricing {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--asos-gray, #f9f9f9);
+}
+
+.video-clip-pricing h3 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.1rem;
+  color: var(--text);
+}
+
+.video-clip-price-amount {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.video-clip-price-desc {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
 .video-clip-order {
   padding: 0.9rem 2rem;
-  border-radius: var(--radius-sm);
-  background: var(--accent);
-  border: 1px solid var(--accent);
-  color: #0b0c0f;
+  border-radius: 0;
+  background: var(--asos-white);
+  border: 1px solid var(--border);
+  color: var(--text);
   font-weight: 700;
   letter-spacing: 0.04em;
   cursor: pointer;
   white-space: nowrap;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
 }
 
 .video-clip-order:hover {
   transform: translateY(-2px);
+  border-color: var(--asos-black);
+  background: var(--asos-gray);
   box-shadow: var(--shadow-soft);
 }
 

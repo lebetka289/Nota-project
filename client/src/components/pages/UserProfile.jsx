@@ -21,6 +21,28 @@ function UserProfile() {
   const [alert, setAlert] = useState(null);
   const [activeTab, setActiveTab] = useState('recordings');
   const [selectedBeatIds, setSelectedBeatIds] = useState(new Set());
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [pageRecordings, setPageRecordings] = useState(1);
+  const [pagePaid, setPagePaid] = useState(1);
+  const PER_PAGE = 6;
+
+  const filterByDate = (list, dateKey = 'created_at') => {
+    if (!dateFrom && !dateTo) return list;
+    return list.filter((item) => {
+      const raw = item[dateKey] || item.paid_at;
+      const d = raw ? new Date(raw) : null;
+      if (!d || isNaN(d.getTime())) return true;
+      if (dateFrom && d < new Date(dateFrom + 'T00:00:00')) return false;
+      if (dateTo && d > new Date(dateTo + 'T23:59:59')) return false;
+      return true;
+    });
+  };
+
+  const paginate = (list, page) => {
+    const start = (page - 1) * PER_PAGE;
+    return list.slice(start, start + PER_PAGE);
+  };
 
   const musicStylesNames = {
     'hyperpop': 'Хайпер поп',
@@ -301,8 +323,14 @@ function UserProfile() {
     return `${baseUrl}${normalized}`;
   };
 
-  const paidRecordings = recordings.filter(r => r.status === 'paid' || r.status === 'in-progress' || r.status === 'completed');
   const pendingRecordings = recordings.filter(r => r.status === 'pending');
+  const paidRecordings = recordings.filter(r => r.status === 'paid' || r.status === 'in-progress' || r.status === 'completed');
+  const filteredPaid = filterByDate(paidRecordings, 'paid_at');
+  const totalPagesPaid = Math.max(1, Math.ceil(filteredPaid.length / PER_PAGE));
+  const paginatedPaid = paginate(filteredPaid, pagePaid);
+  const filteredPending = filterByDate(pendingRecordings);
+  const totalPagesPending = Math.max(1, Math.ceil(filteredPending.length / PER_PAGE));
+  const paginatedPending = paginate(filteredPending, pageRecordings);
 
   if (!user) {
     return (
@@ -435,50 +463,71 @@ function UserProfile() {
                 </div>
               </div>
             )}
-            {pendingRecordings.length > 0 && (
+            {(pendingRecordings.length > 0 || dateFrom || dateTo) && (
               <div className="recordings-section">
                 <h2>Записи, ожидающие оплаты</h2>
-                <div className="recordings-list">
-                  {pendingRecordings.map(recording => (
-                    <div key={recording.id} className="recording-card">
-                      <div className="recording-header">
-                        <h3>{recordingTypesNames[recording.recording_type] || recording.recording_type}</h3>
-                        <span className={`status-badge status-${recording.status}`}>
-                          {statusNames[recording.status] || recording.status}
-                        </span>
-                      </div>
-                      <div className="recording-details">
-                        <div className="detail-item">
-                          <span className="detail-label">Стиль музыки:</span>
-                          <span className="detail-value">
-                            {musicStylesNames[recording.music_style] || recording.music_style}
+                <div className="profile-date-filter">
+                  <label>
+                    <span className="profile-date-label">Дата от</span>
+                    <input type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setPageRecordings(1); }} className="profile-date-input" />
+                  </label>
+                  <label>
+                    <span className="profile-date-label">Дата до</span>
+                    <input type="date" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setPageRecordings(1); }} className="profile-date-input" />
+                  </label>
+                </div>
+                {filteredPending.length === 0 ? (
+                  <div className="empty-recordings"><p>Нет записей по выбранным датам</p></div>
+                ) : (
+                <>
+                  <div className="recordings-list">
+                    {paginatedPending.map(recording => (
+                      <div key={recording.id} className="recording-card">
+                        <div className="recording-header">
+                          <h3>{recordingTypesNames[recording.recording_type] || recording.recording_type}</h3>
+                          <span className={`status-badge status-${recording.status}`}>
+                            {statusNames[recording.status] || recording.status}
                           </span>
                         </div>
-                        <div className="detail-item">
-                          <span className="detail-label">Дата создания:</span>
-                          <span className="detail-value">
-                            {new Date(recording.created_at).toLocaleDateString('ru-RU')}
-                          </span>
-                        </div>
-                        {recording.price && (
+                        <div className="recording-details">
                           <div className="detail-item">
-                            <span className="detail-label">Стоимость:</span>
-                            <span className="detail-value price">
-                              {parseFloat(recording.price).toLocaleString('ru-RU')} ₽
+                            <span className="detail-label">Стиль музыки:</span>
+                            <span className="detail-value">
+                              {musicStylesNames[recording.music_style] || recording.music_style}
                             </span>
                           </div>
-                        )}
+                          <div className="detail-item">
+                            <span className="detail-label">Дата создания:</span>
+                            <span className="detail-value">
+                              {new Date(recording.created_at).toLocaleDateString('ru-RU')}
+                            </span>
+                          </div>
+                          {recording.price && (
+                            <div className="detail-item">
+                              <span className="detail-label">Стоимость:</span>
+                              <span className="detail-value price">
+                                {parseFloat(recording.price).toLocaleString('ru-RU')} ₽
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          className="pay-recording-btn"
+                          onClick={() => handlePayRecording(recording)}
+                          disabled={payingRecordingId === recording.id}
+                        >
+                          {payingRecordingId === recording.id ? 'Обработка...' : 'Оплатить'}
+                        </button>
                       </div>
-                      <button
-                        className="pay-recording-btn"
-                        onClick={() => handlePayRecording(recording)}
-                        disabled={payingRecordingId === recording.id}
-                      >
-                        {payingRecordingId === recording.id ? 'Обработка...' : 'Оплатить'}
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                  <div className="profile-pagination">
+                    <button type="button" className="profile-pagination-btn" onClick={() => setPageRecordings((p) => Math.max(1, p - 1))} disabled={pageRecordings <= 1}>←</button>
+                    <span className="profile-pagination-info">Страница {pageRecordings} из {totalPagesPending}</span>
+                    <button type="button" className="profile-pagination-btn" onClick={() => setPageRecordings((p) => Math.min(totalPagesPending, p + 1))} disabled={pageRecordings >= totalPagesPending}>→</button>
+                  </div>
+                </>
+                )}
               </div>
             )}
             {!pendingBooking?.isPaid && !pendingBookingLoading && pendingRecordings.length === 0 && (
@@ -496,16 +545,27 @@ function UserProfile() {
           <div className="profile-tab-panel">
             <div className="recordings-section">
               <h2>Оплаченные заявки</h2>
+              <div className="profile-date-filter">
+                <label>
+                  <span className="profile-date-label">Дата от</span>
+                  <input type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setPagePaid(1); }} className="profile-date-input" />
+                </label>
+                <label>
+                  <span className="profile-date-label">Дата до</span>
+                  <input type="date" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setPagePaid(1); }} className="profile-date-input" />
+                </label>
+              </div>
               {loading ? (
                 <div className="loading">Загрузка...</div>
-              ) : paidRecordings.length === 0 ? (
+              ) : filteredPaid.length === 0 ? (
                 <div className="empty-recordings">
-                  <p>У вас пока нет оплаченных записей</p>
-                  <span className="empty-icon">Empty</span>
+                  <p>Нет оплаченных записей по выбранным датам</p>
+                  <span className="empty-icon">—</span>
                 </div>
               ) : (
+                <>
                 <div className="recordings-list">
-                  {paidRecordings.map(recording => (
+                  {paginatedPaid.map(recording => (
                     <div key={recording.id} className="recording-card">
                       <div className="recording-header">
                         <h3>{recordingTypesNames[recording.recording_type] || recording.recording_type}</h3>
@@ -538,6 +598,12 @@ function UserProfile() {
                     </div>
                   ))}
                 </div>
+                <div className="profile-pagination">
+                  <button type="button" className="profile-pagination-btn" onClick={() => setPagePaid((p) => Math.max(1, p - 1))} disabled={pagePaid <= 1}>←</button>
+                  <span className="profile-pagination-info">Страница {pagePaid} из {totalPagesPaid}</span>
+                  <button type="button" className="profile-pagination-btn" onClick={() => setPagePaid((p) => Math.min(totalPagesPaid, p + 1))} disabled={pagePaid >= totalPagesPaid}>→</button>
+                </div>
+                </>
               )}
             </div>
           </div>

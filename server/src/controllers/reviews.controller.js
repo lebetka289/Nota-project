@@ -1,13 +1,17 @@
 const { query, queryOne } = require('../../config/database');
 
-// Получить отзывы
+// Получить отзывы (только за последние 3 месяца; старые не возвращаем и удаляем из БД)
 exports.getReviews = async (req, res) => {
   try {
+    await query(
+      'DELETE FROM reviews WHERE created_at < DATE_SUB(NOW(), INTERVAL 3 MONTH)'
+    );
     const rows = await query(
       `SELECT r.id, r.rating, r.comment, r.created_at,
               u.id as user_id, u.name as user_name, u.role as user_role, u.avatar_path as user_avatar_path
        FROM reviews r
        INNER JOIN users u ON u.id = r.user_id
+       WHERE r.created_at >= DATE_SUB(NOW(), INTERVAL 3 MONTH)
        ORDER BY r.created_at DESC
        LIMIT 50`
     );

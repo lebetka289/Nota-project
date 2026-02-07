@@ -16,6 +16,8 @@ function Auth({ onSuccess }) {
   const [showVerification, setShowVerification] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   const [pendingUserId, setPendingUserId] = useState(null);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
   const { login, register, user } = useAuth();
 
   useEffect(() => {
@@ -104,6 +106,35 @@ function Auth({ onSuccess }) {
     }
   };
 
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    if (!forgotEmail.trim()) {
+      setError('Введите email');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const response = await fetch(`${API_URL}/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmail.trim() })
+      });
+      const data = await response.json();
+      setLoading(false);
+      if (response.ok) {
+        setAlert({ message: 'Ссылка для сброса пароля отправлена на email', type: 'success' });
+        setShowForgotPassword(false);
+        setForgotEmail('');
+      } else {
+        setError(data.error || 'Ошибка отправки');
+      }
+    } catch (err) {
+      setLoading(false);
+      setError('Ошибка подключения к серверу');
+    }
+  };
+
   const handleResendCode = async () => {
     setLoading(true);
     setError('');
@@ -134,6 +165,42 @@ function Auth({ onSuccess }) {
       setError('Ошибка подключения к серверу');
     }
   };
+
+  if (showForgotPassword) {
+    return (
+      <div className="auth-container">
+        {alert && <Alert message={alert.message} type={alert.type} onClose={() => setAlert(null)} />}
+        <div className="auth-card">
+          <h2>Не помню пароль</h2>
+          <p className="auth-hint">Введите email — мы отправим ссылку для сброса пароля</p>
+          <form onSubmit={handleForgotPassword} className="auth-form">
+            <div className="form-group">
+              <label>Email</label>
+              <input
+                type="email"
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+                required
+                placeholder="Введите email"
+              />
+            </div>
+            {error && <div className="error-message">{error}</div>}
+            <button type="submit" className="auth-button" disabled={loading}>
+              {loading ? 'Отправка...' : 'Отправить ссылку'}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setShowForgotPassword(false); setError(''); setForgotEmail(''); }}
+              className="switch-button"
+              style={{ marginTop: '1rem', background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}
+            >
+              ← Назад к входу
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   if (showVerification) {
     return (
@@ -251,6 +318,18 @@ function Auth({ onSuccess }) {
           <button type="submit" className="auth-button" disabled={loading}>
             {loading ? 'Загрузка...' : (isLogin ? 'Войти' : 'Зарегистрироваться')}
           </button>
+
+          {isLogin && (
+            <div className="auth-forgot">
+              <button
+                type="button"
+                onClick={() => { setShowForgotPassword(true); setError(''); }}
+                className="switch-button"
+              >
+                Не помню пароль
+              </button>
+            </div>
+          )}
         </form>
 
         <div className="auth-switch">

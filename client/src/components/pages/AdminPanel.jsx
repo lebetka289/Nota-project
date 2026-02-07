@@ -23,7 +23,29 @@ function AdminPanel() {
   const [recordings, setRecordings] = useState([]);
   const [newPassword, setNewPassword] = useState('');
   const [roleSelect, setRoleSelect] = useState('');
+  const [recordingsDateFrom, setRecordingsDateFrom] = useState('');
+  const [recordingsDateTo, setRecordingsDateTo] = useState('');
+  const [recordingsPage, setRecordingsPage] = useState(1);
+  const ADMIN_PER_PAGE = 8;
   const chatBodyRef = useRef(null);
+
+  const filterRecordingsByDate = (list) => {
+    if (!recordingsDateFrom && !recordingsDateTo) return list;
+    return list.filter((r) => {
+      const d = r.created_at ? new Date(r.created_at) : null;
+      if (!d || isNaN(d.getTime())) return true;
+      if (recordingsDateFrom && d < new Date(recordingsDateFrom + 'T00:00:00')) return false;
+      if (recordingsDateTo && d > new Date(recordingsDateTo + 'T23:59:59')) return false;
+      return true;
+    });
+  };
+
+  const filteredRecordings = filterRecordingsByDate(recordings);
+  const totalRecordingsPages = Math.max(1, Math.ceil(filteredRecordings.length / ADMIN_PER_PAGE));
+  const paginatedRecordings = filteredRecordings.slice(
+    (recordingsPage - 1) * ADMIN_PER_PAGE,
+    recordingsPage * ADMIN_PER_PAGE
+  );
 
   const fetchUsers = async () => {
     try {
@@ -50,6 +72,11 @@ function AdminPanel() {
     if (kind === 'role') setRoleSelect(user?.role || 'user');
     if (kind === 'password') setNewPassword('');
     if (kind === 'chat') setChatReply('');
+    if (kind === 'recordings') {
+      setRecordingsPage(1);
+      setRecordingsDateFrom('');
+      setRecordingsDateTo('');
+    }
   };
 
   const closeModal = () => {
@@ -60,6 +87,9 @@ function AdminPanel() {
     setChatConvoId(null);
     setBeatsPurchases([]);
     setRecordings([]);
+    setRecordingsPage(1);
+    setRecordingsDateFrom('');
+    setRecordingsDateTo('');
   };
 
   useEffect(() => {
@@ -307,14 +337,31 @@ function AdminPanel() {
 
             {modal === 'recordings' && (
               <div className="admin-modal-list">
-                {recordings.length === 0 && <div className="admin-list-empty">Нет покупок записей</div>}
-                {recordings.map((r) => (
+                <div className="admin-date-filter">
+                  <label>
+                    <span className="admin-date-label">Дата от</span>
+                    <input type="date" value={recordingsDateFrom} onChange={(e) => { setRecordingsDateFrom(e.target.value); setRecordingsPage(1); }} className="admin-date-input" />
+                  </label>
+                  <label>
+                    <span className="admin-date-label">Дата до</span>
+                    <input type="date" value={recordingsDateTo} onChange={(e) => { setRecordingsDateTo(e.target.value); setRecordingsPage(1); }} className="admin-date-input" />
+                  </label>
+                </div>
+                {filteredRecordings.length === 0 && <div className="admin-list-empty">Нет записей по выбранным датам</div>}
+                {paginatedRecordings.map((r) => (
                   <div key={r.id} className="admin-list-item">
                     <span className="admin-list-title">{r.recording_type} • {r.music_style}</span>
                     <span className="admin-list-meta">{r.status} {r.price != null ? `• ${Number(r.price).toLocaleString('ru-RU')} ₽` : ''}</span>
                     <span className="admin-list-date">{new Date(r.created_at).toLocaleDateString('ru-RU')}</span>
                   </div>
                 ))}
+                {filteredRecordings.length > 0 && (
+                  <div className="admin-pagination">
+                    <button type="button" className="admin-pagination-btn" onClick={() => setRecordingsPage((p) => Math.max(1, p - 1))} disabled={recordingsPage <= 1}>←</button>
+                    <span className="admin-pagination-info">Страница {recordingsPage} из {totalRecordingsPages}</span>
+                    <button type="button" className="admin-pagination-btn" onClick={() => setRecordingsPage((p) => Math.min(totalRecordingsPages, p + 1))} disabled={recordingsPage >= totalRecordingsPages}>→</button>
+                  </div>
+                )}
               </div>
             )}
 

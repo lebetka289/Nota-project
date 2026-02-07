@@ -120,7 +120,7 @@ function BeatsPlayer({ beat }) {
 
       <div className="bp-center">
         <button className="bp-play" onClick={toggle}>
-          {playing ? 'Пауза' : 'Плей'}
+          {playing ? 'Пауза' : 'Играть'}
         </button>
 
         <div className="bp-progress">

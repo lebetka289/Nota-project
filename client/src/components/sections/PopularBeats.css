@@ -231,7 +231,7 @@
   color: var(--accent-2);
 }
 
-/* Inline Player */
+/* Inline Player — белый стиль */
 .popular-beats-player {
   background: var(--asos-white);
   border: 1px solid var(--border);

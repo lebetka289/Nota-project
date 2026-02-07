@@ -203,12 +203,11 @@
 
 .pay-single-beat-btn {
   padding: 0.5rem 1rem;
-  background: var(--asos-black);
+  background: var(--purchase-bg);
   color: var(--asos-white);
   border: none;
-  border-radius: 6px;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
   text-transform: uppercase;
@@ -216,9 +215,9 @@
 }
 
 .pay-single-beat-btn:hover:not(:disabled) {
-  background: #333;
+  background: var(--purchase-bg-hover);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(1, 136, 73, 0.25);
 }
 
 .pay-single-beat-btn:active:not(:disabled) {
@@ -324,7 +323,7 @@
 .checkout-button {
   width: 100%;
   padding: 1.25rem;
-  background: var(--accent);
+  background: var(--purchase-bg);
   color: var(--asos-white);
   border: none;
   font-size: 0.75rem;
@@ -336,8 +335,8 @@
   will-change: transform;
 }
 
-.checkout-button:hover {
-  background: var(--accent-hover);
+.checkout-button:hover:not(:disabled) {
+  background: var(--purchase-bg-hover);
   transform: translateY(-1px);
   box-shadow: 0 10px 22px rgba(0,0,0,0.14);
 }

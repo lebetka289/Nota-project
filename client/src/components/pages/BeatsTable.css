@@ -281,7 +281,7 @@
   height: 36px;
   padding: 0 1.5rem;
   border: none;
-  background: var(--accent);
+  background: var(--purchase-bg);
   color: var(--asos-white);
   font-weight: 700;
   font-family: var(--font-display);
@@ -294,9 +294,9 @@
 }
 
 .beats-buy:hover:not(:disabled) {
-  background: var(--accent-hover);
+  background: var(--purchase-bg-hover);
   transform: translateY(-1px);
-  box-shadow: 0 10px 22px rgba(0,0,0,0.14);
+  box-shadow: 0 10px 22px rgba(1, 136, 73, 0.25);
 }
 
 .beats-buy:active:not(:disabled) {

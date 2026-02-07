@@ -564,6 +564,70 @@
   font-size: 0.875rem;
 }
 
+.profile-date-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+  margin-bottom: 1rem;
+}
+
+.profile-date-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+.profile-date-input {
+  height: 40px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--border);
+  background: var(--asos-white);
+  color: var(--text);
+  font-size: 0.875rem;
+}
+
+.profile-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.profile-pagination-btn {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border);
+  background: var(--asos-white);
+  color: var(--text);
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.profile-pagination-btn:hover:not(:disabled) {
+  border-color: var(--asos-black);
+  background: var(--asos-gray);
+}
+
+.profile-pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.profile-pagination-info {
+  font-size: 0.875rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
 @media (max-width: 768px) {
   .profile-container {
     padding: 0 1rem;

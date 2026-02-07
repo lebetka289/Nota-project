@@ -34,6 +34,9 @@ async function initDatabase() {
   await ensureColumn('users', 'verification_code_expires', "TIMESTAMP NULL");
   await ensureColumn('users', 'blocked', "TINYINT(1) DEFAULT 0");
   await ensureColumn('users', 'avatar_path', "VARCHAR(255) NULL");
+  await ensureColumn('users', 'used_50_discount', "TINYINT(1) DEFAULT 0");
+  await ensureColumn('users', 'password_reset_token', "VARCHAR(255) NULL");
+  await ensureColumn('users', 'password_reset_expires', "TIMESTAMP NULL");
 
   // Таблица товаров
   await query(`CREATE TABLE IF NOT EXISTS products (
@@ -303,6 +306,30 @@ async function initDatabase() {
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE,
     KEY idx_published (published, published_at)
+  )`);
+  await ensureColumn('news', 'tags', 'TEXT NULL');
+  await ensureColumn('news', 'view_count', 'INT NOT NULL DEFAULT 0');
+
+  // Лайки новостей
+  await query(`CREATE TABLE IF NOT EXISTS news_likes (
+    news_id INT NOT NULL,
+    user_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (news_id, user_id),
+    FOREIGN KEY (news_id) REFERENCES news(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  )`);
+
+  // Комментарии к новостям
+  await query(`CREATE TABLE IF NOT EXISTS news_comments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    news_id INT NOT NULL,
+    user_id INT NOT NULL,
+    body TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (news_id) REFERENCES news(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    KEY idx_news_comments (news_id)
   )`);
 }
 

@@ -66,9 +66,9 @@ exports.sendVerificationCode = async (email, code) => {
   try {
     console.log(`📤 Отправка письма на ${email}...`);
     const result = await transporter.sendMail({
-      from: `"Nota Studio" <${process.env.SMTP_USER}>`,
+      from: `"Нота бель" <${process.env.SMTP_USER}>`,
       to: email,
-      subject: 'Код подтверждения email - Nota Studio',
+      subject: 'Код подтверждения email — Нота бель',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #FF0032;">Подтверждение email</h2>
@@ -93,6 +93,37 @@ exports.sendVerificationCode = async (email, code) => {
   }
 };
 
+// Отправка ссылки для сброса пароля
+exports.sendPasswordResetLink = async (email, resetUrl) => {
+  const transporter = createTransporter();
+  if (!transporter) {
+    console.log(`[MOCK EMAIL] Ссылка сброса пароля для ${email}: ${resetUrl}`);
+    return { success: true, mock: true };
+  }
+
+  try {
+    await transporter.sendMail({
+      from: `"Нота бель" <${process.env.SMTP_USER}>`,
+      to: email,
+      subject: 'Сброс пароля — Нота бель',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #111;">Сброс пароля</h2>
+          <p>Вы запросили сброс пароля. Перейдите по ссылке, чтобы задать новый пароль:</p>
+          <p style="margin: 24px 0;">
+            <a href="${resetUrl}" style="display: inline-block; background: #111; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Сменить пароль</a>
+          </p>
+          <p style="color: #666; font-size: 14px;">Ссылка действительна 1 час. Если вы не запрашивали сброс, проигнорируйте это письмо.</p>
+        </div>
+      `
+    });
+    return { success: true };
+  } catch (error) {
+    console.error('Ошибка отправки письма сброса пароля:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 // Отправка файла трека пользователю
 exports.sendTrackToUser = async (userEmail, userName, recordingType, musicStyle, filePath, fileName) => {
   const transporter = createTransporter();
@@ -110,9 +141,9 @@ exports.sendTrackToUser = async (userEmail, userName, recordingType, musicStyle,
     }
 
     await transporter.sendMail({
-      from: `"Nota Studio" <${process.env.SMTP_USER}>`,
+      from: `"Нота бель" <${process.env.SMTP_USER}>`,
       to: userEmail,
-      subject: `Ваш трек готов - Nota Studio`,
+      subject: `Ваш трек готов — Нота бель`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #FF0032;">Ваш трек готов!</h2>

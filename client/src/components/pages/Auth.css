@@ -27,6 +27,27 @@
   font-style: italic;
 }
 
+.auth-hint {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.875rem;
+  margin: -1rem 0 1rem 0;
+}
+
+.auth-forgot {
+  text-align: center;
+  margin-top: -0.5rem;
+}
+
+.auth-forgot .switch-button {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
 .auth-form {
   display: flex;
   flex-direction: column;

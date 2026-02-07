@@ -184,7 +184,7 @@ function SupportPanel() {
             {selected ? (
               <>
                 <div className="sp-chat-title">
-                  <div className="sp-chip">USER</div>
+                  <div className="sp-chip">ПОЛЬЗОВАТЕЛЬ</div>
                   <div>
                     <div className="sp-chat-name">{selected.user_name}</div>
                     <div className="sp-chat-sub">{selected.user_email}</div>
@@ -200,7 +200,7 @@ function SupportPanel() {
           <div className="sp-chat-body" ref={chatBodyRef}>
             {messages.length === 0 ? (
               <div className="sp-empty-chat">
-                <div className="sp-empty-icon">Chat</div>
+                <div className="sp-empty-icon">Чат</div>
                 <div className="sp-empty-text">Начните диалог с пользователем</div>
               </div>
             ) : (
@@ -212,7 +212,7 @@ function SupportPanel() {
                   <div className="sp-bubble">
                     <div className="sp-bubble-top">
                       <span className="sp-role">
-                        {m.sender_role === 'user' ? 'USER' : m.sender_role.toUpperCase()}
+                        {m.sender_role === 'user' ? 'ПОЛЬЗОВАТЕЛЬ' : (m.sender_role === 'support' ? 'ПОДДЕРЖКА' : m.sender_role)}
                       </span>
                       <span className="sp-time">
                         {new Date(m.created_at).toLocaleTimeString('ru-RU', {

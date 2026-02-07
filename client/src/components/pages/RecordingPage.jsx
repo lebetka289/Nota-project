@@ -55,6 +55,8 @@ function RecordingPage({ onNavigate }) {
     { id: 'home-recording', title: 'Запись на дому', description: 'Профессиональная сводка трека по жанрам', icon: 'HOME' }
   ];
 
+  const VIDEO_CLIP_PRICE = 10000;
+
   const formatPhone = (v) => {
     const digits = v.replace(/\D/g, '');
     if (digits.length === 0) return '';
@@ -434,7 +436,10 @@ function RecordingPage({ onNavigate }) {
           recordingType: 'with-music',
           musicStyle: wmMusicGenre || selectedStyle,
           studioBookingId: data.bookingId,
-          purchasedBeatId: selectedBeatId || undefined
+          purchasedBeatId: selectedBeatId || undefined,
+          songsCount: Number(wmSongsCount),
+          dateStart: wmDateStart,
+          dateEnd: wmDateEnd
         }));
         localStorage.setItem('pendingStudioBookingId', String(data.bookingId));
         localStorage.setItem('paymentPageSummaryOnly', '1');
@@ -672,6 +677,11 @@ function RecordingPage({ onNavigate }) {
               <li>Профессиональный видеоклип с записи песни</li>
               <li>Профессиональный свет</li>
             </ul>
+          </div>
+          <div className="video-clip-pricing">
+            <h3>Стоимость и как проходит съёмка</h3>
+            <p className="video-clip-price-amount">Видеоклип: <strong>{VIDEO_CLIP_PRICE.toLocaleString('ru-RU')} ₽</strong></p>
+            <p className="video-clip-price-desc">Как проходит: создаём сценарий по вашей истории или песне, затем профессиональная съёмка видеоклипа с светом и записью.</p>
           </div>
           <button type="button" className="video-clip-order" onClick={handleVideoOrder}>
             Заказать видеоклип

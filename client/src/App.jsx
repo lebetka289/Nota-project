@@ -19,6 +19,7 @@ import BeatsTable from './components/pages/BeatsTable'
 import Footer from './components/layout/Footer'
 import SupportChat from './components/widgets/SupportChat'
 import Auth from './components/pages/Auth'
+import ResetPassword from './components/pages/ResetPassword'
 import Cart from './components/pages/Cart'
 import Favorites from './components/pages/Favorites'
 import AdminPanel from './components/pages/AdminPanel'
@@ -29,8 +30,18 @@ import { useAuth } from './context/AuthContext'
 import './App.css'
 
 function App() {
-  const [currentPage, setCurrentPage] = useState('home')
+  const [currentPage, setCurrentPage] = useState(() => {
+    const p = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
+    if (p.get('page') === 'reset-password' && p.get('token')) return 'reset-password'
+    return 'home'
+  })
   const [searchQuery, setSearchQuery] = useState('')
+  const [navState, setNavState] = useState(null)
+  const [resetPasswordToken, setResetPasswordToken] = useState(() => {
+    const p = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
+    if (p.get('page') === 'reset-password') return p.get('token') || null
+    return null
+  })
   const { loading } = useAuth()
 
   if (loading) {
@@ -41,19 +52,30 @@ function App() {
     )
   }
 
-  const handleNavigate = (page, searchParam = null) => {
+  const handleNavigate = (page, searchParam = null, state = null) => {
     setCurrentPage(page)
     if (searchParam !== null) {
       setSearchQuery(searchParam)
     } else {
       setSearchQuery('')
     }
+    setNavState(state ?? null)
   }
 
   const renderPage = () => {
     switch (currentPage) {
       case 'auth':
         return <Auth onSuccess={setCurrentPage} />
+      case 'reset-password':
+        return (
+          <ResetPassword
+            token={resetPasswordToken}
+            onSuccess={(page) => {
+              setCurrentPage(page)
+              setResetPasswordToken(null)
+            }}
+          />
+        )
       case 'shop':
         return <BeatsTable initialSearch={searchQuery} />
       case 'cart':
@@ -73,7 +95,12 @@ function App() {
       case 'beatmaker':
         return <BeatmakerPanel />
       case 'news':
-        return <NewsPage />
+        return (
+          <NewsPage
+            openNewsId={navState?.openNewsId ?? null}
+            onOpenNewsHandled={() => setNavState((s) => (s?.openNewsId ? null : s))}
+          />
+        )
       case 'reporter':
         return <ReporterPanel />
       case 'studio-booking':

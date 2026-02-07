@@ -1,8 +1,9 @@
+const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { query, queryOne } = require('../../config/database');
 const { JWT_SECRET } = require('../middlewares/auth');
-const { sendVerificationCode } = require('../services/email.service');
+const { sendVerificationCode, sendPasswordResetLink } = require('../services/email.service');
 
 // Регистрация
 exports.register = async (req, res) => {
@@ -222,6 +223,68 @@ exports.resendVerificationCode = async (req, res) => {
     }
   } catch (error) {
     console.error('Ошибка повторной отправки кода:', error);
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+};
+
+// Запрос сброса пароля: отправка ссылки на email
+exports.forgotPassword = async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: 'Укажите email' });
+  }
+  try {
+    const user = await queryOne('SELECT id, email FROM users WHERE email = ?', [email]);
+    if (!user) {
+      return res.status(404).json({ error: 'Пользователь с таким email не найден' });
+    }
+    const token = crypto.randomBytes(32).toString('hex');
+    const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 час
+    await query(
+      'UPDATE users SET password_reset_token = ?, password_reset_expires = ? WHERE id = ?',
+      [token, expires, user.id]
+    );
+    const baseUrl = process.env.FRONTEND_URL || (process.env.NODE_ENV === 'production' ? `${req.protocol || 'https'}://${req.get('host')}` : 'http://localhost:5173');
+    const resetUrl = `${baseUrl.replace(/\/$/, '')}?page=reset-password&token=${token}`;
+    const result = await sendPasswordResetLink(email, resetUrl);
+    if (result.mock) {
+      console.warn(`⚠️ Ссылка сброса пароля для ${email}: ${resetUrl}`);
+    }
+    if (!result.success) {
+      return res.status(500).json({ error: 'Не удалось отправить письмо. Попробуйте позже.' });
+    }
+    res.json({ success: true, message: 'Ссылка для сброса пароля отправлена на email' });
+  } catch (error) {
+    console.error('Ошибка forgotPassword:', error);
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+};
+
+// Смена пароля по токену из ссылки
+exports.resetPassword = async (req, res) => {
+  const { token, password } = req.body;
+  if (!token || !password) {
+    return res.status(400).json({ error: 'Токен и новый пароль обязательны' });
+  }
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'Пароль должен быть не менее 6 символов' });
+  }
+  try {
+    const user = await queryOne(
+      'SELECT id FROM users WHERE password_reset_token = ? AND password_reset_expires > NOW()',
+      [token]
+    );
+    if (!user) {
+      return res.status(400).json({ error: 'Ссылка недействительна или истекла. Запросите сброс пароля снова.' });
+    }
+    const hashed = await bcrypt.hash(password, 10);
+    await query(
+      'UPDATE users SET password = ?, password_reset_token = NULL, password_reset_expires = NULL WHERE id = ?',
+      [hashed, user.id]
+    );
+    res.json({ success: true, message: 'Пароль успешно изменён' });
+  } catch (error) {
+    console.error('Ошибка resetPassword:', error);
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 };

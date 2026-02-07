@@ -17,6 +17,13 @@ const getUserFromAuthHeader = async (req) => {
   }
 };
 
+// Опциональная авторизация — не возвращает 401, только заполняет req.user при валидном токене
+const optionalAuthenticateToken = async (req, res, next) => {
+  const user = await getUserFromAuthHeader(req);
+  if (user) req.user = user;
+  next();
+};
+
 // Middleware для проверки токена
 const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -72,6 +79,7 @@ const isSupportOrAdmin = (req, res, next) => {
 module.exports = {
   JWT_SECRET,
   getUserFromAuthHeader,
+  optionalAuthenticateToken,
   authenticateToken,
   isAdmin,
   isBeatmakerOrAdmin,

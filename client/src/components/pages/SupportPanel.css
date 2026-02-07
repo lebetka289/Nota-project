@@ -245,6 +245,7 @@
 
 .sp-bubble {
   max-width: 75%;
+  min-width: 0;
   border: 1px solid var(--border);
   background: var(--asos-white);
   padding: 0.75rem 1rem;
@@ -287,8 +288,11 @@
 .sp-text {
   color: var(--text);
   white-space: pre-wrap;
-  line-height: 1.5;
+  line-height: 1.4;
   font-size: 0.875rem;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
 }
 
 .sp-msg.support .sp-text {

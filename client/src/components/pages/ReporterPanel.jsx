@@ -16,7 +16,8 @@ function ReporterPanel() {
     title: '',
     content: '',
     image_url: '',
-    published: false
+    published: false,
+    tags: ''
   });
   const [imageUploadType, setImageUploadType] = useState('url'); // 'url' or 'file'
   const [imageFile, setImageFile] = useState(null);
@@ -123,7 +124,8 @@ function ReporterPanel() {
         },
         body: JSON.stringify({
           ...formData,
-          image_url: finalImageUrl
+          image_url: finalImageUrl,
+          tags: formData.tags ? formData.tags.split(',').map((t) => t.trim()).filter(Boolean) : []
         })
       });
 
@@ -166,11 +168,13 @@ function ReporterPanel() {
 
   const handleEdit = (newsItem) => {
     setEditingNews(newsItem);
+    const tagsStr = Array.isArray(newsItem.tags) ? newsItem.tags.join(', ') : (newsItem.tags || '');
     setFormData({
       title: newsItem.title,
       content: newsItem.content,
       image_url: newsItem.image_url || '',
-      published: newsItem.published === 1
+      published: newsItem.published === 1,
+      tags: tagsStr
     });
     setImageUploadType(newsItem.image_url ? 'url' : 'url');
     setImageFile(null);
@@ -183,7 +187,8 @@ function ReporterPanel() {
       title: '',
       content: '',
       image_url: '',
-      published: false
+      published: false,
+      tags: ''
     });
     setImageUploadType('url');
     setImageFile(null);
@@ -244,13 +249,23 @@ function ReporterPanel() {
           </div>
 
           <div className="form-group">
+            <label>Теги (через запятую)</label>
+            <input
+              type="text"
+              value={formData.tags}
+              onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+              placeholder="например: хип-хоп, концерт, премьера"
+            />
+          </div>
+
+          <div className="form-group">
             <label>Содержание *</label>
             <textarea
               value={formData.content}
               onChange={(e) => setFormData({ ...formData, content: e.target.value })}
               required
               rows="10"
-              placeholder="Текст новости"
+              placeholder="Текст новости. Можно вставлять ссылки — они будут кликабельны, например: https://example.com"
             />
           </div>
 
@@ -304,7 +319,7 @@ function ReporterPanel() {
             )}
             {imagePreview && (
               <div className="image-preview">
-                <img src={imagePreview} alt="Preview" />
+                <img src={imagePreview} alt="Превью" />
               </div>
             )}
           </div>

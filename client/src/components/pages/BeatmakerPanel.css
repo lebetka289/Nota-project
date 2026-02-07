@@ -3,6 +3,9 @@
   margin: 2rem auto;
   padding: 0 2rem;
   color: var(--text);
+  background: var(--asos-light-gray, #f5f5f5);
+  min-height: 60vh;
+  border-radius: var(--radius);
 }
 
 .bm-head h1 {
@@ -22,7 +25,7 @@
   padding: 16px;
   border-radius: var(--radius);
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--asos-white);
 }
 
 .bm-grid {
@@ -48,8 +51,8 @@
 .bm-field select {
   height: 44px;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(10, 11, 15, 0.60);
+  border: 1px solid var(--border);
+  background: var(--asos-white);
   color: var(--text);
   padding: 0 12px;
   outline: none;
@@ -91,7 +94,7 @@
   padding: 16px;
   border-radius: var(--radius);
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--asos-white);
 }
 
 .bm-list-title {
@@ -110,8 +113,8 @@
 
 .bm-item {
   border-radius: var(--radius);
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  background: var(--asos-gray, #f9f9f9);
   padding: 14px;
   display: grid;
   grid-template-columns: 1fr auto;
@@ -134,19 +137,20 @@
 
 .bm-pill {
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  background: var(--asos-white);
   padding: 6px 10px;
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   font-size: 11px;
+  color: var(--text);
 }
 
 .bm-pill.accent {
   border-color: rgba(225, 6, 47, 0.55);
   background: rgba(225, 6, 47, 0.12);
-  color: #fff;
+  color: var(--asos-black);
 }
 
 .bm-item audio {
@@ -168,8 +172,8 @@
   justify-content: center;
   padding: 0 12px;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  background: var(--asos-white);
   color: var(--text);
   font-weight: 900;
   letter-spacing: 0.06em;
@@ -244,7 +248,7 @@
 .bm-booking-card {
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--asos-white);
   padding: 1.25rem;
   display: flex;
   flex-direction: column;
@@ -408,6 +412,70 @@
 .bm-booking-upload-label {
   cursor: pointer;
   display: inline-block;
+}
+
+.bm-date-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+  margin-bottom: 1rem;
+}
+
+.bm-date-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+.bm-date-input {
+  height: 40px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--border);
+  background: var(--asos-white);
+  color: var(--text);
+  font-size: 0.875rem;
+}
+
+.bm-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.bm-pagination-btn {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border);
+  background: var(--asos-white);
+  color: var(--text);
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.bm-pagination-btn:hover:not(:disabled) {
+  border-color: var(--asos-black);
+  background: var(--asos-gray);
+}
+
+.bm-pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bm-pagination-info {
+  font-size: 0.875rem;
+  color: var(--muted);
+  font-weight: 600;
 }
 
 @media (max-width: 980px) {

@@ -166,7 +166,7 @@ function Cart() {
       {cartItems.length === 0 ? (
         <div className="empty-cart">
           <p>Ваша корзина пуста</p>
-          <span className="cart-icon">Cart</span>
+          <span className="cart-icon">Корзина</span>
         </div>
       ) : (
         <>
@@ -217,9 +217,11 @@ function Cart() {
               <div className="total-label">Итого:</div>
               <div className="total-amount">{total.toFixed(2)} ₽</div>
             </div>
-            <button className="checkout-button" onClick={checkout} disabled={paying || cartItems.length === 0}>
-              {paying ? 'Обработка…' : 'Перейти к оплате'}
-            </button>
+            {cartItems.length > 1 && (
+              <button className="checkout-button" onClick={checkout} disabled={paying}>
+                {paying ? 'Обработка…' : 'Перейти к оплате'}
+              </button>
+            )}
           </div>
         </>
       )}

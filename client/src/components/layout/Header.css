@@ -132,6 +132,14 @@
 }
 
 /* Search results dropdown */
+.asos-search-results-divider {
+  height: 1px;
+  margin: 0.5rem 1rem;
+  background: var(--border, #e5e5e5);
+  flex-shrink: 0;
+  border: none;
+}
+
 .asos-search-results {
   position: absolute;
   top: 100%;
@@ -214,16 +222,19 @@
 .asos-search-result-title {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #000;
-  margin: 0 0 0.25rem 0;
+  color: #111;
+  margin: 0 0 0.2rem 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .asos-search-result-meta {
-  font-size: 0.75rem;
-  color: #666;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #111;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .asos-actions {
