@@ -29,6 +29,7 @@ function RecordingPage({ onNavigate }) {
   const videoRefs = useRef({});
   const [purchasedBeats, setPurchasedBeats] = useState([]);
   const [selectedBeatId, setSelectedBeatId] = useState(null);
+  const [selectedBeatIds, setSelectedBeatIds] = useState([]);
   const [showBeatDropdown, setShowBeatDropdown] = useState(false);
   const beatDropdownRef = useRef(null);
 
@@ -51,8 +52,8 @@ function RecordingPage({ onNavigate }) {
   const [wmFormSent, setWmFormSent] = useState(false);
 
   const recordingTypes = [
-    { id: 'with-music', title: 'Запись с покупкой музыки', description: 'Выберите бит и запишите на него свой вокал', icon: 'MIC' },
-    { id: 'home-recording', title: 'Запись на дому', description: 'Профессиональная сводка трека по жанрам', icon: 'HOME' }
+    { id: 'with-music', title: 'Запись с покупкой музыки', description: 'Выберите бит и запишите на него свой вокал', icon: 'MIC', image: '/recording/type-music.png' },
+    { id: 'home-recording', title: 'Запись на дому', description: 'Профессиональная сводка трека по жанрам', icon: 'HOME', image: '/recording/type-home.png' }
   ];
 
   const VIDEO_CLIP_PRICE = 10000;
@@ -310,12 +311,14 @@ function RecordingPage({ onNavigate }) {
     setIsPopupOpen(true);
     document.body.style.overflow = 'hidden';
     setSelectedBeatId(null);
+    setSelectedBeatIds([]);
   };
 
   const closePopup = () => {
     setIsPopupOpen(false);
     setSelectedStyle(null);
     setSelectedBeatId(null);
+    setSelectedBeatIds([]);
     setWmFormSent(false);
     setWmFirstName('');
     setWmLastName('');
@@ -349,8 +352,9 @@ function RecordingPage({ onNavigate }) {
       musicStyle: styleId,
       styleName: style.name
     };
-    if (selectedType === 'with-music' && selectedBeatId) {
-      recordingData.purchasedBeatId = selectedBeatId;
+    if (selectedType === 'with-music' && selectedBeatIds.length > 0) {
+      recordingData.purchasedBeatIds = selectedBeatIds;
+      recordingData.purchasedBeatId = selectedBeatIds[0];
     }
     localStorage.setItem('recordingData', JSON.stringify(recordingData));
     try {
@@ -360,7 +364,8 @@ function RecordingPage({ onNavigate }) {
         body: JSON.stringify({
           recording_type: selectedType,
           music_style: styleId,
-          purchased_beat_id: selectedType === 'with-music' ? selectedBeatId : null
+          purchased_beat_id: selectedType === 'with-music' && selectedBeatIds.length > 0 ? selectedBeatIds[0] : null,
+          purchased_beat_ids: selectedType === 'with-music' ? selectedBeatIds : undefined
         })
       });
     } catch (error) {
@@ -378,6 +383,10 @@ function RecordingPage({ onNavigate }) {
       setWmMusicGenre(styleId);
       return;
     }
+    if (selectedType === 'home-recording') {
+      setWmMusicGenre(styleId);
+      return;
+    }
     if (!user) {
       setAlert({ message: 'Войдите в аккаунт, чтобы продолжить', type: 'warning' });
       if (onNavigate) onNavigate('auth');
@@ -385,6 +394,11 @@ function RecordingPage({ onNavigate }) {
       return;
     }
     proceedToPayment();
+  };
+
+  const toggleBeatSelection = (beatId) => {
+    setSelectedBeatIds(prev => prev.includes(beatId) ? prev.filter(id => id !== beatId) : [...prev, beatId]);
+    setSelectedBeatId(null);
   };
 
   const handleWithMusicFormSubmit = async (e) => {
@@ -424,7 +438,8 @@ function RecordingPage({ onNavigate }) {
           needProducer: wmNeedProducer === 'yes',
           needEngineer: wmNeedEngineer === 'yes',
           additionalInfo: wmAdditionalInfo.trim() || undefined,
-          beatId: selectedBeatId || undefined
+          beatIds: selectedBeatIds.length > 0 ? selectedBeatIds : undefined,
+          beatId: selectedBeatIds.length > 0 ? selectedBeatIds[0] : undefined
         })
       });
       const data = await r.json().catch(() => ({}));
@@ -436,7 +451,8 @@ function RecordingPage({ onNavigate }) {
           recordingType: 'with-music',
           musicStyle: wmMusicGenre || selectedStyle,
           studioBookingId: data.bookingId,
-          purchasedBeatId: selectedBeatId || undefined,
+          purchasedBeatIds: selectedBeatIds.length > 0 ? selectedBeatIds : undefined,
+          purchasedBeatId: selectedBeatIds.length > 0 ? selectedBeatIds[0] : undefined,
           songsCount: Number(wmSongsCount),
           dateStart: wmDateStart,
           dateEnd: wmDateEnd
@@ -446,6 +462,72 @@ function RecordingPage({ onNavigate }) {
       }
       setWmFormSent(true);
       setAlert({ message: 'Заявка отправлена.', type: 'success' });
+      closePopup();
+      if (onNavigate) onNavigate('payment');
+    } catch (err) {
+      setAlert({ message: err.message || 'Не удалось отправить данные', type: 'error' });
+    } finally {
+      setWmFormSubmitting(false);
+    }
+  };
+
+  const handleHomeRecordingFormSubmit = async (e) => {
+    e.preventDefault();
+    if (!wmFirstName.trim()) { setAlert({ message: 'Укажите имя', type: 'error' }); return; }
+    if (!wmLastName.trim()) { setAlert({ message: 'Укажите фамилию', type: 'error' }); return; }
+    if (!wmPhone.trim()) { setAlert({ message: 'Укажите телефон', type: 'error' }); return; }
+    if (!wmMusicGenre && !selectedStyle) { setAlert({ message: 'Выберите стиль музыки (кнопками выше)', type: 'error' }); return; }
+    const count = Number(wmSongsCount);
+    if (!Number.isInteger(count) || count < 1) { setAlert({ message: 'Укажите количество песен (не менее 1)', type: 'error' }); return; }
+    if (!wmDateStart) { setAlert({ message: 'Укажите дату начала', type: 'error' }); return; }
+    if (!wmDateEnd) { setAlert({ message: 'Укажите дату окончания', type: 'error' }); return; }
+    if (new Date(wmDateEnd) < new Date(wmDateStart)) { setAlert({ message: 'Дата окончания не может быть раньше даты начала', type: 'error' }); return; }
+    if (wmHasMusicians === '') { setAlert({ message: 'Ответьте: есть ли музыканты или группа?', type: 'error' }); return; }
+    if (wmNeedSessionMusicians === '') { setAlert({ message: 'Ответьте: нужны ли сессионные музыканты?', type: 'error' }); return; }
+    if (wmNeedProducer === '') { setAlert({ message: 'Ответьте: нужен ли продюсер?', type: 'error' }); return; }
+    if (wmNeedEngineer === '') { setAlert({ message: 'Ответьте: нужен ли звукорежиссёр?', type: 'error' }); return; }
+
+    setWmFormSubmitting(true);
+    setAlert(null);
+    try {
+      const r = await fetch(`${API_URL}/studio-booking/home-recording`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: wmFirstName.trim(),
+          lastName: wmLastName.trim(),
+          phone: wmPhone.trim(),
+          intlPrefix: wmIntlPrefix.trim() || undefined,
+          musicGenre: wmMusicGenre || selectedStyle,
+          songsCount: Number(wmSongsCount),
+          musicDetails: wmMusicDetails.trim() || undefined,
+          dateStart: wmDateStart,
+          dateEnd: wmDateEnd,
+          hasMusicians: wmHasMusicians === 'yes',
+          needSessionMusicians: wmNeedSessionMusicians === 'yes',
+          needProducer: wmNeedProducer === 'yes',
+          needEngineer: wmNeedEngineer === 'yes',
+          additionalInfo: wmAdditionalInfo.trim() || undefined
+        })
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.message || data.error || 'Ошибка отправки');
+      if (data.bookingId) {
+        const prev = JSON.parse(localStorage.getItem('recordingData') || '{}');
+        localStorage.setItem('recordingData', JSON.stringify({
+          ...prev,
+          recordingType: 'home-recording',
+          musicStyle: wmMusicGenre || selectedStyle,
+          studioBookingId: data.bookingId,
+          songsCount: Number(wmSongsCount),
+          dateStart: wmDateStart,
+          dateEnd: wmDateEnd
+        }));
+        localStorage.setItem('pendingStudioBookingId', String(data.bookingId));
+        localStorage.setItem('paymentPageSummaryOnly', '1');
+      }
+      setWmFormSent(true);
+      setAlert({ message: 'Заявка принята.', type: 'success' });
       closePopup();
       if (onNavigate) onNavigate('payment');
     } catch (err) {
@@ -568,6 +650,7 @@ function RecordingPage({ onNavigate }) {
 
   const currentType = recordingTypes.find(type => type.id === selectedType);
   const selectedBeat = purchasedBeats.find(b => b.id === selectedBeatId);
+  const selectedBeatsList = purchasedBeats.filter(b => selectedBeatIds.includes(b.id));
 
   return (
     <div className="recording-page">
@@ -581,7 +664,8 @@ function RecordingPage({ onNavigate }) {
         {recordingTypes.map(type => (
           <div
             key={type.id}
-            className={`recording-type-card ${selectedType === type.id ? 'active' : ''}`}
+            className={`recording-type-card ${selectedType === type.id ? 'active' : ''} ${type.image ? 'recording-type-card--with-image' : ''}`}
+            style={type.image ? { backgroundImage: `url(${type.image})` } : undefined}
             onClick={() => handleTypeSelect(type.id)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
@@ -593,7 +677,7 @@ function RecordingPage({ onNavigate }) {
             role="button"
             aria-label={type.title}
           >
-            <div className="type-icon">{type.icon}</div>
+            {!type.image && <div className="type-icon">{type.icon}</div>}
             <h3 className="type-title">{type.title}</h3>
             <p className="type-description">{type.description}</p>
           </div>
@@ -643,8 +727,7 @@ function RecordingPage({ onNavigate }) {
                   <video
                     className="video-clip-video"
                     src={work.video}
-                    poster={work.image}
-                    preload="metadata"
+                    preload="auto"
                     playsInline
                     ref={(el) => {
                       if (el) {
@@ -808,42 +891,40 @@ function RecordingPage({ onNavigate }) {
               <p className="popup-description">{currentType?.description}</p>
             </div>
 
-            {/* Выбор купленного бита для with-music */}
+            {/* Выбор купленных битов для with-music (несколько) */}
             {selectedType === 'with-music' && purchasedBeats.length > 0 && (
               <div className="purchased-beats-selector" ref={beatDropdownRef}>
-                <label className="purchased-beats-label">Использовать купленный бит:</label>
+                <label className="purchased-beats-label">Купленные биты для записи (можно выбрать несколько):</label>
                 <div className="purchased-beats-dropdown">
                   <button
                     type="button"
                     className="purchased-beats-dropdown-btn"
                     onClick={() => setShowBeatDropdown(!showBeatDropdown)}
                   >
-                    {selectedBeat ? selectedBeat.title : 'Выберите бит'}
+                    {selectedBeatsList.length > 0
+                      ? `Выбрано битов: ${selectedBeatsList.length}${selectedBeatsList.length === 1 ? ` — ${selectedBeatsList[0].title}` : ''}`
+                      : 'Выберите один или несколько битов'}
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M6 9l6 6 6-6" />
                     </svg>
                   </button>
                   {showBeatDropdown && (
                     <div className="purchased-beats-dropdown-menu">
-                      <button
-                        type="button"
-                        className={`purchased-beats-dropdown-item ${!selectedBeatId ? 'selected' : ''}`}
-                        onClick={() => {
-                          setSelectedBeatId(null);
-                          setShowBeatDropdown(false);
-                        }}
-                      >
-                        Не использовать купленный бит
-                      </button>
+                      {selectedBeatIds.length > 0 && (
+                        <button
+                          type="button"
+                          className="purchased-beats-dropdown-item"
+                          onClick={() => setSelectedBeatIds([])}
+                        >
+                          Снять выбор
+                        </button>
+                      )}
                       {purchasedBeats.map((beat) => (
                         <button
                           key={beat.id}
                           type="button"
-                          className={`purchased-beats-dropdown-item ${selectedBeatId === beat.id ? 'selected' : ''}`}
-                          onClick={() => {
-                            setSelectedBeatId(beat.id);
-                            setShowBeatDropdown(false);
-                          }}
+                          className={`purchased-beats-dropdown-item ${selectedBeatIds.includes(beat.id) ? 'selected' : ''}`}
+                          onClick={() => toggleBeatSelection(beat.id)}
                         >
                           <div className="purchased-beats-dropdown-cover">
                             {beat.cover_url ? (
@@ -856,6 +937,7 @@ function RecordingPage({ onNavigate }) {
                             <div className="purchased-beats-dropdown-title">{beat.title}</div>
                             <div className="purchased-beats-dropdown-meta">{beat.genre} • BPM {beat.bpm}</div>
                           </div>
+                          {selectedBeatIds.includes(beat.id) && <span className="purchased-beats-check">✓</span>}
                         </button>
                       ))}
                     </div>
@@ -892,6 +974,96 @@ function RecordingPage({ onNavigate }) {
                 ))}
               </div>
             </div>
+
+            {/* Форма уточнения для «Запись на дому» — та же система, без упоминания скидки */}
+            {selectedType === 'home-recording' && selectedStyle && (
+              <div className="popup-wm-form-wrap">
+                <form className="popup-wm-form" onSubmit={handleHomeRecordingFormSubmit}>
+                  <h3 className="popup-wm-form-title">Уточнение для записи на дому</h3>
+                  <div className="popup-wm-form-grid">
+                    <div className="popup-wm-row popup-wm-row-inline">
+                      <div className="popup-wm-field">
+                        <label>Имя *</label>
+                        <input type="text" placeholder="Имя" value={wmFirstName} onChange={(e) => setWmFirstName(e.target.value)} />
+                      </div>
+                      <div className="popup-wm-field">
+                        <label>Фамилия *</label>
+                        <input type="text" placeholder="Фамилия" value={wmLastName} onChange={(e) => setWmLastName(e.target.value)} />
+                      </div>
+                    </div>
+                    <div className="popup-wm-row popup-wm-row-inline">
+                      <div className="popup-wm-field">
+                        <label>Телефон *</label>
+                        <input type="tel" placeholder="+7 (999) 123-45-67" value={wmPhone} onChange={handleWmPhoneChange} />
+                      </div>
+                      <div className="popup-wm-field popup-wm-intl">
+                        <label>Межд. префикс</label>
+                        <input type="text" placeholder="+7" value={wmIntlPrefix} onChange={(e) => setWmIntlPrefix(e.target.value)} />
+                      </div>
+                    </div>
+                    <div className="popup-wm-row">
+                      <div className="popup-wm-field">
+                        <label>Количество песен *</label>
+                        <input type="number" min={1} placeholder="1" value={wmSongsCount} onChange={(e) => setWmSongsCount(e.target.value)} />
+                        <span className="popup-wm-hint">Сколько песен планируете записать?</span>
+                      </div>
+                    </div>
+                    <div className="popup-wm-row">
+                      <div className="popup-wm-field">
+                        <label>О вашей музыке</label>
+                        <textarea rows={3} placeholder="Опишите стиль и по возможности приложите ссылки на треки." value={wmMusicDetails} onChange={(e) => setWmMusicDetails(e.target.value)} />
+                      </div>
+                    </div>
+                    <div className="popup-wm-row">
+                      <span className="popup-wm-section-label">Когда хотите записаться?</span>
+                    </div>
+                    <div className="popup-wm-row popup-wm-row-inline">
+                      <div className="popup-wm-field">
+                        <label>Начало *</label>
+                        <input type="date" value={wmDateStart} onChange={(e) => setWmDateStart(e.target.value)} />
+                      </div>
+                      <div className="popup-wm-field">
+                        <label>Окончание *</label>
+                        <input type="date" value={wmDateEnd} onChange={(e) => setWmDateEnd(e.target.value)} />
+                      </div>
+                    </div>
+                    <div className="popup-wm-row popup-wm-radio-row">
+                      <span className="popup-wm-label">У вас есть музыканты или группа? *</span>
+                      <label className="popup-wm-radio"><input type="radio" name="hrHasMusicians" value="yes" checked={wmHasMusicians === 'yes'} onChange={() => setWmHasMusicians('yes')} /> Да</label>
+                      <label className="popup-wm-radio"><input type="radio" name="hrHasMusicians" value="no" checked={wmHasMusicians === 'no'} onChange={() => setWmHasMusicians('no')} /> Нет</label>
+                    </div>
+                    <div className="popup-wm-row popup-wm-radio-row">
+                      <span className="popup-wm-label">Нужны сессионные музыканты? *</span>
+                      <label className="popup-wm-radio"><input type="radio" name="hrNeedSession" value="yes" checked={wmNeedSessionMusicians === 'yes'} onChange={() => setWmNeedSessionMusicians('yes')} /> Да</label>
+                      <label className="popup-wm-radio"><input type="radio" name="hrNeedSession" value="no" checked={wmNeedSessionMusicians === 'no'} onChange={() => setWmNeedSessionMusicians('no')} /> Нет</label>
+                    </div>
+                    <div className="popup-wm-row popup-wm-radio-row">
+                      <span className="popup-wm-label">Нужен продюсер? *</span>
+                      <span className="popup-wm-hint">Рекомендуем «Да», если сомневаетесь.</span>
+                      <label className="popup-wm-radio"><input type="radio" name="hrNeedProducer" value="yes" checked={wmNeedProducer === 'yes'} onChange={() => setWmNeedProducer('yes')} /> Да</label>
+                      <label className="popup-wm-radio"><input type="radio" name="hrNeedProducer" value="no" checked={wmNeedProducer === 'no'} onChange={() => setWmNeedProducer('no')} /> Нет</label>
+                    </div>
+                    <div className="popup-wm-row popup-wm-radio-row">
+                      <span className="popup-wm-label">Нужен звукорежиссёр? *</span>
+                      <span className="popup-wm-hint">Рекомендуем «Да», если сомневаетесь.</span>
+                      <label className="popup-wm-radio"><input type="radio" name="hrNeedEngineer" value="yes" checked={wmNeedEngineer === 'yes'} onChange={() => setWmNeedEngineer('yes')} /> Да</label>
+                      <label className="popup-wm-radio"><input type="radio" name="hrNeedEngineer" value="no" checked={wmNeedEngineer === 'no'} onChange={() => setWmNeedEngineer('no')} /> Нет</label>
+                    </div>
+                    <div className="popup-wm-row">
+                      <div className="popup-wm-field">
+                        <label>Всё остальное</label>
+                        <textarea rows={2} placeholder="Пожелания, особые запросы" value={wmAdditionalInfo} onChange={(e) => setWmAdditionalInfo(e.target.value)} />
+                      </div>
+                    </div>
+                    <div className="popup-wm-row popup-wm-submit-row">
+                      <button type="submit" className="popup-wm-submit" disabled={wmFormSubmitting}>
+                        {wmFormSubmitting ? 'Отправка…' : 'Отправить'}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            )}
 
             {/* Форма уточнения для «Запись с покупкой музыки» — передаётся битмейкеру */}
             {selectedType === 'with-music' && selectedStyle && (

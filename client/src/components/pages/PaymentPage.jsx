@@ -24,6 +24,7 @@ function PaymentPage({ recordingType, musicStyle, onNavigate }) {
   const finalType = recordingType || recordingData.recordingType || 'unknown';
   const finalStyle = musicStyle || recordingData.musicStyle || 'unknown';
   const purchasedBeatIdFromStorage = recordingData.purchasedBeatId || null;
+  const purchasedBeatIdsFromStorage = Array.isArray(recordingData.purchasedBeatIds) ? recordingData.purchasedBeatIds : [];
   const studioBookingIdFromStorage = recordingData.studioBookingId || null;
 
   const musicStylesNames = {
@@ -79,7 +80,7 @@ function PaymentPage({ recordingType, musicStyle, onNavigate }) {
   };
 
   const priceByType = {
-    'home-recording': 3500,
+    'home-recording': 6500,
     'own-music': 5000,
     'with-music': 7000,
     'video-clip': 15000
@@ -89,12 +90,13 @@ function PaymentPage({ recordingType, musicStyle, onNavigate }) {
   const PRICE_PER_TRACK = 1000;
   const EXTRA_DAYS_FEE = 200;
   const EXTRA_DAYS_THRESHOLD = 7;
+  const HOME_RECORDING_OFFSET = 500;
 
   const recordingPriceBreakdown = (() => {
     if (finalType === 'video-clip') {
       return { type: 'video-clip', total: VIDEO_CLIP_PRICE, tracks: 0, days: 0, tracksTotal: 0, extraDaysFee: 0 };
     }
-    if (finalType === 'with-music') {
+    if (finalType === 'with-music' || finalType === 'home-recording') {
       const tracks = Math.max(0, parseInt(recordingData.songsCount, 10) || 0);
       const start = recordingData.dateStart ? new Date(recordingData.dateStart) : null;
       const end = recordingData.dateEnd ? new Date(recordingData.dateEnd) : null;
@@ -104,7 +106,17 @@ function PaymentPage({ recordingType, musicStyle, onNavigate }) {
       }
       const tracksTotal = tracks * PRICE_PER_TRACK;
       const extraDaysFee = days > EXTRA_DAYS_THRESHOLD ? EXTRA_DAYS_FEE : 0;
-      return { type: 'with-music', total: tracksTotal + extraDaysFee, tracks, days, tracksTotal, extraDaysFee };
+      const totalBeforeOffset = (tracksTotal + extraDaysFee) || 7000;
+      const total = finalType === 'home-recording' ? Math.max(0, totalBeforeOffset - HOME_RECORDING_OFFSET) : totalBeforeOffset;
+      return {
+        type: finalType,
+        total,
+        tracks,
+        days,
+        tracksTotal,
+        extraDaysFee,
+        homeOffset: finalType === 'home-recording' ? HOME_RECORDING_OFFSET : 0
+      };
     }
     return null;
   })();
@@ -186,11 +198,12 @@ function PaymentPage({ recordingType, musicStyle, onNavigate }) {
         body: JSON.stringify({
           recording_type: finalType,
           music_style: finalStyle,
-          purchased_beat_id: finalType === 'with-music' ? (selectedBeatId || null) : null,
-          studio_booking_id: finalType === 'with-music' ? studioBookingIdFromStorage || null : null,
-          songs_count: finalType === 'with-music' ? recordingData.songsCount : undefined,
-          date_start: finalType === 'with-music' ? recordingData.dateStart : undefined,
-          date_end: finalType === 'with-music' ? recordingData.dateEnd : undefined
+          purchased_beat_id: finalType === 'with-music' ? (purchasedBeatIdsFromStorage[0] || selectedBeatId || null) : null,
+          purchased_beat_ids: finalType === 'with-music' && purchasedBeatIdsFromStorage.length > 0 ? purchasedBeatIdsFromStorage : undefined,
+          studio_booking_id: (finalType === 'with-music' || finalType === 'home-recording') ? studioBookingIdFromStorage || null : null,
+          songs_count: (finalType === 'with-music' || finalType === 'home-recording') ? recordingData.songsCount : undefined,
+          date_start: (finalType === 'with-music' || finalType === 'home-recording') ? recordingData.dateStart : undefined,
+          date_end: (finalType === 'with-music' || finalType === 'home-recording') ? recordingData.dateEnd : undefined
         })
       });
 
@@ -361,6 +374,16 @@ function PaymentPage({ recordingType, musicStyle, onNavigate }) {
                     <p className="price-breakdown-desc">Как проходит: запись вокала на выбранный бит; при записи более 7 дней добавляется 200 ₽.</p>
                   </>
                 )}
+                {recordingPriceBreakdown.type === 'home-recording' && (
+                  <>
+                    <p className="price-breakdown-line">Треки: {recordingPriceBreakdown.tracks} × {PRICE_PER_TRACK.toLocaleString('ru-RU')} ₽ = {recordingPriceBreakdown.tracksTotal.toLocaleString('ru-RU')} ₽</p>
+                    <p className="price-breakdown-line">Продолжительность: {recordingPriceBreakdown.days > 0 ? `${recordingPriceBreakdown.days} дн.` : '—'} {recordingPriceBreakdown.days > EXTRA_DAYS_THRESHOLD ? `(более ${EXTRA_DAYS_THRESHOLD} дней: +${EXTRA_DAYS_FEE} ₽)` : ''}</p>
+                    {recordingPriceBreakdown.homeOffset > 0 && (
+                      <p className="price-breakdown-line">Запись на дому: −{recordingPriceBreakdown.homeOffset.toLocaleString('ru-RU')} ₽</p>
+                    )}
+                    <p className="price-breakdown-desc">Расчёт как у записи с покупкой музыки, дешевле на 500 ₽. При записи более 7 дней добавляется 200 ₽.</p>
+                  </>
+                )}
               </div>
             )}
             <div className="price-amount">
@@ -377,7 +400,7 @@ function PaymentPage({ recordingType, musicStyle, onNavigate }) {
                 </div>
               ) : (
                 <span className="price-value">
-                  {basePrice.toLocaleString('ru-RU')} ₽
+                  {finalPrice.toLocaleString('ru-RU')} ₽
                 </span>
               )}
             </div>

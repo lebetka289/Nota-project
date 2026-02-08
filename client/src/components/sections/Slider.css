@@ -27,7 +27,8 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.3));
+  background-size: cover;
+  background-position: center;
   opacity: 0;
   transform: translateX(100%);
   transition: all 0.6s ease-in-out;

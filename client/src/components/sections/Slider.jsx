@@ -5,18 +5,11 @@ function Slider() {
   const [currentSlide, setCurrentSlide] = useState(0);
   
   const slides = [
-    {
-      title: 'Профессиональная звукозапись',
-      description: 'Современное оборудование и опытные звукорежиссеры'
-    },
-    {
-      title: 'Сведение и мастеринг',
-      description: 'Качественная обработка ваших треков'
-    },
-    {
-      title: 'Студийное время',
-      description: 'Аренда студии для ваших проектов'
-    }
+    { title: 'Профессиональная звукозапись', description: 'Современное оборудование и опытные звукорежиссеры', image: '/slider/slide1.png' },
+    { title: 'Сведение и мастеринг', description: 'Качественная обработка ваших треков', image: '/slider/slide2.png' },
+    { title: 'Студийное время', description: 'Аренда студии для ваших проектов', image: '/slider/slide3.png' },
+    { title: 'Живые выступления', description: 'Съёмка концертов и клипов', image: '/slider/slide4.png' },
+    { title: 'Ваша музыка — наш приоритет', description: 'От идеи до готового трека', image: '/slider/slide5.png' }
   ];
 
   // Автоплей каждые 5 секунд (всегда работает)
@@ -47,6 +40,9 @@ function Slider() {
           <div
             key={index}
             className={`slide ${index === currentSlide ? 'active' : ''}`}
+            style={{
+              backgroundImage: `linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.5)), url(${slide.image})`
+            }}
           >
             <h2>{slide.title}</h2>
             <p>{slide.description}</p>

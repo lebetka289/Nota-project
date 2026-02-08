@@ -8,7 +8,7 @@ const EXTRA_DAYS_THRESHOLD = 7;
 
 const recordingPriceRub = (recordingType, opts = {}) => {
   if (recordingType === 'video-clip') return VIDEO_CLIP_PRICE;
-  if (recordingType === 'with-music') {
+  const withMusicPrice = () => {
     const tracks = Math.max(0, parseInt(opts.songs_count, 10) || 0);
     const start = opts.date_start ? new Date(opts.date_start) : null;
     const end = opts.date_end ? new Date(opts.date_end) : null;
@@ -17,12 +17,12 @@ const recordingPriceRub = (recordingType, opts = {}) => {
       days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
     }
     return tracks * PRICE_PER_TRACK + (days > EXTRA_DAYS_THRESHOLD ? EXTRA_DAYS_FEE : 0) || 7000;
-  }
+  };
+  if (recordingType === 'with-music') return withMusicPrice();
+  if (recordingType === 'home-recording') return Math.max(0, withMusicPrice() - 500);
   switch (recordingType) {
     case 'buy-music':
       return 3000;
-    case 'home-recording':
-      return 3500;
     case 'own-music':
     default:
       return 5000;
@@ -82,8 +82,10 @@ exports.getUserDiscountInfo = async (req, res) => {
 
 // Создать платеж для записи
 exports.createRecordingPayment = async (req, res) => {
-  const { recording_id, recording_type, music_style, purchased_beat_id, studio_booking_id, songs_count, date_start, date_end } = req.body;
+  const { recording_id, recording_type, music_style, purchased_beat_id, purchased_beat_ids, studio_booking_id, songs_count, date_start, date_end } = req.body;
   const priceOpts = { songs_count, date_start, date_end };
+  const beatIds = Array.isArray(purchased_beat_ids) ? purchased_beat_ids.map(id => Number(id)).filter(Boolean) : [];
+  const firstBeatId = beatIds.length > 0 ? beatIds[0] : (purchased_beat_id != null ? Number(purchased_beat_id) : null);
 
   try {
     let recording = null;
@@ -100,26 +102,27 @@ exports.createRecordingPayment = async (req, res) => {
         return res.status(400).json({ error: 'recording_type и music_style обязательны' });
       }
 
-      // Проверяем, что purchased_beat_id принадлежит пользователю
-      if (purchased_beat_id) {
+      // Проверяем, что все выбранные биты куплены пользователем
+      for (const bid of beatIds.length ? beatIds : (firstBeatId ? [firstBeatId] : [])) {
         const purchase = await queryOne(
           "SELECT beat_id FROM beat_purchases WHERE user_id = ? AND beat_id = ? AND status = 'paid'",
-          [req.user.id, purchased_beat_id]
+          [req.user.id, bid]
         );
         if (!purchase) {
-          return res.status(400).json({ error: 'Выбранный бит не куплен или не найден' });
+          return res.status(400).json({ error: 'Один из выбранных битов не куплен или не найден' });
         }
       }
 
-      // Получаем скидку пользователя
+      // Получаем скидку 50%: при 3+ оплаченных записях; после использования снова после следующих 3 записей
       const discountPercent = await getUserDiscount(req.user.id);
       const basePrice = recordingPriceRub(recording_type, priceOpts);
       const discountAmount = (basePrice * discountPercent) / 100;
       const finalPrice = basePrice - discountAmount;
 
+      const beatIdsJson = beatIds.length > 0 ? JSON.stringify(beatIds) : null;
       const r = await query(
-        "INSERT INTO user_recordings (user_id, recording_type, music_style, price, status, purchased_beat_id, discount_percent, studio_booking_id) VALUES (?, ?, ?, ?, 'pending', ?, ?, ?)",
-        [req.user.id, recording_type, music_style, finalPrice, purchased_beat_id || null, discountPercent, studio_booking_id || null]
+        "INSERT INTO user_recordings (user_id, recording_type, music_style, price, status, purchased_beat_id, purchased_beat_ids, discount_percent, studio_booking_id) VALUES (?, ?, ?, ?, 'pending', ?, ?, ?, ?)",
+        [req.user.id, recording_type, music_style, finalPrice, firstBeatId || null, beatIdsJson, discountPercent, studio_booking_id || null]
       );
       recording = await queryOne(
         "SELECT * FROM user_recordings WHERE id = ? AND user_id = ?",

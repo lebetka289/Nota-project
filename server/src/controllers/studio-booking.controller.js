@@ -170,7 +170,60 @@ exports.submitWithMusicClarification = async (req, res) => {
     const needProducer = Boolean(body.needProducer);
     const needEngineer = Boolean(body.needEngineer);
     const additionalInfo = body.additionalInfo ? String(body.additionalInfo).trim() : null;
-    const beatId = body.beatId != null ? Number(body.beatId) : null;
+    const beatIds = Array.isArray(body.beatIds) ? body.beatIds.map(id => Number(id)).filter(Boolean) : [];
+    const beatId = beatIds.length > 0 ? beatIds[0] : (body.beatId != null ? Number(body.beatId) : null);
+    const beatIdsJson = beatIds.length > 0 ? JSON.stringify(beatIds) : null;
+
+    await query(
+      `INSERT INTO studio_bookings (
+        first_name, last_name, phone, email, intl_prefix, website,
+        music_genre, songs_count, music_details, date_start, date_end,
+        has_musicians, need_session_musicians, need_producer, need_engineer,
+        additional_info, status, beat_id, beat_ids
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?, ?)`,
+      [
+        firstName, lastName, phone, '', (intlPrefix || ''), null,
+        musicGenre, songsCount, musicDetails, dateStart, dateEnd,
+        hasMusicians ? 1 : 0, needSessionMusicians ? 1 : 0, needProducer ? 1 : 0, needEngineer ? 1 : 0,
+        additionalInfo, beatId, beatIdsJson
+      ]
+    );
+    const bookingId = (await queryOne('SELECT LAST_INSERT_ID() as id')).id;
+    await query('UPDATE studio_bookings SET source = ? WHERE id = ?', ['with-music', bookingId]);
+
+    return res.status(200).json({ success: true, message: 'Данные отправлены битмейкеру', bookingId });
+  } catch (dbError) {
+    if (dbError.code === 'ER_NO_SUCH_TABLE') {
+      return res.status(200).json({ success: true, message: 'Данные приняты' });
+    }
+    console.error('Ошибка сохранения уточнения with-music:', dbError);
+    return res.status(500).json({ error: 'Ошибка сервера', message: 'Не удалось отправить данные.' });
+  }
+};
+
+// Форма «Запись на дому» — те же поля, что и с покупкой музыки; цена обычная (без упоминания скидки)
+exports.submitHomeRecordingClarification = async (req, res) => {
+  const body = req.body || {};
+  const err = validateWithMusicBody(body);
+  if (err) {
+    return res.status(400).json({ error: err, message: err });
+  }
+
+  try {
+    const firstName = String(body.firstName).trim();
+    const lastName = String(body.lastName).trim();
+    const phone = String(body.phone).trim();
+    const intlPrefix = body.intlPrefix ? String(body.intlPrefix).trim() : null;
+    const musicGenre = String(body.musicGenre).trim();
+    const songsCount = Number(body.songsCount);
+    const musicDetails = body.musicDetails ? String(body.musicDetails).trim() : null;
+    const dateStart = String(body.dateStart).trim();
+    const dateEnd = String(body.dateEnd).trim();
+    const hasMusicians = Boolean(body.hasMusicians);
+    const needSessionMusicians = Boolean(body.needSessionMusicians);
+    const needProducer = Boolean(body.needProducer);
+    const needEngineer = Boolean(body.needEngineer);
+    const additionalInfo = body.additionalInfo ? String(body.additionalInfo).trim() : null;
 
     await query(
       `INSERT INTO studio_bookings (
@@ -183,18 +236,18 @@ exports.submitWithMusicClarification = async (req, res) => {
         firstName, lastName, phone, '', (intlPrefix || ''), null,
         musicGenre, songsCount, musicDetails, dateStart, dateEnd,
         hasMusicians ? 1 : 0, needSessionMusicians ? 1 : 0, needProducer ? 1 : 0, needEngineer ? 1 : 0,
-        additionalInfo, beatId
+        additionalInfo, null
       ]
     );
     const bookingId = (await queryOne('SELECT LAST_INSERT_ID() as id')).id;
-    await query('UPDATE studio_bookings SET source = ? WHERE id = ?', ['with-music', bookingId]);
+    await query('UPDATE studio_bookings SET source = ? WHERE id = ?', ['home-recording', bookingId]);
 
-    return res.status(200).json({ success: true, message: 'Данные отправлены битмейкеру', bookingId });
+    return res.status(200).json({ success: true, message: 'Заявка принята', bookingId });
   } catch (dbError) {
     if (dbError.code === 'ER_NO_SUCH_TABLE') {
       return res.status(200).json({ success: true, message: 'Данные приняты' });
     }
-    console.error('Ошибка сохранения уточнения with-music:', dbError);
+    console.error('Ошибка сохранения уточнения home-recording:', dbError);
     return res.status(500).json({ error: 'Ошибка сервера', message: 'Не удалось отправить данные.' });
   }
 };

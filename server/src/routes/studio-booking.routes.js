@@ -5,6 +5,7 @@ const { authenticateToken, isBeatmakerOrAdmin } = require('../middlewares/auth')
 
 router.post('/', studioBookingController.submitBooking);
 router.post('/with-music', studioBookingController.submitWithMusicClarification);
+router.post('/home-recording', studioBookingController.submitHomeRecordingClarification);
 router.get('/list', authenticateToken, isBeatmakerOrAdmin, studioBookingController.getListForBeatmaker);
 router.get('/:id', authenticateToken, studioBookingController.getBookingById);
 router.patch('/:id/status', authenticateToken, isBeatmakerOrAdmin, studioBookingController.updateBookingStatus);

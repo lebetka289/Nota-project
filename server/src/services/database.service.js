@@ -162,6 +162,7 @@ async function initDatabase() {
   await ensureColumn('user_recordings', 'paid_at', "TIMESTAMP NULL");
   await ensureColumn('user_recordings', 'track_file_path', "VARCHAR(255) NULL");
   await ensureColumn('user_recordings', 'purchased_beat_id', "INT NULL");
+  await ensureColumn('user_recordings', 'purchased_beat_ids', 'JSON NULL');
   await ensureColumn('user_recordings', 'discount_percent', "DECIMAL(5, 2) DEFAULT 0");
   await ensureColumn('user_recordings', 'studio_booking_id', 'INT NULL');
 
@@ -215,6 +216,7 @@ async function initDatabase() {
   await ensureColumn('studio_bookings', 'status', "VARCHAR(50) DEFAULT 'new'");
   await ensureColumn('studio_bookings', 'source', "VARCHAR(50) DEFAULT 'form'");
   await ensureColumn('studio_bookings', 'beat_id', 'INT NULL');
+  await ensureColumn('studio_bookings', 'beat_ids', 'JSON NULL');
   await ensureColumn('studio_bookings', 'user_id', 'INT NULL');
   await ensureColumn('studio_bookings', 'recording_id', 'INT NULL');
 

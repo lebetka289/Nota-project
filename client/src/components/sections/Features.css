@@ -1,4 +1,4 @@
-/* ASOS-Style Features Section */
+/* ASOS-Style Features Section — без тёмного фона, без обводки у слайдов */
 .features-section {
   padding: 5rem 2rem;
   max-width: 1400px;
@@ -6,6 +6,14 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.features-section .section-header h2 {
+  color: var(--text, #111);
+}
+
+.features-section .section-subtitle {
+  color: var(--muted, #555);
 }
 
 .features-header {
@@ -65,15 +73,37 @@
   width: 100%;
   height: 100%;
   background: var(--asos-white);
+  background-size: cover;
+  background-position: center;
   padding: 3rem 2rem;
   text-align: center;
-  border: 1px solid var(--border);
+  border: none;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: var(--shadow-soft);
+}
+
+.feature-slide-content--with-image {
+  border: none;
+}
+
+.feature-slide-content--with-image .feature-title {
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* Мелкий текст на выбранном (центральном) слайде с фото — белый */
+.feature-slide-center .feature-slide-content--with-image .feature-description {
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.feature-slide-content--with-image .feature-description {
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 /* Center slide */
@@ -84,8 +114,11 @@
 }
 
 .feature-slide-center .feature-slide-content {
-  border-color: var(--asos-black);
   box-shadow: var(--shadow-lg);
+}
+
+.feature-slide-center .feature-slide-content--with-image {
+  border: none;
 }
 
 .feature-slide-center:hover .feature-slide-content {
@@ -134,22 +167,6 @@
   transform: translateX(0) scale(0.5) translateZ(-600px);
   opacity: 0;
   pointer-events: none;
-}
-
-/* Icon */
-.feature-icon {
-  font-size: 4rem;
-  margin-bottom: 1.5rem;
-  display: block;
-  transition: transform 0.4s ease;
-}
-
-.feature-slide-center .feature-icon {
-  transform: scale(1.1);
-}
-
-.feature-slide:hover .feature-icon {
-  transform: scale(1.15);
 }
 
 /* Title */
@@ -286,11 +303,6 @@
   
   .feature-slide-content {
     padding: 2rem 1.5rem;
-  }
-  
-  .feature-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
   }
   
   .feature-title {

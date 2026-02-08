@@ -244,7 +244,11 @@ exports.forgotPassword = async (req, res) => {
       'UPDATE users SET password_reset_token = ?, password_reset_expires = ? WHERE id = ?',
       [token, expires, user.id]
     );
-    const baseUrl = process.env.FRONTEND_URL || (process.env.NODE_ENV === 'production' ? `${req.protocol || 'https'}://${req.get('host')}` : 'http://localhost:5173');
+    // Ссылка на тот же хост и порт, на котором открыт сайт (или FRONTEND_URL)
+    const origin = req.get('Origin') || req.get('Referer');
+    const baseUrl = process.env.FRONTEND_URL
+      || (origin ? origin.replace(/\/$/, '').replace(/#.*$/, '').split('?')[0] : null)
+      || (process.env.NODE_ENV === 'production' ? `${req.protocol || 'https'}://${req.get('host')}`.replace(/:5000$/, ':5173') : 'http://localhost:5173');
     const resetUrl = `${baseUrl.replace(/\/$/, '')}?page=reset-password&token=${token}`;
     const result = await sendPasswordResetLink(email, resetUrl);
     if (result.mock) {

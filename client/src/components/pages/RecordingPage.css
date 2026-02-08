@@ -32,7 +32,7 @@
 
 .recording-page-header h1 {
   font-size: 3rem;
-  color: #fff;
+  color: #111;
   margin-bottom: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.14em;
@@ -53,6 +53,8 @@
 
 .recording-type-card {
   background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+  background-size: cover;
+  background-position: center;
   border: 2px solid #444;
   border-radius: 16px;
   padding: 2.5rem;
@@ -63,7 +65,45 @@
   overflow: hidden;
 }
 
-.recording-type-card::before {
+.recording-type-card--with-image {
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+}
+
+/* В выборе записи текст всегда белый */
+.recording-type-card .type-title,
+.recording-type-card .type-description {
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.recording-type-card--with-image .type-title,
+.recording-type-card--with-image .type-description {
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  position: relative;
+  z-index: 1;
+}
+
+/* Постоянный оверлей на карточках с фото, чтобы белый текст читался */
+.recording-type-card--with-image::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 14px;
+  pointer-events: none;
+  transition: background 0.35s ease;
+}
+
+.recording-type-card--with-image:hover::before {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.recording-type-card:not(.recording-type-card--with-image)::before {
   content: '';
   position: absolute;
   top: 0;
@@ -74,7 +114,7 @@
   transition: left 0.5s ease;
 }
 
-.recording-type-card:hover::before {
+.recording-type-card:not(.recording-type-card--with-image):hover::before {
   left: 100%;
 }
 
@@ -108,14 +148,14 @@
   line-height: 1.5;
 }
 
-/* Стили попапа такие же как в RecordingSelector */
+/* Модальное окно в стиле сайта — светлый фон */
 .recording-popup-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.9);
+  background-color: rgba(0, 0, 0, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -134,15 +174,15 @@
 }
 
 .recording-popup-content {
-  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+  background: #fff;
   border-radius: 20px;
   width: 1600px;
   max-width: 95vw;
   height: 800px;
   max-height: 95vh;
   position: relative;
-  border: 2px solid #444;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
   animation: slideUp 0.3s ease;
   display: flex;
   flex-direction: column;
@@ -165,9 +205,9 @@
   position: absolute;
   top: 1.5rem;
   right: 1.5rem;
-  background-color: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: #fff;
+  background-color: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  color: #333;
   width: 45px;
   height: 45px;
   border-radius: 50%;
@@ -181,20 +221,21 @@
 }
 
 .recording-popup-close:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: #eee;
+  border-color: #ccc;
   transform: rotate(90deg) scale(1.1);
 }
 
 .popup-header-content {
   padding: 3rem 3rem 2rem;
   text-align: center;
-  border-bottom: 2px solid #444;
+  border-bottom: 1px solid #e8e8e8;
   flex-shrink: 0;
 }
 
 .popup-title {
   font-size: 2.5rem;
-  color: #fff;
+  color: #111;
   margin: 0 0 1rem 0;
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -202,7 +243,7 @@
 
 .popup-description {
   font-size: 1.2rem;
-  color: #aaa;
+  color: #555;
   margin: 0;
 }
 
@@ -210,7 +251,7 @@
 .purchased-beats-selector {
   margin: 0 3rem 2rem;
   padding-bottom: 2rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid #e8e8e8;
   flex-shrink: 0;
 }
 
@@ -218,7 +259,7 @@
   display: block;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #fff;
+  color: #333;
   margin-bottom: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -231,9 +272,9 @@
 .purchased-beats-dropdown-btn {
   width: 100%;
   padding: 0.875rem 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #fff;
+  background: #f8f8f8;
+  border: 1px solid #e0e0e0;
+  color: #333;
   font-size: 0.875rem;
   cursor: pointer;
   display: flex;
@@ -243,8 +284,8 @@
 }
 
 .purchased-beats-dropdown-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.3);
+  background: #f0f0f0;
+  border-color: #ccc;
 }
 
 .purchased-beats-dropdown-btn svg {
@@ -258,11 +299,12 @@
   left: 0;
   right: 0;
   margin-top: 4px;
-  background: #1a1a1a;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: #fff;
+  border: 1px solid #e0e0e0;
   max-height: 300px;
   overflow-y: auto;
   z-index: 1000;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
 .purchased-beats-dropdown-item {
@@ -270,8 +312,8 @@
   padding: 0.75rem 1rem;
   background: none;
   border: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  color: #fff;
+  border-bottom: 1px solid #eee;
+  color: #333;
   font-size: 0.875rem;
   text-align: left;
   cursor: pointer;
@@ -286,18 +328,24 @@
 }
 
 .purchased-beats-dropdown-item:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: #f5f5f5;
 }
 
 .purchased-beats-dropdown-item.selected {
-  background: rgba(225, 6, 47, 0.2);
+  background: rgba(225, 6, 47, 0.12);
+}
+
+.purchased-beats-check {
+  margin-left: auto;
+  color: rgba(225, 6, 47, 0.9);
+  font-weight: bold;
 }
 
 .purchased-beats-dropdown-cover {
   width: 48px;
   height: 48px;
   flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.05);
+  background: #f0f0f0;
   overflow: hidden;
 }
 
@@ -314,7 +362,7 @@
   align-items: center;
   justify-content: center;
   font-size: 1.25rem;
-  color: rgba(255, 255, 255, 0.3);
+  color: rgba(0, 0, 0, 0.25);
 }
 
 .purchased-beats-dropdown-info {
@@ -474,7 +522,7 @@
 /* Жанр музыки — большие кнопки в попапе (запись с покупкой музыки) */
 .popup-wm-genres-wrap {
   padding: 1rem 3rem 1.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid #e8e8e8;
   flex-shrink: 0;
 }
 
@@ -500,7 +548,7 @@
 /* Форма уточнения в попапе (запись с покупкой музыки) — стиль сайта */
 .popup-wm-form-wrap {
   padding: 1.5rem 3rem 2rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid #e8e8e8;
   flex-shrink: 0;
 }
 
@@ -511,7 +559,7 @@
 
 .popup-wm-form-title {
   font-size: 1rem;
-  color: #fff;
+  color: #111;
   margin: 0 0 1.25rem 0;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -549,7 +597,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: #aaa;
+  color: #555;
 }
 
 .popup-wm-field input,
@@ -557,9 +605,9 @@
 .popup-wm-field textarea {
   width: 100%;
   padding: 0.65rem 0.85rem;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #fff;
+  background: #f8f8f8;
+  border: 1px solid #e0e0e0;
+  color: #333;
   font-size: 0.875rem;
   border-radius: 8px;
   transition: border-color 0.2s;
@@ -579,7 +627,7 @@
 
 .popup-wm-hint {
   font-size: 0.75rem;
-  color: #888;
+  color: #666;
   margin-top: 0.2rem;
 }
 
@@ -588,7 +636,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #aaa;
+  color: #555;
   margin-bottom: 0.25rem;
 }
 
@@ -607,7 +655,7 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.875rem;
-  color: #fff;
+  color: #333;
   cursor: pointer;
 }
 
@@ -625,7 +673,7 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.8rem;
-  color: #aaa;
+  color: #555;
   cursor: pointer;
 }
 
@@ -637,7 +685,7 @@
 .popup-wm-submit-row {
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid #e8e8e8;
 }
 
 .popup-wm-submit {
@@ -674,7 +722,7 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   margin: 0 0 0.75rem;
-  color: var(--text, #fff);
+  color: #111;
 }
 
 .popup-wm-how-steps {
@@ -682,7 +730,7 @@
   padding-left: 1.25rem;
   font-size: 0.9rem;
   line-height: 1.5;
-  color: var(--muted, rgba(255, 255, 255, 0.75));
+  color: #555;
 }
 
 .popup-wm-how-steps li {
@@ -692,16 +740,16 @@
 .popup-wm-proceed-wrap {
   margin-top: 1.25rem;
   padding-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid #e8e8e8;
 }
 
 .popup-wm-proceed {
   width: 100%;
   max-width: 280px;
   padding: 0.85rem 1.5rem;
-  background: #333;
-  border: 1px solid #555;
-  color: #fff;
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+  color: #333;
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -712,7 +760,7 @@
 }
 
 .popup-wm-proceed:hover {
-  background: #444;
+  background: #e8e8e8;
   border-color: rgba(225, 6, 47, 0.5);
 }
 
