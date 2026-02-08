@@ -4,11 +4,11 @@ import './Features.css';
 function Features() {
   const features = [
     { title: 'Профессиональное оборудование', description: 'Современная техника от ведущих производителей для качественной записи', image: '/features/feature1.png' },
-    { icon: 'MIC', title: 'Опытные звукорежиссеры', description: 'Команда профессионалов с многолетним опытом работы в индустрии', image: '/features/feature2.png' },
-    { icon: 'MIX', title: 'Сведение и мастеринг', description: 'Полный цикл обработки треков от записи до финального мастеринга', image: '/features/feature3.png' },
-    { icon: 'TIME', title: 'Гибкий график', description: 'Работаем в удобное для вас время, включая выходные дни', image: '/features/feature4.png' },
-    { icon: 'PRICE', title: 'Доступные цены', description: 'Честные цены без скрытых доплат и прозрачная система скидок', image: '/features/feature5.png' },
-    { icon: 'FAST', title: 'Быстрая работа', description: 'Оперативная обработка заказов и соблюдение всех сроков', image: '/features/feature6.png' }
+    { title: 'Опытные звукорежиссеры', description: 'Команда профессионалов с многолетним опытом работы в индустрии', image: '/features/feature2.png' },
+    { title: 'Сведение и мастеринг', description: 'Полный цикл обработки треков от записи до финального мастеринга', image: '/features/feature3.png' },
+    { title: 'Гибкий график', description: 'Работаем в удобное для вас время, включая выходные дни', image: '/features/feature4.png' },
+    { title: 'Доступные цены', description: 'Честные цены без скрытых доплат и прозрачная система скидок', image: '/features/feature5.png' },
+    { title: 'Быстрая работа', description: 'Оперативная обработка заказов и соблюдение всех сроков', image: '/features/feature6.png' }
   ];
 
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -84,7 +84,7 @@ function Features() {
                   className={`feature-slide-content ${feature.image ? 'feature-slide-content--with-image' : ''}`}
                   style={feature.image ? { backgroundImage: `linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.5)), url(${feature.image})` } : undefined}
                 >
-                  <div className="feature-icon">{feature.icon}</div>
+                
                   <h3 className="feature-title">{feature.title}</h3>
                   <p className="feature-description">{feature.description}</p>
                 </div>
