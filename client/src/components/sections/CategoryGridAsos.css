@@ -1,0 +1,64 @@
+/* ASOS-style: 4 equal image blocks */
+.category-grid-asos {
+  padding: 0;
+  background: #fff;
+}
+
+.category-grid-asos-inner {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  max-width: 100%;
+}
+
+.category-grid-asos-card {
+  display: block;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  overflow: hidden;
+}
+
+.category-grid-asos-img {
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  background: #f0f0f0;
+}
+
+.category-grid-asos-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.5s ease;
+}
+
+.category-grid-asos-card:hover .category-grid-asos-img img {
+  transform: scale(1.05);
+}
+
+.category-grid-asos-title {
+  display: block;
+  padding: 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #000;
+}
+
+@media (max-width: 1024px) {
+  .category-grid-asos-inner {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .category-grid-asos-inner {
+    grid-template-columns: 1fr;
+  }
+}

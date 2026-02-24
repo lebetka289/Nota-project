@@ -1,11 +1,14 @@
+/* ASOS-Style Hero Slider */
 .slider-container {
   position: relative;
   width: 100%;
-  max-width: 1600px;
-  margin: 2rem auto;
-  height: 600px;
+  height: 70vh;
+  min-height: 500px;
+  max-height: 800px;
   overflow: hidden;
-  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .slider {
@@ -24,13 +27,12 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background:
-    radial-gradient(900px 500px at 10% 10%, rgba(225, 6, 47, 0.18), transparent 55%),
-    linear-gradient(180deg, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.4));
+  background-size: cover;
+  background-position: center;
   opacity: 0;
   transform: translateX(100%);
   transition: all 0.6s ease-in-out;
-  padding: 4rem;
+  padding: 4rem 2rem;
   text-align: center;
 }
 
@@ -40,23 +42,55 @@
 }
 
 .slide h2 {
-  font-size: 4rem;
-  margin-bottom: 1.5rem;
-  color: #fff;
-  text-shadow: 2px 4px 8px rgba(0, 0, 0, 0.8);
+  font-size: clamp(3rem, 10vw, 8rem);
+  margin-bottom: 2rem;
+  color: var(--asos-white);
+  text-shadow: 2px 4px 8px rgba(0, 0, 0, 0.3);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: -0.05em;
   font-weight: 900;
+  font-style: italic;
+  text-align: center;
+  max-width: 1200px;
+  line-height: 0.95;
 }
 
 .slide p {
-  font-size: 1.4rem;
+  font-size: clamp(1rem, 2vw, 1.25rem);
   color: rgba(255, 255, 255, 0.9);
-  max-width: 700px;
-  font-weight: 300;
+  max-width: 600px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
 }
 
-/* Навигация справа снизу */
+/* CTA Buttons */
+.slide-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 2rem;
+  justify-content: center;
+}
+
+.slide-cta-btn {
+  background: var(--asos-white);
+  color: var(--asos-black);
+  padding: 1rem 3rem;
+  font-size: 0.75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.slide-cta-btn:hover {
+  background: var(--asos-black);
+  color: var(--asos-white);
+}
+
+/* Navigation Controls */
 .slider-controls {
   position: absolute;
   bottom: 2rem;
@@ -67,7 +101,7 @@
   z-index: 10;
 }
 
-/* Индикаторы слайдов */
+/* Slider Dots */
 .slider-dots {
   display: flex;
   gap: 8px;
@@ -76,9 +110,9 @@
 
 .dot {
   position: relative;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 0;
   border: none;
   background-color: rgba(255, 255, 255, 0.4);
   cursor: pointer;
@@ -87,17 +121,15 @@
 }
 
 .dot:hover {
-  background-color: rgba(255, 255, 255, 0.7);
-  transform: scale(1.2);
+  background-color: rgba(255, 255, 255, 0.8);
 }
 
 .dot.active {
-  background-color: rgba(225, 6, 47, 0.8);
-  width: 12px;
-  height: 12px;
+  background-color: var(--asos-white);
+  width: 24px;
 }
 
-/* Анимация прогресса (круговая заливка) */
+/* Progress animation */
 .dot-progress {
   position: absolute;
   top: 50%;
@@ -109,7 +141,7 @@
 }
 
 .progress-ring {
-  stroke-dasharray: 100.53; /* 2 * π * r = 2 * 3.14159 * 16 */
+  stroke-dasharray: 100.53;
   stroke-dashoffset: 100.53;
   transform-origin: center;
   transform: rotate(-90deg);
@@ -117,50 +149,46 @@
 }
 
 @keyframes progressAnimation {
-  from {
-    stroke-dashoffset: 100.53;
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
+  from { stroke-dashoffset: 100.53; }
+  to { stroke-dashoffset: 0; }
 }
 
-/* Кнопки навигации */
+/* Navigation Buttons */
 .slider-buttons {
   display: flex;
-  gap: 8px;
+  gap: 4px;
 }
 
 .slider-btn {
   background-color: rgba(0, 0, 0, 0.5);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  width: 36px;
-  height: 36px;
-  border-radius: 4px;
-  font-size: 1.4rem;
+  color: var(--asos-white);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  width: 40px;
+  height: 40px;
+  border-radius: 0;
+  font-size: 1.25rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
+  font-weight: 300;
 }
 
 .slider-btn:hover {
-  background-color: rgba(225, 6, 47, 0.9);
-  border-color: rgba(225, 6, 47, 1);
-  transform: scale(1.05);
+  background-color: var(--asos-black);
+  border-color: var(--asos-black);
 }
 
 .slider-btn:active {
   transform: scale(0.95);
 }
 
+/* Responsive */
 @media (max-width: 768px) {
   .slider-container {
-    height: 400px;
-    margin: 1rem;
+    height: 60vh;
+    min-height: 400px;
   }
   
   .slide {
@@ -168,11 +196,11 @@
   }
   
   .slide h2 {
-    font-size: 2.2rem;
+    font-size: 2.5rem;
   }
   
   .slide p {
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
   
   .slider-controls {
@@ -182,23 +210,17 @@
   }
   
   .slider-btn {
-    width: 32px;
-    height: 32px;
-    font-size: 1.2rem;
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
   }
   
   .dot {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
   
   .dot.active {
-    width: 10px;
-    height: 10px;
-  }
-  
-  .dot-progress {
-    width: 24px;
-    height: 24px;
+    width: 20px;
   }
 }

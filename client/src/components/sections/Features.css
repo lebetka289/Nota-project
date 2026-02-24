@@ -1,0 +1,442 @@
+/* ASOS-Style Features Section — без тёмного фона, без обводки у слайдов */
+.features-section {
+  padding: 5rem 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.features-section .section-header h2 {
+  color: var(--text, #111);
+}
+
+.features-section .section-subtitle {
+  color: var(--muted, #555);
+}
+
+.features-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  max-width: 600px;
+}
+
+.features-title {
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  font-weight: 900;
+  text-transform: uppercase;
+  font-style: italic;
+  letter-spacing: -0.02em;
+  margin: 0 0 1rem;
+}
+
+.features-subtitle {
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+/* Carousel */
+.features-carousel {
+  position: relative;
+  width: 100%;
+  max-width: 1200px;
+  height: 450px;
+  margin: 2rem auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 1500px;
+}
+
+.carousel-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Slides */
+.feature-slide {
+  position: absolute;
+  width: 380px;
+  height: 360px;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  transform-style: preserve-3d;
+}
+
+.feature-slide-content {
+  width: 100%;
+  height: 100%;
+  background: var(--asos-white);
+  background-size: cover;
+  background-position: center;
+  padding: 3rem 2rem;
+  text-align: center;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-soft);
+}
+
+.feature-slide-content--with-image {
+  border: none;
+}
+
+.feature-slide-content--with-image .feature-title {
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* Мелкий текст на выбранном (центральном) слайде с фото — белый */
+.feature-slide-center .feature-slide-content--with-image .feature-description {
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.feature-slide-content--with-image .feature-description {
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* Center slide */
+.feature-slide-center {
+  z-index: 10;
+  transform: translateX(0) scale(1) translateZ(0);
+  opacity: 1;
+}
+
+.feature-slide-center .feature-slide-content {
+  box-shadow: var(--shadow-lg);
+}
+
+.feature-slide-center .feature-slide-content--with-image {
+  border: none;
+}
+
+.feature-slide-center:hover .feature-slide-content {
+  transform: scale(1.02);
+}
+
+/* Right slide (near) */
+.feature-slide-right {
+  z-index: 5;
+  transform: translateX(320px) scale(0.85) translateZ(-200px);
+  opacity: 0.7;
+}
+
+.feature-slide-right:hover {
+  transform: translateX(280px) scale(0.88) translateZ(-150px);
+}
+
+/* Left slide (near) */
+.feature-slide-left {
+  z-index: 5;
+  transform: translateX(-320px) scale(0.85) translateZ(-200px);
+  opacity: 0.7;
+}
+
+.feature-slide-left:hover {
+  transform: translateX(-280px) scale(0.88) translateZ(-150px);
+}
+
+/* Right slide (far) */
+.feature-slide-right-back {
+  z-index: 2;
+  transform: translateX(550px) scale(0.7) translateZ(-400px);
+  opacity: 0.4;
+}
+
+/* Left slide (far) */
+.feature-slide-left-back {
+  z-index: 2;
+  transform: translateX(-550px) scale(0.7) translateZ(-400px);
+  opacity: 0.4;
+}
+
+/* Hidden slides */
+.feature-slide-hidden {
+  z-index: 1;
+  transform: translateX(0) scale(0.5) translateZ(-600px);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Title */
+.feature-title {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: var(--asos-black);
+  margin: 0 0 1rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-style: normal;
+}
+
+/* Description */
+.feature-description {
+  font-size: 0.875rem;
+  line-height: 1.7;
+  color: var(--muted);
+  margin: 0;
+}
+
+.feature-slide-center .feature-description {
+  color: var(--text-secondary);
+}
+
+/* Navigation Buttons */
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 50px;
+  height: 50px;
+  background: var(--asos-white);
+  border: 2px solid var(--asos-black);
+  color: var(--asos-black);
+  font-size: 1.5rem;
+  font-weight: 300;
+  cursor: pointer;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.carousel-btn:hover {
+  background: var(--asos-black);
+  color: var(--asos-white);
+}
+
+.carousel-btn:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.carousel-btn-prev {
+  left: 0;
+}
+
+.carousel-btn-next {
+  right: 0;
+}
+
+/* Dots */
+.carousel-dots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 2rem;
+  z-index: 15;
+}
+
+.carousel-dot {
+  width: 8px;
+  height: 8px;
+  border: 1px solid var(--border-2);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+.carousel-dot:hover {
+  border-color: var(--asos-black);
+}
+
+.carousel-dot.active {
+  background: var(--asos-black);
+  border-color: var(--asos-black);
+  width: 24px;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .features-carousel {
+    height: 400px;
+  }
+  
+  .feature-slide {
+    width: 340px;
+    height: 320px;
+  }
+  
+  .feature-slide-right {
+    transform: translateX(280px) scale(0.8) translateZ(-200px);
+  }
+  
+  .feature-slide-left {
+    transform: translateX(-280px) scale(0.8) translateZ(-200px);
+  }
+  
+  .feature-slide-right-back {
+    transform: translateX(480px) scale(0.65) translateZ(-400px);
+  }
+  
+  .feature-slide-left-back {
+    transform: translateX(-480px) scale(0.65) translateZ(-400px);
+  }
+}
+
+@media (max-width: 768px) {
+  .features-section {
+    padding: 3rem 1rem;
+  }
+  
+  .features-carousel {
+    height: 350px;
+    margin: 1.5rem auto;
+  }
+  
+  .feature-slide {
+    width: 280px;
+    height: 280px;
+  }
+  
+  .feature-slide-content {
+    padding: 2rem 1.5rem;
+  }
+  
+  .feature-title {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .feature-description {
+    font-size: 0.8rem;
+  }
+  
+  /* On mobile, show only center slide */
+  .feature-slide-right,
+  .feature-slide-left,
+  .feature-slide-right-back,
+  .feature-slide-left-back {
+    opacity: 0;
+    pointer-events: none;
+  }
+  
+  .carousel-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 1.25rem;
+  }
+  
+  .carousel-btn-prev {
+    left: 0.5rem;
+  }
+  
+  .carousel-btn-next {
+    right: 0.5rem;
+  }
+  
+  .carousel-dots {
+    margin-top: 1.5rem;
+  }
+}
+
+/* Битмейкеры в секции «Почему выбирают нас» */
+.features-beatmakers-wrap {
+  width: 100%;
+  max-width: 900px;
+  margin-top: 3.5rem;
+  padding-top: 2.5rem;
+  border-top: 1px solid var(--border, #eee);
+}
+
+.features-beatmakers-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text, #111);
+  margin: 0 0 0.5rem 0;
+  text-align: center;
+}
+
+.features-beatmakers-sub {
+  font-size: 0.95rem;
+  color: var(--muted, #666);
+  margin: 0 0 1.5rem 0;
+  text-align: center;
+}
+
+.features-beatmakers-loading {
+  text-align: center;
+  color: var(--muted);
+  margin: 0;
+}
+
+.features-beatmakers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 2rem;
+  justify-items: center;
+}
+
+.features-beatmaker-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.features-beatmaker-avatar-wrap {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+  margin-bottom: 1rem;
+  flex-shrink: 0;
+}
+
+.features-beatmaker-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.features-beatmaker-avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.features-beatmaker-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text, #111);
+  margin-bottom: 0.75rem;
+}
+
+.features-beatmaker-book-btn {
+  padding: 0.6rem 1.25rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #fff;
+  background: rgba(225, 6, 47, 0.9);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.features-beatmaker-book-btn:hover {
+  background: rgba(225, 6, 47, 1);
+  transform: translateY(-1px);
+}

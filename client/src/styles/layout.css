@@ -1,0 +1,166 @@
+/* ============================================
+   ASOS-STYLE LAYOUT SYSTEM
+   ============================================ */
+
+:root {
+  --container-max-width: 1400px;
+  --container-padding: 2rem;
+  --section-spacing: 5rem;
+  --content-max-width: 1000px;
+}
+
+/* Containers */
+.container {
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: 0 var(--container-padding);
+  width: 100%;
+}
+
+.container-narrow {
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: 0 var(--container-padding);
+  width: 100%;
+}
+
+/* Sections */
+.section {
+  padding: var(--section-spacing) 0;
+  width: 100%;
+}
+
+.section-sm {
+  padding: calc(var(--section-spacing) * 0.5) 0;
+}
+
+.section-lg {
+  padding: calc(var(--section-spacing) * 1.5) 0;
+}
+
+/* Section headers */
+.section-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.section-header h2 {
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  font-weight: 900;
+  color: var(--text);
+  margin: 0 0 1rem 0;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  font-style: italic;
+  line-height: 1.1;
+}
+
+.section-subtitle {
+  font-size: 0.875rem;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* Text alignment */
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+/* Flex utilities */
+.flex { display: flex; }
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.flex-column { flex-direction: column; }
+.flex-wrap { flex-wrap: wrap; }
+.flex-gap { gap: 1.5rem; }
+.flex-gap-sm { gap: 0.75rem; }
+.flex-gap-lg { gap: 2rem; }
+
+/* Margins */
+.mt-auto { margin-top: auto; }
+.mb-auto { margin-bottom: auto; }
+.mx-auto { margin-left: auto; margin-right: auto; }
+.my-auto { margin-top: auto; margin-bottom: auto; }
+
+/* Cards */
+.card {
+  background: var(--asos-white);
+  padding: 2rem;
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  border-color: var(--asos-black);
+  box-shadow: var(--shadow);
+}
+
+.card-sm {
+  padding: 1.25rem;
+}
+
+.card-lg {
+  padding: 2.5rem;
+}
+
+/* Grids */
+.grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.grid-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+.grid-auto {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  :root {
+    --container-padding: 1.5rem;
+    --section-spacing: 4rem;
+  }
+  
+  .grid-4 { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --container-padding: 1rem;
+    --section-spacing: 3rem;
+  }
+  
+  .section-header {
+    margin-bottom: 2rem;
+  }
+  
+  .grid-2,
+  .grid-3,
+  .grid-4 {
+    grid-template-columns: 1fr;
+  }
+  
+  .flex-between {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+}

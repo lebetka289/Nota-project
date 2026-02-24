@@ -1,0 +1,15 @@
+User-agent: *
+# Закрываем техничку/личные разделы (паттерны с * поддерживаются Яндексом и Google)
+Disallow: /*?page=admin*
+Disallow: /*?page=profile*
+Disallow: /*?page=support*
+Disallow: /*?page=cart*
+Disallow: /*?page=favorites*
+Disallow: /*?page=payment*
+Disallow: /*?page=reset-password*
+
+Allow: /
+
+# ВАЖНО: при смене домена обновите адрес
+Sitemap: http://155.212.217.144:5173/sitemap.xml
+

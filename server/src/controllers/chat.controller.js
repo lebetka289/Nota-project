@@ -16,7 +16,16 @@ exports.getOrCreateMyConversation = async (req, res) => {
       convo = await queryOne("SELECT * FROM chat_conversations WHERE id = ?", [r.insertId]);
     }
 
-    res.json(convo);
+    // Добавляем информацию о непрочитанных сообщениях
+    const unreadCount = await queryOne(
+      "SELECT COUNT(*) as count FROM chat_messages WHERE conversation_id = ? AND sender_role IN ('support','admin') AND read_by_user = 0",
+      [convo.id]
+    );
+
+    res.json({
+      ...convo,
+      unread_count: unreadCount?.count || 0
+    });
   } catch (error) {
     console.error('Ошибка создания диалога:', error);
     res.status(500).json({ error: 'Ошибка создания диалога' });
@@ -32,13 +41,15 @@ exports.getMyMessages = async (req, res) => {
     );
     if (!convo) return res.json([]);
 
+    // Получаем только сообщения из диалога текущего пользователя
     const messages = await query(
       "SELECT id, sender_role, body, created_at FROM chat_messages WHERE conversation_id = ? ORDER BY created_at ASC, id ASC",
       [convo.id]
     );
 
+    // Отмечаем сообщения от поддержки как прочитанные пользователем
     await query(
-      "UPDATE chat_messages SET read_by_user = 1 WHERE conversation_id = ? AND sender_role IN ('support','admin')",
+      "UPDATE chat_messages SET read_by_user = 1 WHERE conversation_id = ? AND sender_role IN ('support','admin') AND read_by_user = 0",
       [convo.id]
     );
 
@@ -95,7 +106,11 @@ exports.getAllConversations = async (_req, res) => {
   try {
     const convos = await query(
       `SELECT c.id, c.user_id, c.status, c.last_message_at, c.created_at,
-              u.name as user_name, u.email as user_email
+              u.name as user_name, u.email as user_email,
+              (SELECT COUNT(*) FROM chat_messages m 
+               WHERE m.conversation_id = c.id 
+               AND m.sender_role = 'user' 
+               AND m.read_by_support = 0) as unread_count
        FROM chat_conversations c
        JOIN users u ON u.id = c.user_id
        ORDER BY (c.last_message_at IS NULL), c.last_message_at DESC, c.created_at DESC`
@@ -113,13 +128,15 @@ exports.getConversationMessages = async (req, res) => {
     const convo = await queryOne("SELECT * FROM chat_conversations WHERE id = ?", [req.params.id]);
     if (!convo) return res.status(404).json({ error: 'Диалог не найден' });
 
+    // Получаем только сообщения из выбранного диалога
     const messages = await query(
       "SELECT id, sender_role, body, created_at FROM chat_messages WHERE conversation_id = ? ORDER BY created_at ASC, id ASC",
       [convo.id]
     );
 
+    // Отмечаем сообщения от пользователя как прочитанные поддержкой
     await query(
-      "UPDATE chat_messages SET read_by_support = 1 WHERE conversation_id = ? AND sender_role = 'user'",
+      "UPDATE chat_messages SET read_by_support = 1 WHERE conversation_id = ? AND sender_role = 'user' AND read_by_support = 0",
       [convo.id]
     );
 

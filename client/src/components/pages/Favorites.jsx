@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import './Favorites.css';
 import BeatsPlayer from '../widgets/BeatsPlayer';
+import Alert from '../widgets/Alert';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -10,6 +11,7 @@ function Favorites() {
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeBeat, setActiveBeat] = useState(null);
+  const [alert, setAlert] = useState(null);
 
   useEffect(() => {
     fetchFavorites();
@@ -45,10 +47,10 @@ function Favorites() {
       if (response.ok) {
         setFavorites(favorites.filter(item => item.beat_id !== beatId));
       } else {
-        alert('Ошибка удаления из избранного');
+        setAlert({ message: 'Ошибка удаления из избранного', type: 'error' });
       }
     } catch (error) {
-      alert('Ошибка подключения к серверу');
+      setAlert({ message: 'Ошибка подключения к серверу', type: 'error' });
     }
   };
 
@@ -66,26 +68,57 @@ function Favorites() {
       });
 
       if (response.ok) {
-        alert('Бит добавлен в корзину');
+        setAlert({ message: 'Бит добавлен в корзину', type: 'success' });
+        window.dispatchEvent(new Event('nota:cart-updated'));
       } else {
         const data = await response.json();
-        alert(data.error || 'Ошибка добавления в корзину');
+        setAlert({ message: data.error || 'Ошибка добавления в корзину', type: 'error' });
       }
     } catch (error) {
-      alert('Ошибка подключения к серверу');
+      setAlert({ message: 'Ошибка подключения к серверу', type: 'error' });
+    }
+  };
+
+  const handlePayBeat = async (beatId) => {
+    if (!token) return setAlert({ message: 'Войдите, чтобы оплатить', type: 'warning' });
+    try {
+      const response = await fetch(`${API_URL}/payments/beat/pay`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ beat_id: beatId })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Ошибка создания платежа');
+      }
+
+      if (data.free || data.mock) {
+        setAlert({ message: 'Оплата проведена в тестовом режиме.', type: 'success' });
+        fetchFavorites();
+      } else if (data.confirmation_url) {
+        window.location.href = data.confirmation_url;
+      } else {
+        setAlert({ message: 'Платеж создан, но нет ссылки на оплату', type: 'error' });
+      }
+    } catch (error) {
+      setAlert({ message: error.message || 'Ошибка оплаты', type: 'error' });
     }
   };
 
   const downloadBeat = async (item) => {
-    if (!token) return alert('Войдите, чтобы скачать');
-    if (!item.purchased && Number(item.price) > 0) return alert('Скачивание доступно только после покупки');
+    if (!token) return setAlert({ message: 'Войдите, чтобы скачать', type: 'warning' });
+    if (!item.purchased && Number(item.price) > 0) return setAlert({ message: 'Скачивание доступно только после покупки', type: 'warning' });
     try {
       const r = await fetch(`${API_URL}/beats/${item.beat_id}/download`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!r.ok) {
         const data = await r.json().catch(() => ({}));
-        return alert(data.error || 'Ошибка скачивания');
+        return setAlert({ message: data.error || 'Ошибка скачивания', type: 'error' });
       }
       const blob = await r.blob();
       const disp = r.headers.get('content-disposition');
@@ -101,7 +134,7 @@ function Favorites() {
       URL.revokeObjectURL(href);
     } catch (e) {
       console.error(e);
-      alert('Ошибка скачивания');
+      setAlert({ message: 'Ошибка скачивания', type: 'error' });
     }
   };
 
@@ -111,12 +144,13 @@ function Favorites() {
 
   return (
     <div className="favorites-container">
+      {alert && <Alert message={alert.message} type={alert.type} onClose={() => setAlert(null)} />}
       <h2>Избранное</h2>
 
       {favorites.length === 0 ? (
         <div className="empty-favorites">
           <p>У вас пока нет избранных битов</p>
-          <span className="favorite-icon">❤️</span>
+          <span className="favorite-icon">Fav</span>
         </div>
       ) : (
         <div className="favorites-grid">
@@ -127,7 +161,7 @@ function Favorites() {
                   {item.cover_url ? (
                     <img src={item.cover_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
-                    <span className="favorite-item-icon">♪</span>
+                    <span className="favorite-item-icon">—</span>
                   )}
                 </div>
                 <div className="favorite-info">
@@ -138,26 +172,36 @@ function Favorites() {
                       onClick={() => handleRemove(item.beat_id)}
                       title="Удалить из избранного"
                     >
-                      ❤️
+                      Fav
                     </button>
                   </div>
                   <p className="favorite-description">Жанр: {item.genre} • BPM: {item.bpm}</p>
                   <div className="favorite-footer">
                     <div className="favorite-price">{item.price} ₽</div>
-                    <button
-                      className="add-to-cart-btn"
-                      onClick={() => handleAddToCart(item.beat_id)}
-                    >
-                      В корзину
-                    </button>
-                    <button className="add-to-cart-btn" onClick={() => setActiveBeat(item)}>
-                      Плеер
-                    </button>
-                    {item.purchased || Number(item.price) === 0 ? (
-                      <button className="add-to-cart-btn" onClick={() => downloadBeat(item)}>
-                        Скачать
+                    <div className="favorite-actions">
+                      {!item.purchased && Number(item.price) > 0 && (
+                        <button
+                          className="pay-beat-btn-fav"
+                          onClick={() => handlePayBeat(item.beat_id)}
+                        >
+                          Оплатить
+                        </button>
+                      )}
+                      <button
+                        className="add-to-cart-btn"
+                        onClick={() => handleAddToCart(item.beat_id)}
+                      >
+                        В корзину
                       </button>
-                    ) : null}
+                      <button className="add-to-cart-btn" onClick={() => setActiveBeat(item)}>
+                        Плеер
+                      </button>
+                      {item.purchased || Number(item.price) === 0 ? (
+                        <button className="add-to-cart-btn" onClick={() => downloadBeat(item)}>
+                          Скачать
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
               </div>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import './StudioInfo.css';
 
-function StudioInfo() {
+function StudioInfo({ onNavigate }) {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
@@ -142,29 +142,29 @@ function StudioInfo() {
               onClick={closePopup}
               aria-label="Закрыть"
             >
-              ✕
+              ×
             </button>
 
             <div className="popup-header">
               <h2 className="popup-studio-name">{studioData.name}</h2>
               <div className="popup-studio-info">
                 <div className="info-item">
-                  <span className="info-icon">📍</span>
+                  <span className="info-icon">Addr</span>
                   <span className="info-text">{studioData.address}</span>
                 </div>
                 <div className="info-item">
-                  <span className="info-icon">🕐</span>
+                  <span className="info-icon">Time</span>
                   <span className="info-text">
                     {studioData.workingHours.weekdays}<br />
                     {studioData.workingHours.weekend}
                   </span>
                 </div>
                 <div className="info-item">
-                  <span className="info-icon">📞</span>
+                  <span className="info-icon">Tel</span>
                   <span className="info-text">{studioData.phone}</span>
                 </div>
                 <div className="info-item">
-                  <span className="info-icon">✉️</span>
+                  <span className="info-icon">@</span>
                   <span className="info-text">{studioData.email}</span>
                 </div>
               </div>

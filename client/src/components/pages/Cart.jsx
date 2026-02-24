@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import './Cart.css';
 import BeatsPlayer from '../widgets/BeatsPlayer';
+import Alert from '../widgets/Alert';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -11,6 +12,7 @@ function Cart() {
   const [loading, setLoading] = useState(true);
   const [activeBeat, setActiveBeat] = useState(null);
   const [paying, setPaying] = useState(false);
+  const [alert, setAlert] = useState(null);
 
   useEffect(() => {
     fetchCart();
@@ -45,11 +47,46 @@ function Cart() {
 
       if (response.ok) {
         setCartItems(cartItems.filter(item => item.id !== id));
+        window.dispatchEvent(new Event('nota:cart-updated'));
       } else {
-        alert('Ошибка удаления бита');
+        setAlert({ message: 'Ошибка удаления бита', type: 'error' });
       }
     } catch (error) {
-      alert('Ошибка подключения к серверу');
+      setAlert({ message: 'Ошибка подключения к серверу', type: 'error' });
+    }
+  };
+
+  const handlePaySingleBeat = async (beatId) => {
+    if (!token) return setAlert({ message: 'Войдите, чтобы оплатить', type: 'warning' });
+    try {
+      setPaying(true);
+      const response = await fetch(`${API_URL}/payments/beat/pay`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ beat_id: beatId })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Ошибка создания платежа');
+      }
+
+      if (data.free || data.mock) {
+        setAlert({ message: 'Оплата проведена в тестовом режиме.', type: 'success' });
+        window.dispatchEvent(new Event('nota:cart-updated'));
+        fetchCart();
+      } else if (data.confirmation_url) {
+        window.location.href = data.confirmation_url;
+      } else {
+        setAlert({ message: 'Платеж создан, но нет ссылки на оплату', type: 'error' });
+      }
+    } catch (error) {
+      setAlert({ message: error.message || 'Ошибка оплаты', type: 'error' });
+    } finally {
+      setPaying(false);
     }
   };
 
@@ -68,18 +105,19 @@ function Cart() {
 
       if (response.ok) {
         setCartItems([]);
+        window.dispatchEvent(new Event('nota:cart-updated'));
       } else {
-        alert('Ошибка очистки корзины');
+        setAlert({ message: 'Ошибка очистки корзины', type: 'error' });
       }
     } catch (error) {
-      alert('Ошибка подключения к серверу');
+      setAlert({ message: 'Ошибка подключения к серверу', type: 'error' });
     }
   };
 
   const total = cartItems.reduce((sum, item) => sum + Number(item.price || 0), 0);
 
   const checkout = async () => {
-    if (!token) return alert('Войдите, чтобы оплатить');
+    if (!token) return setAlert({ message: 'Войдите, чтобы оплатить', type: 'warning' });
     try {
       setPaying(true);
       const r = await fetch(`${API_URL}/cart/checkout`, {
@@ -87,16 +125,22 @@ function Cart() {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await r.json().catch(() => ({}));
-      if (!r.ok) return alert(data.error || 'Ошибка оплаты');
+      if (!r.ok) return setAlert({ message: data.error || 'Ошибка оплаты', type: 'error' });
 
       if (data.free) {
-        alert('✅ Биты отмечены как купленные');
+        setAlert({ message: 'Биты отмечены как купленные.', type: 'success' });
+        window.dispatchEvent(new Event('nota:cart-updated'));
+        return fetchCart();
+      }
+      if (data.mock) {
+        setAlert({ message: 'Оплата проведена в тестовом режиме.', type: 'success' });
+        window.dispatchEvent(new Event('nota:cart-updated'));
         return fetchCart();
       }
       if (data.confirmation_url) {
         window.location.href = data.confirmation_url;
       } else {
-        alert('Платеж создан, но нет ссылки на оплату');
+        setAlert({ message: 'Платеж создан, но нет ссылки на оплату', type: 'error' });
       }
     } finally {
       setPaying(false);
@@ -109,6 +153,7 @@ function Cart() {
 
   return (
     <div className="cart-container">
+      {alert && <Alert message={alert.message} type={alert.type} onClose={() => setAlert(null)} />}
       <div className="cart-header">
         <h2>Корзина</h2>
         {cartItems.length > 0 && (
@@ -121,7 +166,7 @@ function Cart() {
       {cartItems.length === 0 ? (
         <div className="empty-cart">
           <p>Ваша корзина пуста</p>
-          <span className="cart-icon">🛒</span>
+          <span className="cart-icon">Корзина</span>
         </div>
       ) : (
         <>
@@ -132,7 +177,7 @@ function Cart() {
                   {item.cover_url ? (
                     <img src={item.cover_url} alt="" style={{ width: 44, height: 44, borderRadius: 12, objectFit: 'cover' }} />
                   ) : (
-                    '♪'
+                    '—'
                   )}
                 </div>
                 <div className="cart-item-info">
@@ -145,9 +190,15 @@ function Cart() {
                     <button className="remove-button" onClick={() => setActiveBeat(item)} style={{ marginRight: 10 }}>
                       Плеер
                     </button>
-                    <span style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 700, fontSize: 12 }}>
-                      Скачивание будет доступно после оплаты
-                    </span>
+                    {!item.purchased && Number(item.price) > 0 && (
+                      <button
+                        className="pay-single-beat-btn"
+                        onClick={() => handlePaySingleBeat(item.beat_id)}
+                        disabled={paying}
+                      >
+                        {paying ? 'Обработка...' : 'Оплатить'}
+                      </button>
+                    )}
                   </div>
                 </div>
                 <button
@@ -155,7 +206,7 @@ function Cart() {
                   className="remove-button"
                   title="Удалить из корзины"
                 >
-                  ✕
+                  ×
                 </button>
               </div>
             ))}
@@ -166,9 +217,11 @@ function Cart() {
               <div className="total-label">Итого:</div>
               <div className="total-amount">{total.toFixed(2)} ₽</div>
             </div>
-            <button className="checkout-button" onClick={checkout} disabled={paying || cartItems.length === 0}>
-              {paying ? 'Обработка…' : 'Перейти к оплате'}
-            </button>
+            {cartItems.length > 1 && (
+              <button className="checkout-button" onClick={checkout} disabled={paying}>
+                {paying ? 'Обработка…' : 'Перейти к оплате'}
+              </button>
+            )}
           </div>
         </>
       )}

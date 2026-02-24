@@ -19,25 +19,38 @@ exports.getAllBeats = async (req, res) => {
 
     const { genre, q } = req.query;
     const params = [];
-    let sql = "SELECT id, title, genre, bpm, price, cover_path, file_path, created_at FROM beats";
+    let sql = `SELECT b.id, b.title, b.genre, b.bpm, b.price, b.cover_path, b.file_path, b.play_count, b.created_at,
+               u.name as author_name, u.avatar_path as author_avatar_path
+               FROM beats b
+               LEFT JOIN users u ON u.id = b.created_by`;
     const where = [];
 
     if (genre && genre !== 'all') {
-      where.push("genre = ?");
+      where.push("b.genre = ?");
       params.push(genre);
     }
     if (q) {
-      where.push("(LOWER(title) LIKE ?)");
+      where.push("(LOWER(b.title) LIKE ?)");
       params.push(`%${String(q).toLowerCase()}%`);
     }
     if (where.length) sql += " WHERE " + where.join(" AND ");
-    sql += " ORDER BY created_at DESC, id DESC";
+    sql += " ORDER BY b.created_at DESC, b.id DESC";
 
     const rows = await query(sql, params);
     const host = req.get('host');
     const protocol = req.protocol;
     const mapped = rows.map((b) => ({
-      ...b,
+      id: b.id,
+      title: b.title,
+      genre: b.genre,
+      bpm: b.bpm,
+      price: b.price,
+      cover_path: b.cover_path,
+      file_path: b.file_path,
+      play_count: b.play_count || 0,
+      created_at: b.created_at,
+      author_name: b.author_name || 'Автор',
+      author_avatar_url: b.author_avatar_path ? `${protocol}://${host}/uploads/${b.author_avatar_path}` : null,
       file_url: `${protocol}://${host}/api/beats/${b.id}/stream`,
       cover_url: b.cover_path ? `${protocol}://${host}/uploads/${b.cover_path}` : null,
       purchased: purchasedSet ? purchasedSet.has(b.id) : false
@@ -108,6 +121,48 @@ exports.createBeat = async (req, res) => {
   } catch (e) {
     console.error('Ошибка загрузки бита:', e);
     res.status(500).json({ error: 'Ошибка загрузки бита' });
+  }
+};
+
+// Увеличить счетчик прослушиваний
+exports.incrementPlayCount = async (req, res) => {
+  try {
+    await query("UPDATE beats SET play_count = COALESCE(play_count, 0) + 1 WHERE id = ?", [req.params.id]);
+    res.json({ success: true });
+  } catch (e) {
+    console.error('Ошибка увеличения счетчика:', e);
+    res.status(500).json({ error: 'Ошибка обновления счетчика' });
+  }
+};
+
+// Получить купленные биты пользователя
+exports.getPurchasedBeats = async (req, res) => {
+  try {
+    const rows = await query(
+      `SELECT b.id, b.title, b.genre, b.bpm, b.price, b.cover_path, b.file_path, b.play_count, bp.paid_at,
+              u.name as author_name, u.avatar_path as author_avatar_path
+       FROM beat_purchases bp
+       JOIN beats b ON bp.beat_id = b.id
+       LEFT JOIN users u ON u.id = b.created_by
+       WHERE bp.user_id = ? AND bp.status = 'paid'
+       ORDER BY bp.paid_at DESC`,
+      [req.user.id]
+    );
+    const host = req.get('host');
+    const protocol = req.protocol;
+    res.json(
+      rows.map((b) => ({
+        ...b,
+        author_name: b.author_name || 'Автор',
+        author_avatar_url: b.author_avatar_path ? `${protocol}://${host}/uploads/${b.author_avatar_path}` : null,
+        file_url: `${protocol}://${host}/api/beats/${b.id}/stream`,
+        cover_url: b.cover_path ? `${protocol}://${host}/uploads/${b.cover_path}` : null,
+        play_count: b.play_count || 0
+      }))
+    );
+  } catch (e) {
+    console.error('Ошибка получения купленных битов:', e);
+    res.status(500).json({ error: 'Ошибка получения битов' });
   }
 };
 

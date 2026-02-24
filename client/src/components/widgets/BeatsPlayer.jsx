@@ -18,6 +18,16 @@ function BeatsPlayer({ beat }) {
 
   const cover = useMemo(() => beat?.cover_url || null, [beat]);
 
+  const incrementPlayCount = async (beatId) => {
+    try {
+      await fetch(`${import.meta.env.VITE_API_URL || '/api'}/beats/${beatId}/play`, {
+        method: 'POST'
+      });
+    } catch (error) {
+      console.error('Ошибка обновления счетчика прослушиваний:', error);
+    }
+  };
+
   useEffect(() => {
     const a = audioRef.current;
     if (!a || !beat) return;
@@ -30,7 +40,11 @@ function BeatsPlayer({ beat }) {
     a.src = beat.file_url;
     a.load();
     // autoplay when selecting a beat
-    a.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+    a.play().then(() => {
+      setPlaying(true);
+      // Отслеживание прослушивания
+      incrementPlayCount(beat.id);
+    }).catch(() => setPlaying(false));
   }, [beat]);
 
   useEffect(() => {
@@ -64,6 +78,10 @@ function BeatsPlayer({ beat }) {
       try {
         await a.play();
         setPlaying(true);
+        // Отслеживание прослушивания при первом запуске
+        if (beat && a.currentTime === 0) {
+          incrementPlayCount(beat.id);
+        }
       } catch {
         setPlaying(false);
       }
@@ -88,7 +106,7 @@ function BeatsPlayer({ beat }) {
       <audio ref={audioRef} />
       <div className="bp-left">
         <div className="bp-cover">
-          {cover ? <img src={cover} alt="" /> : <div className="bp-cover-ph">♪</div>}
+          {cover ? <img src={cover} alt="" /> : <div className="bp-cover-ph">—</div>}
         </div>
         <div className="bp-meta">
           <div className="bp-title">{beat.title}</div>
@@ -102,7 +120,7 @@ function BeatsPlayer({ beat }) {
 
       <div className="bp-center">
         <button className="bp-play" onClick={toggle}>
-          {playing ? 'Пауза' : 'Плей'}
+          {playing ? 'Пауза' : 'Играть'}
         </button>
 
         <div className="bp-progress">

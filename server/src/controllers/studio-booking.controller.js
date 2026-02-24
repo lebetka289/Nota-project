@@ -1,0 +1,572 @@
+const { query, queryOne } = require('../../config/database');
+
+function validateBody(body) {
+  const {
+    firstName,
+    lastName,
+    phone,
+    email,
+    musicGenre,
+    songsCount,
+    dateStart,
+    dateEnd,
+    hasMusicians,
+    needSessionMusicians,
+    needProducer,
+    needEngineer
+  } = body;
+
+  if (!firstName || typeof firstName !== 'string' || !firstName.trim()) {
+    return 'Укажите имя';
+  }
+  if (!lastName || typeof lastName !== 'string' || !lastName.trim()) {
+    return 'Укажите фамилию';
+  }
+  if (!phone || typeof phone !== 'string' || !phone.trim()) {
+    return 'Укажите телефон';
+  }
+  if (!email || typeof email !== 'string' || !email.trim()) {
+    return 'Укажите email';
+  }
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRe.test(email)) {
+    return 'Некорректный email';
+  }
+  if (!musicGenre || typeof musicGenre !== 'string' || !musicGenre.trim()) {
+    return 'Выберите жанр музыки';
+  }
+  const count = Number(songsCount);
+  if (!Number.isInteger(count) || count < 1) {
+    return 'Укажите количество песен (не менее 1)';
+  }
+  if (!dateStart || typeof dateStart !== 'string' || !dateStart.trim()) {
+    return 'Укажите дату начала';
+  }
+  if (!dateEnd || typeof dateEnd !== 'string' || !dateEnd.trim()) {
+    return 'Укажите дату окончания';
+  }
+  if (new Date(dateEnd) < new Date(dateStart)) {
+    return 'Дата окончания не может быть раньше даты начала';
+  }
+  if (typeof hasMusicians !== 'boolean') {
+    return 'Ответьте: есть ли музыканты или группа';
+  }
+  if (typeof needSessionMusicians !== 'boolean') {
+    return 'Ответьте: нужны ли сессионные музыканты';
+  }
+  if (typeof needProducer !== 'boolean') {
+    return 'Ответьте: нужен ли продюсер';
+  }
+  if (typeof needEngineer !== 'boolean') {
+    return 'Ответьте: нужен ли звукорежиссёр';
+  }
+  return null;
+}
+
+exports.submitBooking = async (req, res) => {
+  const body = req.body || {};
+  const err = validateBody(body);
+  if (err) {
+    return res.status(400).json({ error: err, message: err });
+  }
+
+  try {
+    const firstName = String(body.firstName).trim();
+    const lastName = String(body.lastName).trim();
+    const phone = String(body.phone).trim();
+    const email = String(body.email).trim();
+    const intlPrefix = body.intlPrefix ? String(body.intlPrefix).trim() : null;
+    const website = body.website ? String(body.website).trim() : null;
+    const musicGenre = String(body.musicGenre).trim();
+    const songsCount = Number(body.songsCount);
+    const musicDetails = body.musicDetails ? String(body.musicDetails).trim() : null;
+    const dateStart = String(body.dateStart).trim();
+    const dateEnd = String(body.dateEnd).trim();
+    const hasMusicians = Boolean(body.hasMusicians);
+    const needSessionMusicians = Boolean(body.needSessionMusicians);
+    const needProducer = Boolean(body.needProducer);
+    const needEngineer = Boolean(body.needEngineer);
+    const additionalInfo = body.additionalInfo ? String(body.additionalInfo).trim() : null;
+    const beatmakerId = body.beatmakerId != null ? Number(body.beatmakerId) : null;
+
+    await query(
+      `INSERT INTO studio_bookings (
+        first_name, last_name, phone, email, intl_prefix, website,
+        music_genre, songs_count, music_details, date_start, date_end,
+        has_musicians, need_session_musicians, need_producer, need_engineer,
+        additional_info, status, beatmaker_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?)`,
+      [
+        firstName,
+        lastName,
+        phone,
+        email,
+        intlPrefix,
+        website,
+        musicGenre,
+        songsCount,
+        musicDetails,
+        dateStart,
+        dateEnd,
+        hasMusicians ? 1 : 0,
+        needSessionMusicians ? 1 : 0,
+        needProducer ? 1 : 0,
+        needEngineer ? 1 : 0,
+        additionalInfo,
+        beatmakerId
+      ]
+    );
+
+    return res.status(200).json({ success: true, message: 'Заявка принята' });
+  } catch (dbError) {
+    if (dbError.code === 'ER_NO_SUCH_TABLE') {
+      console.warn('Таблица studio_bookings отсутствует. Добавьте её в database.service.js. Заявка принята без сохранения.');
+      return res.status(200).json({ success: true, message: 'Заявка принята' });
+    }
+    console.error('Ошибка сохранения заявки на студию:', dbError);
+    return res.status(500).json({
+      error: 'Ошибка сервера',
+      message: 'Не удалось отправить заявку. Попробуйте позже.'
+    });
+  }
+};
+
+// Валидация для формы «запись с покупкой музыки» (без email и website)
+function validateWithMusicBody(body) {
+  const { firstName, lastName, phone, musicGenre, songsCount, dateStart, dateEnd, hasMusicians, needSessionMusicians, needProducer, needEngineer } = body;
+  if (!firstName || typeof firstName !== 'string' || !firstName.trim()) return 'Укажите имя';
+  if (!lastName || typeof lastName !== 'string' || !lastName.trim()) return 'Укажите фамилию';
+  if (!phone || typeof phone !== 'string' || !phone.trim()) return 'Укажите телефон';
+  if (!musicGenre || typeof musicGenre !== 'string' || !musicGenre.trim()) return 'Выберите жанр музыки';
+  const count = Number(songsCount);
+  if (!Number.isInteger(count) || count < 1) return 'Укажите количество песен (не менее 1)';
+  if (!dateStart || typeof dateStart !== 'string' || !dateStart.trim()) return 'Укажите дату начала';
+  if (!dateEnd || typeof dateEnd !== 'string' || !dateEnd.trim()) return 'Укажите дату окончания';
+  if (new Date(dateEnd) < new Date(dateStart)) return 'Дата окончания не может быть раньше даты начала';
+  if (typeof hasMusicians !== 'boolean') return 'Ответьте: есть ли музыканты или группа';
+  if (typeof needSessionMusicians !== 'boolean') return 'Ответьте: нужны ли сессионные музыканты';
+  if (typeof needProducer !== 'boolean') return 'Ответьте: нужен ли продюсер';
+  if (typeof needEngineer !== 'boolean') return 'Ответьте: нужен ли звукорежиссёр';
+  return null;
+}
+
+exports.submitWithMusicClarification = async (req, res) => {
+  const body = req.body || {};
+  const err = validateWithMusicBody(body);
+  if (err) {
+    return res.status(400).json({ error: err, message: err });
+  }
+
+  try {
+    const firstName = String(body.firstName).trim();
+    const lastName = String(body.lastName).trim();
+    const phone = String(body.phone).trim();
+    const intlPrefix = body.intlPrefix ? String(body.intlPrefix).trim() : null;
+    const musicGenre = String(body.musicGenre).trim();
+    const songsCount = Number(body.songsCount);
+    const musicDetails = body.musicDetails ? String(body.musicDetails).trim() : null;
+    const dateStart = String(body.dateStart).trim();
+    const dateEnd = String(body.dateEnd).trim();
+    const hasMusicians = Boolean(body.hasMusicians);
+    const needSessionMusicians = Boolean(body.needSessionMusicians);
+    const needProducer = Boolean(body.needProducer);
+    const needEngineer = Boolean(body.needEngineer);
+    const additionalInfo = body.additionalInfo ? String(body.additionalInfo).trim() : null;
+    const beatIds = Array.isArray(body.beatIds) ? body.beatIds.map(id => Number(id)).filter(Boolean) : [];
+    const beatId = beatIds.length > 0 ? beatIds[0] : (body.beatId != null ? Number(body.beatId) : null);
+    const beatIdsJson = beatIds.length > 0 ? JSON.stringify(beatIds) : null;
+    const beatmakerId = body.beatmakerId != null ? Number(body.beatmakerId) : null;
+
+    await query(
+      `INSERT INTO studio_bookings (
+        first_name, last_name, phone, email, intl_prefix, website,
+        music_genre, songs_count, music_details, date_start, date_end,
+        has_musicians, need_session_musicians, need_producer, need_engineer,
+        additional_info, status, beat_id, beat_ids, beatmaker_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?, ?, ?)`,
+      [
+        firstName, lastName, phone, '', (intlPrefix || ''), null,
+        musicGenre, songsCount, musicDetails, dateStart, dateEnd,
+        hasMusicians ? 1 : 0, needSessionMusicians ? 1 : 0, needProducer ? 1 : 0, needEngineer ? 1 : 0,
+        additionalInfo, beatId, beatIdsJson, beatmakerId
+      ]
+    );
+    const bookingId = (await queryOne('SELECT LAST_INSERT_ID() as id')).id;
+    await query('UPDATE studio_bookings SET source = ? WHERE id = ?', ['with-music', bookingId]);
+
+    return res.status(200).json({ success: true, message: 'Данные отправлены битмейкеру', bookingId });
+  } catch (dbError) {
+    if (dbError.code === 'ER_NO_SUCH_TABLE') {
+      return res.status(200).json({ success: true, message: 'Данные приняты' });
+    }
+    console.error('Ошибка сохранения уточнения with-music:', dbError);
+    return res.status(500).json({ error: 'Ошибка сервера', message: 'Не удалось отправить данные.' });
+  }
+};
+
+// Форма «Запись на дому» — те же поля, что и с покупкой музыки; цена обычная (без упоминания скидки)
+exports.submitHomeRecordingClarification = async (req, res) => {
+  const body = req.body || {};
+  const err = validateWithMusicBody(body);
+  if (err) {
+    return res.status(400).json({ error: err, message: err });
+  }
+
+  try {
+    const firstName = String(body.firstName).trim();
+    const lastName = String(body.lastName).trim();
+    const phone = String(body.phone).trim();
+    const intlPrefix = body.intlPrefix ? String(body.intlPrefix).trim() : null;
+    const musicGenre = String(body.musicGenre).trim();
+    const songsCount = Number(body.songsCount);
+    const musicDetails = body.musicDetails ? String(body.musicDetails).trim() : null;
+    const dateStart = String(body.dateStart).trim();
+    const dateEnd = String(body.dateEnd).trim();
+    const hasMusicians = Boolean(body.hasMusicians);
+    const needSessionMusicians = Boolean(body.needSessionMusicians);
+    const needProducer = Boolean(body.needProducer);
+    const needEngineer = Boolean(body.needEngineer);
+    const additionalInfo = body.additionalInfo ? String(body.additionalInfo).trim() : null;
+    const beatmakerId = body.beatmakerId != null ? Number(body.beatmakerId) : null;
+
+    await query(
+      `INSERT INTO studio_bookings (
+        first_name, last_name, phone, email, intl_prefix, website,
+        music_genre, songs_count, music_details, date_start, date_end,
+        has_musicians, need_session_musicians, need_producer, need_engineer,
+        additional_info, status, beat_id, beatmaker_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?, ?)`,
+      [
+        firstName, lastName, phone, '', (intlPrefix || ''), null,
+        musicGenre, songsCount, musicDetails, dateStart, dateEnd,
+        hasMusicians ? 1 : 0, needSessionMusicians ? 1 : 0, needProducer ? 1 : 0, needEngineer ? 1 : 0,
+        additionalInfo, null, beatmakerId
+      ]
+    );
+    const bookingId = (await queryOne('SELECT LAST_INSERT_ID() as id')).id;
+    await query('UPDATE studio_bookings SET source = ? WHERE id = ?', ['home-recording', bookingId]);
+
+    return res.status(200).json({ success: true, message: 'Заявка принята', bookingId });
+  } catch (dbError) {
+    if (dbError.code === 'ER_NO_SUCH_TABLE') {
+      return res.status(200).json({ success: true, message: 'Данные приняты' });
+    }
+    console.error('Ошибка сохранения уточнения home-recording:', dbError);
+    return res.status(500).json({ error: 'Ошибка сервера', message: 'Не удалось отправить данные.' });
+  }
+};
+
+// Список заявок для битмейкера: new и in_work
+exports.getListForBeatmaker = async (req, res) => {
+  try {
+    const [newList, inWorkList] = await Promise.all([
+      query(
+        `SELECT id, first_name, last_name, phone, email, intl_prefix, website,
+                music_genre, songs_count, music_details, date_start, date_end,
+                has_musicians, need_session_musicians, need_producer, need_engineer,
+                additional_info, created_at, status, beat_id
+         FROM studio_bookings WHERE status = 'new' ORDER BY created_at DESC`
+      ),
+      query(
+        `SELECT b.id, b.first_name, b.last_name, b.phone, b.email, b.intl_prefix, b.website,
+                b.music_genre, b.songs_count, b.music_details, b.date_start, b.date_end,
+                b.has_musicians, b.need_session_musicians, b.need_producer, b.need_engineer,
+                b.additional_info, b.created_at, b.status, b.beat_id AS booking_beat_id,
+                b.recording_id, r.track_file_path, u.email AS user_email,
+                beat.id AS beat_id, beat.title AS beat_title, beat.original_name AS beat_original_name
+         FROM studio_bookings b
+         LEFT JOIN user_recordings r ON b.recording_id = r.id
+         LEFT JOIN users u ON r.user_id = u.id
+         LEFT JOIN beats beat ON b.beat_id = beat.id
+         WHERE b.status = 'in_work'
+         ORDER BY b.created_at DESC`
+      )
+    ]);
+
+    const mapRow = (row) => ({
+      id: row.id,
+      firstName: row.first_name,
+      lastName: row.last_name,
+      phone: row.phone,
+      email: row.email,
+      intlPrefix: row.intl_prefix,
+      website: row.website,
+      musicGenre: row.music_genre,
+      songsCount: row.songs_count,
+      musicDetails: row.music_details,
+      dateStart: row.date_start,
+      dateEnd: row.date_end,
+      hasMusicians: Boolean(row.has_musicians),
+      needSessionMusicians: Boolean(row.need_session_musicians),
+      needProducer: Boolean(row.need_producer),
+      needEngineer: Boolean(row.need_engineer),
+      additionalInfo: row.additional_info,
+      createdAt: row.created_at,
+      status: row.status || 'new'
+    });
+
+    const mapInWorkRow = (row) => ({
+      ...mapRow(row),
+      isPaid: Boolean(row.recording_id),
+      recordingId: row.recording_id || null,
+      userEmail: row.user_email || null,
+      trackFilePath: row.track_file_path || null,
+      beat: row.beat_id ? { id: row.beat_id, title: row.beat_title, originalName: row.beat_original_name } : null
+    });
+
+    res.json({
+      new: newList.map(mapRow),
+      in_work: inWorkList.map(mapInWorkRow)
+    });
+  } catch (err) {
+    if (err.code === 'ER_NO_SUCH_TABLE') {
+      return res.json({ new: [], in_work: [] });
+    }
+    console.error('Ошибка получения заявок студии:', err);
+    res.status(500).json({ error: 'Ошибка получения заявок' });
+  }
+};
+
+// Получить заявку по id для личного кабинета (если не привязана к пользователю или привязана к текущему)
+exports.getBookingById = async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) {
+    return res.status(400).json({ error: 'Некорректный id' });
+  }
+  try {
+    const row = await queryOne(
+      `SELECT b.id, b.first_name, b.last_name, b.phone, b.email, b.music_genre, b.songs_count,
+              b.date_start, b.date_end, b.created_at, b.source, b.beat_id, b.recording_id, b.user_id,
+              b.status, b.rejection_reason
+       FROM studio_bookings b
+       WHERE b.id = ? AND (b.user_id IS NULL OR b.user_id = ?)`,
+      [id, req.user.id]
+    );
+    if (!row) {
+      return res.status(404).json({ error: 'Заявка не найдена' });
+    }
+    res.json({
+      id: row.id,
+      firstName: row.first_name,
+      lastName: row.last_name,
+      phone: row.phone,
+      email: row.email,
+      musicGenre: row.music_genre,
+      songsCount: row.songs_count,
+      dateStart: row.date_start,
+      dateEnd: row.date_end,
+      createdAt: row.created_at,
+      source: row.source,
+      beatId: row.beat_id,
+      recordingId: row.recording_id,
+      userId: row.user_id,
+      isPaid: Boolean(row.recording_id),
+      status: row.status || 'new',
+      rejectionReason: row.rejection_reason || null
+    });
+  } catch (err) {
+    if (err.code === 'ER_NO_SUCH_TABLE') {
+      return res.status(404).json({ error: 'Заявка не найдена' });
+    }
+    console.error('Ошибка получения заявки:', err);
+    res.status(500).json({ error: 'Ошибка получения заявки' });
+  }
+};
+
+// Перевести заявку в работу, завершить или отклонить (битмейкер)
+exports.updateBookingStatus = async (req, res) => {
+  const id = Number(req.params.id);
+  const { status, rejectionReason } = req.body || {};
+  if (!Number.isInteger(id)) {
+    return res.status(400).json({ error: 'Некорректный id' });
+  }
+  if (!['in_work', 'completed', 'rejected'].includes(status)) {
+    return res.status(400).json({ error: 'status должен быть in_work, completed или rejected' });
+  }
+
+  try {
+    const row = await queryOne('SELECT id, status FROM studio_bookings WHERE id = ?', [id]);
+    if (!row) {
+      return res.status(404).json({ error: 'Заявка не найдена' });
+    }
+    if (status === 'rejected') {
+      const reason = typeof rejectionReason === 'string' ? rejectionReason.trim() : null;
+      await query('UPDATE studio_bookings SET status = ?, rejection_reason = ? WHERE id = ?', [status, reason || null, id]);
+    } else {
+      await query('UPDATE studio_bookings SET status = ?, rejection_reason = NULL WHERE id = ?', [status, id]);
+    }
+    res.json({ success: true, status });
+  } catch (err) {
+    if (err.code === 'ER_NO_SUCH_TABLE') {
+      return res.status(404).json({ error: 'Заявка не найдена' });
+    }
+    console.error('Ошибка обновления заявки:', err);
+    res.status(500).json({ error: 'Ошибка обновления заявки' });
+  }
+};
+
+// Список битмейкеров для записи (публичный): сначала role=beatmaker, если пусто — авторы битов (created_by в beats)
+exports.getBeatmakers = async (req, res) => {
+  try {
+    let list = await query(
+      "SELECT id, name, avatar_path FROM users WHERE role = 'beatmaker' AND (blocked IS NULL OR blocked = 0) ORDER BY name"
+    );
+    if (!list || list.length === 0) {
+      list = await query(
+        `SELECT DISTINCT u.id, u.name, u.avatar_path
+         FROM users u
+         INNER JOIN beats b ON b.created_by = u.id
+         WHERE (u.blocked IS NULL OR u.blocked = 0)
+         ORDER BY u.name`
+      );
+    }
+    const rows = (list || []).map((row) => ({
+      id: row.id,
+      name: row.name || 'Битмейкер',
+      avatar_path: row.avatar_path
+    }));
+    res.json(rows);
+  } catch (err) {
+    if (err.code === 'ER_NO_SUCH_TABLE') {
+      return res.json([]);
+    }
+    console.error('Ошибка getBeatmakers:', err);
+    res.status(500).json({ error: 'Ошибка загрузки списка битмейкеров' });
+  }
+};
+
+// Занятые периоды битмейкера (даты записей)
+exports.getBeatmakerAvailability = async (req, res) => {
+  const beatmakerId = Number(req.params.beatmakerId);
+  if (!Number.isInteger(beatmakerId)) {
+    return res.status(400).json({ error: 'Некорректный id битмейкера' });
+  }
+  try {
+    const rows = await query(
+      `SELECT date_start, date_end FROM studio_bookings 
+       WHERE beatmaker_id = ? AND status IN ('new', 'in_work') 
+       ORDER BY date_start`,
+      [beatmakerId]
+    );
+    res.json({ busy: (rows || []).map((r) => ({ date_start: r.date_start, date_end: r.date_end })) });
+  } catch (err) {
+    if (err.code === 'ER_NO_SUCH_TABLE' || err.code === 'ER_BAD_FIELD_ERROR') {
+      return res.json({ busy: [] });
+    }
+    console.error('Ошибка getBeatmakerAvailability:', err);
+    res.status(500).json({ error: 'Ошибка загрузки занятости' });
+  }
+};
+
+// Рабочие дни битмейкера (календарь) — только для авторизованного битмейкера
+exports.getWorkingDays = async (req, res) => {
+  const beatmakerId = req.user.id;
+  const year = Number(req.query.year);
+  const month = Number(req.query.month);
+  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+    return res.status(400).json({ error: 'Укажите year и month в query' });
+  }
+  try {
+    const start = `${year}-${String(month).padStart(2, '0')}-01`;
+    const lastDay = new Date(year, month, 0).getDate();
+    const end = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+    const rows = await query(
+      'SELECT work_date FROM beatmaker_working_days WHERE beatmaker_id = ? AND work_date >= ? AND work_date <= ? ORDER BY work_date',
+      [beatmakerId, start, end]
+    );
+    const toDateStr = (d) => (d instanceof Date ? d.toISOString().slice(0, 10) : (d ? String(d).slice(0, 10) : ''));
+    const dates = (rows || []).map((r) => toDateStr(r.work_date)).filter(Boolean);
+    res.json({ dates });
+  } catch (err) {
+    if (err.code === 'ER_NO_SUCH_TABLE') {
+      return res.json({ dates: [] });
+    }
+    console.error('Ошибка getWorkingDays:', err);
+    res.status(500).json({ error: 'Ошибка загрузки рабочих дней' });
+  }
+};
+
+exports.toggleWorkingDay = async (req, res) => {
+  const beatmakerId = req.user.id;
+  const { date } = req.body || {};
+  if (!date || typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return res.status(400).json({ error: 'Укажите date в формате YYYY-MM-DD' });
+  }
+  try {
+    const existing = await queryOne('SELECT id FROM beatmaker_working_days WHERE beatmaker_id = ? AND work_date = ?', [beatmakerId, date]);
+    if (existing) {
+      await query('DELETE FROM beatmaker_working_days WHERE beatmaker_id = ? AND work_date = ?', [beatmakerId, date]);
+      return res.json({ date, working: false });
+    }
+    await query('INSERT INTO beatmaker_working_days (beatmaker_id, work_date) VALUES (?, ?)', [beatmakerId, date]);
+    return res.json({ date, working: true });
+  } catch (err) {
+    if (err.code === 'ER_NO_SUCH_TABLE') {
+      return res.status(400).json({ error: 'Таблица рабочих дней недоступна' });
+    }
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.json({ date, working: true });
+    }
+    console.error('Ошибка toggleWorkingDay:', err);
+    res.status(500).json({ error: 'Ошибка сохранения' });
+  }
+};
+
+// Сохранить рабочие дни на месяц (заменить список за месяц)
+exports.setWorkingDays = async (req, res) => {
+  const beatmakerId = req.user.id;
+  const { year, month, dates } = req.body || {};
+  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+    return res.status(400).json({ error: 'Укажите year и month' });
+  }
+  const dateList = Array.isArray(dates) ? dates.filter((d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) : [];
+  const start = `${year}-${String(month).padStart(2, '0')}-01`;
+  const lastDay = new Date(year, month, 0).getDate();
+  const end = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+  try {
+    await query('DELETE FROM beatmaker_working_days WHERE beatmaker_id = ? AND work_date >= ? AND work_date <= ?', [beatmakerId, start, end]);
+    for (const d of dateList) {
+      if (d >= start && d <= end) await query('INSERT INTO beatmaker_working_days (beatmaker_id, work_date) VALUES (?, ?)', [beatmakerId, d]);
+    }
+    const rows = await query(
+      'SELECT work_date FROM beatmaker_working_days WHERE beatmaker_id = ? AND work_date >= ? AND work_date <= ? ORDER BY work_date',
+      [beatmakerId, start, end]
+    );
+    const toDateStr = (d) => (d instanceof Date ? d.toISOString().slice(0, 10) : (d ? String(d).slice(0, 10) : ''));
+    res.json({ dates: (rows || []).map((r) => toDateStr(r.work_date)).filter(Boolean) });
+  } catch (err) {
+    if (err.code === 'ER_NO_SUCH_TABLE') {
+      return res.json({ dates: [] });
+    }
+    console.error('Ошибка setWorkingDays:', err);
+    res.status(500).json({ error: 'Ошибка сохранения' });
+  }
+};
+
+// Рабочие дни битмейкера (публично, для формы записи)
+exports.getWorkingDaysForBeatmaker = async (req, res) => {
+  const beatmakerId = Number(req.params.beatmakerId);
+  if (!Number.isInteger(beatmakerId)) {
+    return res.status(400).json({ error: 'Некорректный id' });
+  }
+  const year = Number(req.query.year);
+  const month = Number(req.query.month);
+  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+    return res.status(400).json({ error: 'Укажите year и month в query' });
+  }
+  try {
+    const start = `${year}-${String(month).padStart(2, '0')}-01`;
+    const lastDay = new Date(year, month, 0).getDate();
+    const end = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+    const rows = await query(
+      'SELECT work_date FROM beatmaker_working_days WHERE beatmaker_id = ? AND work_date >= ? AND work_date <= ? ORDER BY work_date',
+      [beatmakerId, start, end]
+    );
+    const toDateStr = (d) => (d instanceof Date ? d.toISOString().slice(0, 10) : (d ? String(d).slice(0, 10) : ''));
+    res.json({ dates: (rows || []).map((r) => toDateStr(r.work_date)).filter(Boolean) });
+  } catch (err) {
+    if (err.code === 'ER_NO_SUCH_TABLE') return res.json({ dates: [] });
+    console.error('Ошибка getWorkingDaysForBeatmaker:', err);
+    res.status(500).json({ error: 'Ошибка загрузки' });
+  }
+};

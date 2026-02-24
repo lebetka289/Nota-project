@@ -1,0 +1,35 @@
+/* Чёрная полоска с бегущим текстом (сверху в притык к слайдеру) */
+.marquee-strip {
+  width: 100%;
+  background: #000;
+  overflow: hidden;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.marquee-strip-inner {
+  display: flex;
+  width: max-content;
+  animation: marqueeScroll 30s linear infinite;
+  will-change: transform;
+}
+
+.marquee-strip-text {
+  display: inline-block;
+  padding: 0.6rem 0;
+  font-size: clamp(0.75rem, 1.8vw, 0.95rem);
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #fff;
+  white-space: nowrap;
+}
+
+@keyframes marqueeScroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}

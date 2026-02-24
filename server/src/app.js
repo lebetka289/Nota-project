@@ -16,6 +16,8 @@ const reviewsRoutes = require('./routes/reviews.routes');
 const usersRoutes = require('./routes/users.routes');
 const itemsRoutes = require('./routes/items.routes');
 const healthRoutes = require('./routes/health.routes');
+const newsRoutes = require('./routes/news.routes');
+const studioBookingRoutes = require('./routes/studio-booking.routes');
 
 const app = express();
 
@@ -45,5 +47,7 @@ app.use('/api/reviews', reviewsRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/items', itemsRoutes);
 app.use('/api/health', healthRoutes);
+app.use('/api/news', newsRoutes);
+app.use('/api/studio-booking', studioBookingRoutes);
 
 module.exports = app;

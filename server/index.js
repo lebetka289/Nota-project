@@ -18,7 +18,10 @@ const startServer = async () => {
 
 startServer();
 
-process.on('SIGINT', () => {
-  console.log('✅ Сервер остановлен');
+const shutdown = (signal) => {
+  console.log(`✅ Получен ${signal}, сервер останавливается...`);
   process.exit(0);
-});
+};
+
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));

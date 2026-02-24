@@ -68,7 +68,12 @@ export const AuthProvider = ({ children }) => {
         setUser(data.user);
         return { success: true };
       } else {
-        return { success: false, error: data.error };
+        return { 
+          success: false, 
+          error: data.error,
+          requiresVerification: data.requiresVerification,
+          userId: data.userId
+        };
       }
     } catch (error) {
       return { success: false, error: 'Ошибка подключения к серверу' };
@@ -106,15 +111,21 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const refreshUser = () => {
+    if (token) fetchUser();
+  };
+
   const value = {
     user,
     loading,
     login,
     register,
     logout,
+    refreshUser,
     isAdmin: user?.role === 'admin',
     isSupport: user?.role === 'support' || user?.role === 'admin',
     isBeatmaker: user?.role === 'beatmaker' || user?.role === 'admin',
+    isReporter: user?.role === 'reporter' || user?.role === 'admin',
     token
   };
 
