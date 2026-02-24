@@ -461,7 +461,6 @@
 }
 
 @media (max-width: 768px) {
-  .asos-mobile-menu { display: flex; }
   .asos-search-container { max-width: none; }
   .asos-search-wrap { display: flex; }
 }
