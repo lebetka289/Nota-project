@@ -430,14 +430,22 @@ function UserProfile() {
                 <div className="loading">Загрузка заявки…</div>
               </div>
             )}
-            {pendingBooking && !pendingBooking.isPaid && (
+            {pendingBooking && (pendingBooking.status === 'rejected' || !pendingBooking.isPaid) && (
               <div className="recordings-section">
-                <h2>Заявка на запись с покупкой музыки</h2>
-                <p className="profile-section-hint">Оплатите заявку — после оплаты статус автоматически передаётся битмейкеру.</p>
-                <div className="recording-card booking-pending-card">
+                <h2>Заявка на запись</h2>
+                {pendingBooking.status === 'rejected' ? (
+                  <p className="profile-section-hint">Битмейкер отклонил заявку. Причина указана ниже.</p>
+                ) : (
+                  <p className="profile-section-hint">Оплатите заявку — после оплаты статус автоматически передаётся битмейкеру.</p>
+                )}
+                <div className={`recording-card booking-pending-card ${pendingBooking.status === 'rejected' ? 'booking-rejected' : ''}`}>
                   <div className="recording-header">
                     <h3>Запись с покупкой музыки</h3>
-                    <span className="status-badge status-pending">Ожидает оплаты</span>
+                    {pendingBooking.status === 'rejected' ? (
+                      <span className="status-badge status-cancelled">Отменено</span>
+                    ) : (
+                      <span className="status-badge status-pending">Ожидает оплаты</span>
+                    )}
                   </div>
                   <div className="recording-details">
                     <div className="detail-item">
@@ -452,14 +460,22 @@ function UserProfile() {
                       <span className="detail-label">Период записи:</span>
                       <span className="detail-value">{pendingBooking.dateStart} — {pendingBooking.dateEnd}</span>
                     </div>
+                    {pendingBooking.status === 'rejected' && pendingBooking.rejectionReason && (
+                      <div className="detail-item detail-item-reason">
+                        <span className="detail-label">Причина отклонения:</span>
+                        <span className="detail-value rejection-reason">{pendingBooking.rejectionReason}</span>
+                      </div>
+                    )}
                   </div>
-                  <button
-                    className="pay-recording-btn"
-                    onClick={() => handlePayBooking(pendingBooking)}
-                    disabled={payingBookingId === pendingBooking.id}
-                  >
-                    {payingBookingId === pendingBooking.id ? 'Обработка...' : 'Оплатить'}
-                  </button>
+                  {pendingBooking.status !== 'rejected' && (
+                    <button
+                      className="pay-recording-btn"
+                      onClick={() => handlePayBooking(pendingBooking)}
+                      disabled={payingBookingId === pendingBooking.id}
+                    >
+                      {payingBookingId === pendingBooking.id ? 'Обработка...' : 'Оплатить'}
+                    </button>
+                  )}
                 </div>
               </div>
             )}

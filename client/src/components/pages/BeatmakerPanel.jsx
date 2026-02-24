@@ -27,8 +27,21 @@ const BOOKING_GENRE_NAMES = {
   other: 'Другое'
 };
 
-function BookingCard({ booking, onTakeToWork, takingId }) {
+function BookingCard({
+  booking,
+  onTakeToWork,
+  takingId,
+  onRejectClick,
+  onRejectSubmit,
+  onRejectCancel,
+  rejectingBookingId,
+  rejectReason,
+  onRejectReasonChange,
+  rejectingId
+}) {
   const taking = takingId === booking.id;
+  const rejecting = rejectingId === booking.id;
+  const showRejectForm = rejectingBookingId === booking.id;
   const genreLabel = BOOKING_GENRE_NAMES[booking.musicGenre] || booking.musicGenre;
 
   return (
@@ -76,16 +89,59 @@ function BookingCard({ booking, onTakeToWork, takingId }) {
           </div>
         )}
       </div>
-      {onTakeToWork && (
+      {(onTakeToWork || onRejectClick) && (
         <div className="bm-booking-actions">
-          <button
-            type="button"
-            className="bm-btn-take"
-            onClick={() => onTakeToWork(booking.id)}
-            disabled={taking}
-          >
-            {taking ? 'Отправка…' : 'Взять в работу'}
-          </button>
+          {!showRejectForm ? (
+            <>
+              {onTakeToWork && (
+                <button
+                  type="button"
+                  className="bm-btn-take"
+                  onClick={() => onTakeToWork(booking.id)}
+                  disabled={taking}
+                >
+                  {taking ? 'Отправка…' : 'Взять в работу'}
+                </button>
+              )}
+              {onRejectClick && (
+                <button
+                  type="button"
+                  className="bm-btn-reject"
+                  onClick={() => onRejectClick(booking.id)}
+                >
+                  Не принять
+                </button>
+              )}
+            </>
+          ) : (
+            <div className="bm-reject-form">
+              <label className="bm-reject-label">Причина отклонения</label>
+              <textarea
+                className="bm-reject-textarea"
+                placeholder="Укажите причину (по желанию)"
+                value={rejectReason}
+                onChange={(e) => onRejectReasonChange(e.target.value)}
+                rows={3}
+              />
+              <div className="bm-reject-buttons">
+                <button
+                  type="button"
+                  className="bm-btn-reject-submit"
+                  onClick={() => onRejectSubmit(booking.id)}
+                  disabled={rejecting}
+                >
+                  {rejecting ? 'Отправка…' : 'Отправить'}
+                </button>
+                <button
+                  type="button"
+                  className="bm-btn-reject-cancel"
+                  onClick={onRejectCancel}
+                >
+                  Отменить
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -212,6 +268,9 @@ function BeatmakerPanel() {
   const [uploadingTrackId, setUploadingTrackId] = useState(null);
   const [sendingTrackId, setSendingTrackId] = useState(null);
   const [takingBookingId, setTakingBookingId] = useState(null);
+  const [rejectingBookingId, setRejectingBookingId] = useState(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const [rejectingId, setRejectingId] = useState(null);
   const [alert, setAlert] = useState(null);
 
   const [dateFrom, setDateFrom] = useState('');
@@ -219,6 +278,13 @@ function BeatmakerPanel() {
   const [pageNew, setPageNew] = useState(1);
   const [pageInWork, setPageInWork] = useState(1);
   const PER_PAGE = 8;
+
+  const [calendarYear, setCalendarYear] = useState(() => new Date().getFullYear());
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date().getMonth() + 1);
+  const [workingDays, setWorkingDays] = useState([]);
+  const [selectedWorkingDays, setSelectedWorkingDays] = useState([]);
+  const [workingDaysLoading, setWorkingDaysLoading] = useState(false);
+  const [savingWorkingDays, setSavingWorkingDays] = useState(false);
 
   const filterByDate = (list, dateKey = 'createdAt') => {
     if (!dateFrom && !dateTo) return list;
@@ -291,6 +357,102 @@ function BeatmakerPanel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, token, isBeatmaker]);
 
+  const normalizeDateStr = (d) => {
+    if (!d) return '';
+    if (typeof d === 'string') return d.slice(0, 10);
+    try { return new Date(d).toISOString().slice(0, 10); } catch (_) { return ''; }
+  };
+
+  const loadWorkingDays = async () => {
+    if (!token) return;
+    setWorkingDaysLoading(true);
+    try {
+      const r = await fetch(
+        `${API_URL}/studio-booking/working-days?year=${calendarYear}&month=${calendarMonth}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const data = await r.json();
+      const dates = (Array.isArray(data.dates) ? data.dates : []).map(normalizeDateStr).filter(Boolean);
+      setWorkingDays(dates);
+    } catch (e) {
+      setWorkingDays([]);
+    } finally {
+      setWorkingDaysLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'calendar' && token) loadWorkingDays();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, calendarYear, calendarMonth, token]);
+
+  useEffect(() => {
+    setSelectedWorkingDays(workingDays);
+  }, [workingDays]);
+
+  const toggleSelectedDay = (dateStr) => {
+    setSelectedWorkingDays((prev) =>
+      prev.includes(dateStr) ? prev.filter((d) => d !== dateStr) : [...prev, dateStr].sort()
+    );
+  };
+
+  const getSameWeekdaysInMonth = (year, month, sourceDates) => {
+    if (!Array.isArray(sourceDates) || sourceDates.length === 0) return [];
+    const weekdays = [...new Set(sourceDates.map((d) => new Date(d + 'T12:00:00').getDay()))];
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const result = [];
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      if (weekdays.includes(new Date(dateStr + 'T12:00:00').getDay())) result.push(dateStr);
+    }
+    return result;
+  };
+
+  const saveWorkingDays = async () => {
+    if (!token || savingWorkingDays) return;
+    setSavingWorkingDays(true);
+    try {
+      const r = await fetch(`${API_URL}/studio-booking/working-days`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          year: calendarYear,
+          month: calendarMonth,
+          dates: selectedWorkingDays
+        })
+      });
+      const data = await r.json();
+      if (r.ok) {
+        const saved = (Array.isArray(data.dates) ? data.dates : []).map(normalizeDateStr).filter(Boolean);
+        setWorkingDays(saved);
+        setSelectedWorkingDays(saved);
+        setAlert({ message: 'Рабочие дни сохранены и продублированы на следующий месяц.', type: 'success' });
+        const nextMonth = calendarMonth === 12 ? 1 : calendarMonth + 1;
+        const nextYear = calendarMonth === 12 ? calendarYear + 1 : calendarYear;
+        const nextMonthDates = getSameWeekdaysInMonth(nextYear, nextMonth, selectedWorkingDays);
+        if (nextMonthDates.length > 0) {
+          await fetch(`${API_URL}/studio-booking/working-days`, {
+            method: 'PUT',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ year: nextYear, month: nextMonth, dates: nextMonthDates })
+          });
+        }
+      } else {
+        setAlert({ message: data.error || 'Ошибка сохранения', type: 'error' });
+      }
+    } catch (e) {
+      setAlert({ message: 'Ошибка сохранения рабочих дней', type: 'error' });
+    } finally {
+      setSavingWorkingDays(false);
+    }
+  };
+
   const loadPaidRecordings = async () => {
     if (!token) return;
     try {
@@ -327,6 +489,40 @@ function BeatmakerPanel() {
       setAlert({ message: err.message || 'Не удалось перевести в работу', type: 'error' });
     } finally {
       setTakingBookingId(null);
+    }
+  };
+
+  const handleRejectClick = (bookingId) => {
+    setRejectingBookingId(bookingId);
+    setRejectReason('');
+  };
+
+  const handleRejectCancel = () => {
+    setRejectingBookingId(null);
+    setRejectReason('');
+  };
+
+  const handleRejectSubmit = async (bookingId) => {
+    try {
+      setRejectingId(bookingId);
+      const r = await fetch(`${API_URL}/studio-booking/${bookingId}/status`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: 'rejected', rejectionReason: rejectReason })
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Ошибка');
+      setAlert({ message: 'Заявка отклонена с указанной причиной.', type: 'success' });
+      setRejectingBookingId(null);
+      setRejectReason('');
+      await loadBookings();
+    } catch (err) {
+      setAlert({ message: err.message || 'Не удалось отклонить заявку', type: 'error' });
+    } finally {
+      setRejectingId(null);
     }
   };
 
@@ -464,8 +660,25 @@ function BeatmakerPanel() {
   const tabs = [
     { id: 'form-orders', label: 'Заказы с формы' },
     { id: 'in-work', label: 'Заказы в работе' },
+    { id: 'calendar', label: 'Календарь' },
     { id: 'beats', label: 'Созданные биты' }
   ];
+
+  const MONTH_NAMES = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+  const WEEKDAY_NAMES = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+
+  const getCalendarDays = () => {
+    const daysInMonth = new Date(calendarYear, calendarMonth, 0).getDate();
+    const firstDay = new Date(calendarYear, calendarMonth - 1, 1);
+    const startOffset = (firstDay.getDay() + 6) % 7;
+    const cells = [];
+    for (let i = 0; i < startOffset; i++) cells.push(null);
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${calendarYear}-${String(calendarMonth).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      cells.push(dateStr);
+    }
+    return cells;
+  };
 
   return (
     <div className="bm-page">
@@ -514,6 +727,13 @@ function BeatmakerPanel() {
                     booking={b}
                     onTakeToWork={handleTakeToWork}
                     takingId={takingBookingId}
+                    onRejectClick={handleRejectClick}
+                    onRejectSubmit={handleRejectSubmit}
+                    onRejectCancel={handleRejectCancel}
+                    rejectingBookingId={rejectingBookingId}
+                    rejectReason={rejectReason}
+                    onRejectReasonChange={setRejectReason}
+                    rejectingId={rejectingId}
                   />
                 ))}
               </div>
@@ -626,6 +846,80 @@ function BeatmakerPanel() {
                   </div>
                 ))}
               </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'calendar' && (
+        <div className="bm-tab-panel">
+          <div className="bm-calendar-wrap">
+            <div className="bm-calendar-header">
+              <button
+                type="button"
+                className="bm-calendar-nav"
+                onClick={() => {
+                  if (calendarMonth === 1) {
+                    setCalendarYear((y) => y - 1);
+                    setCalendarMonth(12);
+                  } else setCalendarMonth((m) => m - 1);
+                }}
+              >
+                ← Назад
+              </button>
+              <h2 className="bm-calendar-title">
+                {MONTH_NAMES[calendarMonth - 1]} {calendarYear}
+              </h2>
+              <button
+                type="button"
+                className="bm-calendar-nav"
+                onClick={() => {
+                  if (calendarMonth === 12) {
+                    setCalendarYear((y) => y + 1);
+                    setCalendarMonth(1);
+                  } else setCalendarMonth((m) => m + 1);
+                }}
+              >
+                Вперёд →
+              </button>
+            </div>
+            <p className="bm-calendar-hint">Выберите дни и нажмите «Сохранить», чтобы записать их как рабочие.</p>
+            {workingDaysLoading ? (
+              <div className="bm-muted">Загрузка календаря…</div>
+            ) : (
+              <>
+                <div className="bm-calendar-grid">
+                  {WEEKDAY_NAMES.map((name) => (
+                    <div key={name} className="bm-calendar-weekday">
+                      {name}
+                    </div>
+                  ))}
+                  {getCalendarDays().map((dateStr, idx) => (
+                    <div
+                      key={dateStr || `empty-${idx}`}
+                      className={`bm-calendar-day ${dateStr ? '' : 'bm-calendar-day-empty'} ${dateStr && selectedWorkingDays.includes(dateStr) ? 'bm-calendar-day-working' : ''}`}
+                      role={dateStr ? 'button' : undefined}
+                      tabIndex={dateStr ? 0 : undefined}
+                      onClick={() => dateStr && toggleSelectedDay(dateStr)}
+                      onKeyDown={(e) => dateStr && (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), toggleSelectedDay(dateStr))}
+                      aria-label={dateStr ? (selectedWorkingDays.includes(dateStr) ? `Рабочий день ${dateStr}` : `День ${dateStr}`) : undefined}
+                    >
+                      {dateStr ? new Date(dateStr + 'T12:00:00').getDate() : ''}
+                      {dateStr && selectedWorkingDays.includes(dateStr) && <span className="bm-calendar-day-check">✓</span>}
+                    </div>
+                  ))}
+                </div>
+                <div className="bm-calendar-save-wrap">
+                  <button
+                    type="button"
+                    className="bm-calendar-save-btn"
+                    onClick={saveWorkingDays}
+                    disabled={savingWorkingDays}
+                  >
+                    {savingWorkingDays ? 'Сохранение…' : 'Сохранить рабочие дни'}
+                  </button>
+                </div>
+              </>
             )}
           </div>
         </div>

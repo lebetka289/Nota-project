@@ -51,6 +51,102 @@
   margin-bottom: 3rem;
 }
 
+/* Битмейкеры: круглое фото, имя, кнопка Записаться */
+.recording-beatmakers-section {
+  margin-bottom: 3rem;
+}
+
+.recording-beatmakers-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #111;
+  margin: 0 0 0.5rem 0;
+  text-align: center;
+}
+
+.recording-beatmakers-subtitle {
+  font-size: 0.95rem;
+  color: #666;
+  margin: 0 0 2rem 0;
+  text-align: center;
+}
+
+.recording-beatmakers-loading,
+.recording-beatmakers-empty {
+  text-align: center;
+  color: #888;
+  padding: 2rem;
+}
+
+.recording-beatmakers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 2rem;
+  justify-items: center;
+}
+
+.recording-beatmaker-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.recording-beatmaker-avatar-wrap {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+  margin-bottom: 1rem;
+  flex-shrink: 0;
+}
+
+.recording-beatmaker-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.recording-beatmaker-avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.recording-beatmaker-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111;
+  margin-bottom: 0.75rem;
+}
+
+.recording-beatmaker-book-btn {
+  padding: 0.6rem 1.25rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #fff;
+  background: rgba(225, 6, 47, 0.9);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.recording-beatmaker-book-btn:hover {
+  background: rgba(225, 6, 47, 1);
+  transform: translateY(-2px);
+}
+
 .recording-type-card {
   background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
   background-size: cover;
@@ -564,6 +660,13 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
+}
+
+.popup-wm-form-desc {
+  font-size: 0.95rem;
+  color: #555;
+  margin: 0 0 1.25rem 0;
+  line-height: 1.5;
 }
 
 .popup-wm-form-grid {

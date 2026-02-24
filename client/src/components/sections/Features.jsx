@@ -1,7 +1,43 @@
 import { useState, useEffect } from 'react';
 import './Features.css';
 
-function Features() {
+const API_URL = import.meta.env.VITE_API_URL || '/api';
+
+const resolveAvatarUrl = (avatarPath, apiUrl) => {
+  if (!avatarPath) return null;
+  if (avatarPath.startsWith('http')) return avatarPath;
+  const base = (apiUrl || '').replace(/\/api\/?$/, '');
+  const path = avatarPath.startsWith('/') ? avatarPath : `/uploads/${avatarPath}`;
+  return `${base}${path}`;
+};
+
+function Features({ onNavigate }) {
+  const [beatmakers, setBeatmakers] = useState([]);
+  const [beatmakersLoading, setBeatmakersLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${API_URL}/studio-booking/beatmakers`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled) setBeatmakers(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (!cancelled) setBeatmakers([]);
+      })
+      .finally(() => {
+        if (!cancelled) setBeatmakersLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleBookBeatmaker = (beatmakerId) => {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem('studioBookingSelectedBeatmakerId', String(beatmakerId));
+    }
+    if (onNavigate) onNavigate('recording');
+  };
+
   const features = [
     { title: 'Профессиональное оборудование', description: 'Современная техника от ведущих производителей для качественной записи', image: '/features/feature1.png' },
     { title: 'Опытные звукорежиссеры', description: 'Команда профессионалов с многолетним опытом работы в индустрии', image: '/features/feature2.png' },
@@ -107,6 +143,37 @@ function Features() {
             aria-label={`Перейти к слайду ${index + 1}`}
           />
         ))}
+      </div>
+
+      {/* Битмейкеры — записаться на студию */}
+      <div className="features-beatmakers-wrap">
+        <h3 className="features-beatmakers-title">Битмейкеры</h3>
+        <p className="features-beatmakers-sub">Выберите битмейкера и запишитесь на студию</p>
+        {beatmakersLoading ? (
+          <p className="features-beatmakers-loading">Загрузка…</p>
+        ) : beatmakers.length > 0 ? (
+          <div className="features-beatmakers-grid">
+            {beatmakers.map((bm) => (
+              <div key={bm.id} className="features-beatmaker-card">
+                <div className="features-beatmaker-avatar-wrap">
+                  {resolveAvatarUrl(bm.avatar_path, API_URL) ? (
+                    <img src={resolveAvatarUrl(bm.avatar_path, API_URL)} alt="" className="features-beatmaker-avatar" />
+                  ) : (
+                    <div className="features-beatmaker-avatar-placeholder">{bm.name ? bm.name.charAt(0) : '?'}</div>
+                  )}
+                </div>
+                <div className="features-beatmaker-name">{bm.name || 'Битмейкер'}</div>
+                <button
+                  type="button"
+                  className="features-beatmaker-book-btn"
+                  onClick={() => handleBookBeatmaker(bm.id)}
+                >
+                  Записаться
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : null}
       </div>
     </div>
   );

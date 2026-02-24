@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Header from './components/layout/Header'
 import MarqueeStrip from './components/sections/MarqueeStrip'
 import Slider from './components/sections/Slider'
@@ -27,7 +27,37 @@ import NewsPage from './components/pages/NewsPage'
 import ReporterPanel from './components/pages/ReporterPanel'
 import StudioBookingPage from './components/pages/StudioBookingPage'
 import { useAuth } from './context/AuthContext'
+import { trackPageView } from './utils/analytics.js'
 import './App.css'
+
+const PAGE_TITLES = {
+  home: 'Нота бель',
+  shop: 'Магазин — Нота бель',
+  news: 'Новости — Нота бель',
+  studio-booking: 'Бронирование студии — Нота бель',
+  recording: 'Запись — Нота бель',
+  auth: 'Вход — Нота бель',
+  reset-password: 'Сброс пароля — Нота бель',
+  cart: 'Корзина — Нота бель',
+  favorites: 'Избранное — Нота бель',
+  profile: 'Профиль — Нота бель',
+  support: 'Поддержка — Нота бель',
+  beatmaker: 'Кабинет битмейкера — Нота бель',
+  admin: 'Админ-панель — Нота бель',
+  reporter: 'Панель репортера — Нота бель',
+  payment: 'Оплата — Нота бель',
+}
+
+function setRobotsMeta(content) {
+  if (typeof document === 'undefined') return;
+  let tag = document.querySelector('meta[name="robots"]');
+  if (!tag) {
+    tag = document.createElement('meta');
+    tag.setAttribute('name', 'robots');
+    document.head.appendChild(tag);
+  }
+  tag.setAttribute('content', content);
+}
 
 function App() {
   const [currentPage, setCurrentPage] = useState(() => {
@@ -43,6 +73,17 @@ function App() {
     return null
   })
   const { loading } = useAuth()
+
+  useEffect(() => {
+    const title = PAGE_TITLES[currentPage] || PAGE_TITLES.home
+    if (typeof document !== 'undefined') document.title = title
+
+    // Личные/технические разделы лучше закрывать от индексации
+    const noindexPages = new Set(['admin', 'profile', 'support', 'cart', 'favorites', 'payment', 'reset-password'])
+    setRobotsMeta(noindexPages.has(currentPage) ? 'noindex,nofollow' : 'index,follow')
+
+    trackPageView({ title })
+  }, [currentPage])
 
   if (loading) {
   return (
@@ -114,7 +155,7 @@ function App() {
             <CategoryGridAsos onNavigate={setCurrentPage} />
             <Stats />
             <RecordingSelector onNavigate={setCurrentPage} />
-            <Features />
+            <Features onNavigate={handleNavigate} />
             <PopularBeats onNavigate={setCurrentPage} />
             <HomeRecording onNavigate={setCurrentPage} />
             <Testimonials />

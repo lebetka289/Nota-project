@@ -362,8 +362,29 @@
 
 .status-cancelled {
   background: rgba(208, 19, 69, 0.1);
-  color: var(--accent-2);
-  border: 1px solid var(--accent-2);
+  color: var(--accent-2, #c83246);
+  border: 1px solid var(--accent-2, #c83246);
+}
+
+.booking-rejected.recording-card {
+  border-color: rgba(200, 50, 70, 0.3);
+  background: rgba(200, 50, 70, 0.03);
+}
+
+.detail-item-reason {
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.rejection-reason {
+  display: block;
+  margin-top: 0.25rem;
+  padding: 0.5rem 0.6rem;
+  background: rgba(200, 50, 70, 0.08);
+  border-radius: 8px;
+  color: var(--text, #1a1a1a);
+  font-style: italic;
 }
 
 .recording-details {

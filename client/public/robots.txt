@@ -1,0 +1,15 @@
+User-agent: *
+# Закрываем техничку/личные разделы (паттерны с * поддерживаются Яндексом и Google)
+Disallow: /*?page=admin*
+Disallow: /*?page=profile*
+Disallow: /*?page=support*
+Disallow: /*?page=cart*
+Disallow: /*?page=favorites*
+Disallow: /*?page=payment*
+Disallow: /*?page=reset-password*
+
+Allow: /
+
+# ВАЖНО: замените домен на реальный
+Sitemap: https://YOUR_DOMAIN.TLD/sitemap.xml
+

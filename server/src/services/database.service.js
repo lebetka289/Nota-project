@@ -217,8 +217,20 @@ async function initDatabase() {
   await ensureColumn('studio_bookings', 'source', "VARCHAR(50) DEFAULT 'form'");
   await ensureColumn('studio_bookings', 'beat_id', 'INT NULL');
   await ensureColumn('studio_bookings', 'beat_ids', 'JSON NULL');
+  await ensureColumn('studio_bookings', 'beatmaker_id', 'INT NULL');
   await ensureColumn('studio_bookings', 'user_id', 'INT NULL');
   await ensureColumn('studio_bookings', 'recording_id', 'INT NULL');
+  await ensureColumn('studio_bookings', 'rejection_reason', 'TEXT NULL');
+
+  // Рабочие дни битмейкера (календарь)
+  await query(`CREATE TABLE IF NOT EXISTS beatmaker_working_days (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    beatmaker_id INT NOT NULL,
+    work_date DATE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_beatmaker_date (beatmaker_id, work_date),
+    FOREIGN KEY (beatmaker_id) REFERENCES users(id) ON DELETE CASCADE
+  )`);
 
   // Биты (магазин)
   await query(`CREATE TABLE IF NOT EXISTS beats (

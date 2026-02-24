@@ -1,40 +1,46 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Alert from '../widgets/Alert';
 import './StudioBookingPage.css';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
-const MUSIC_GENRES = [
-  { value: '', label: 'Выберите жанр' },
-  { value: 'pop', label: 'Поп' },
-  { value: 'rap', label: 'Рэп / Хип-хоп' },
-  { value: 'russian-rap', label: 'Русский рэп' },
-  { value: 'indie', label: 'Инди' },
-  { value: 'rock', label: 'Рок' },
-  { value: 'electronic', label: 'Электронная музыка' },
-  { value: 'rnb', label: 'R&B' },
-  { value: 'jazz', label: 'Джаз' },
-  { value: 'folk', label: 'Фолк / Авторская' },
-  { value: 'other', label: 'Другое' }
+const resolveAvatarUrl = (avatarPath) => {
+  if (!avatarPath) return null;
+  if (avatarPath.startsWith('http')) return avatarPath;
+  const base = (API_URL || '').replace(/\/api\/?$/, '');
+  const path = avatarPath.startsWith('/') ? avatarPath : `/uploads/${avatarPath}`;
+  return `${base}${path}`;
+};
+
+const RECORDING_TYPES = [
+  { id: 'home-recording', label: 'Запись на дому' },
+  { id: 'with-music', label: 'Запись с покупкой музыки' }
 ];
 
 function StudioBookingPage({ onNavigate }) {
   const [alert, setAlert] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [beatmakers, setBeatmakers] = useState([]);
+  const [selectedBeatmakerId, setSelectedBeatmakerId] = useState(null);
+  const [busyPeriods, setBusyPeriods] = useState([]);
+  const [recordingType, setRecordingType] = useState('with-music');
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [intlPrefix, setIntlPrefix] = useState('+7');
-  const [website, setWebsite] = useState('');
   const [musicGenre, setMusicGenre] = useState('');
 
   const [songsCount, setSongsCount] = useState('');
   const [musicDetails, setMusicDetails] = useState('');
 
-  const [dateStart, setDateStart] = useState('');
-  const [dateEnd, setDateEnd] = useState('');
+  const [selectedBookingDates, setSelectedBookingDates] = useState([]);
+
+  const [calendarYear, setCalendarYear] = useState(() => new Date().getFullYear());
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date().getMonth() + 1);
+  const [workingDaysBeatmaker, setWorkingDaysBeatmaker] = useState([]);
+  const [workingDaysLoading, setWorkingDaysLoading] = useState(false);
 
   const [hasMusicians, setHasMusicians] = useState('');
   const [needSessionMusicians, setNeedSessionMusicians] = useState('');
@@ -46,6 +52,127 @@ function StudioBookingPage({ onNavigate }) {
   const showAlert = (message, type = 'info') => {
     setAlert({ message, type });
   };
+
+  useEffect(() => {
+    if (typeof sessionStorage === 'undefined') return;
+    const beatmakerId = sessionStorage.getItem('studioBookingSelectedBeatmakerId');
+    if (beatmakerId) {
+      const id = Number(beatmakerId);
+      if (Number.isInteger(id)) setSelectedBeatmakerId(id);
+      sessionStorage.removeItem('studioBookingSelectedBeatmakerId');
+    }
+    const type = sessionStorage.getItem('studioBookingRecordingType');
+    if (type && ['home-recording', 'with-music'].includes(type)) setRecordingType(type);
+    const style = sessionStorage.getItem('studioBookingMusicStyle');
+    if (style) setMusicGenre(style);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${API_URL}/studio-booking/beatmakers`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled) setBeatmakers(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (!cancelled) setBeatmakers([]);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    if (!selectedBeatmakerId) {
+      setBusyPeriods([]);
+      return;
+    }
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const res = await fetch(`${API_URL}/studio-booking/availability/${selectedBeatmakerId}`);
+        if (res.ok && !cancelled) {
+          const data = await res.json();
+          setBusyPeriods(Array.isArray(data.busy) ? data.busy : []);
+        } else if (!cancelled) setBusyPeriods([]);
+      } catch (e) {
+        if (!cancelled) setBusyPeriods([]);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [selectedBeatmakerId]);
+
+  useEffect(() => {
+    if (!selectedBeatmakerId) {
+      setWorkingDaysBeatmaker([]);
+      return;
+    }
+    let cancelled = false;
+    setWorkingDaysLoading(true);
+    fetch(
+      `${API_URL}/studio-booking/working-days/beatmaker/${selectedBeatmakerId}?year=${calendarYear}&month=${calendarMonth}`
+    )
+      .then((r) => r.json())
+      .then((data) => {
+        const raw = Array.isArray(data.dates) ? data.dates : [];
+        const normalized = raw.map((d) => (typeof d === 'string' ? d.slice(0, 10) : (d && new Date(d).toISOString ? new Date(d).toISOString().slice(0, 10) : ''))).filter(Boolean);
+        if (!cancelled) setWorkingDaysBeatmaker(normalized);
+      })
+      .catch(() => {
+        if (!cancelled) setWorkingDaysBeatmaker([]);
+      })
+      .finally(() => {
+        if (!cancelled) setWorkingDaysLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [selectedBeatmakerId, calendarYear, calendarMonth]);
+
+  const WEEKDAY_NAMES = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+  const MONTH_NAMES = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+
+  const getCalendarDays = () => {
+    const daysInMonth = new Date(calendarYear, calendarMonth, 0).getDate();
+    const firstDay = new Date(calendarYear, calendarMonth - 1, 1);
+    const startOffset = (firstDay.getDay() + 6) % 7;
+    const cells = [];
+    for (let i = 0; i < startOffset; i++) cells.push(null);
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${calendarYear}-${String(calendarMonth).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      cells.push(dateStr);
+    }
+    return cells;
+  };
+
+  const isDateBusy = (dateStr) => {
+    const d = new Date(dateStr + 'T12:00:00').getTime();
+    return busyPeriods.some((p) => {
+      const start = new Date(p.date_start + 'T00:00:00').getTime();
+      const end = new Date((p.date_end || p.date_start) + 'T23:59:59').getTime();
+      return d >= start && d <= end;
+    });
+  };
+
+  const isWorkingDay = (dateStr) => {
+    if (!dateStr) return false;
+    const ymd = dateStr.slice(0, 10);
+    return workingDaysBeatmaker.some((d) => String(d).slice(0, 10) === ymd);
+  };
+
+  const handleCalendarDayClick = (dateStr) => {
+    if (!dateStr || !isWorkingDay(dateStr) || isDateBusy(dateStr)) return;
+    const ymd = dateStr.slice(0, 10);
+    setSelectedBookingDates((prev) =>
+      prev.includes(ymd) ? prev.filter((d) => d !== ymd) : [...prev, ymd].sort()
+    );
+  };
+
+  const bookingDatesSorted = [...selectedBookingDates].sort();
+  const dateStart = bookingDatesSorted.length > 0 ? bookingDatesSorted[0] : '';
+  const dateEnd = bookingDatesSorted.length > 0 ? bookingDatesSorted[bookingDatesSorted.length - 1] : '';
+  const bookingDaysCount = bookingDatesSorted.length;
+
+  const BASE_RECORDING_PRICE = 1000;
+  const EXTRA_DAY_PRICE = 200;
+  const totalBookingPrice = bookingDaysCount < 1 ? 0 : BASE_RECORDING_PRICE + (bookingDaysCount - 1) * EXTRA_DAY_PRICE;
 
   const validate = () => {
     if (!firstName.trim()) {
@@ -60,33 +187,16 @@ function StudioBookingPage({ onNavigate }) {
       showAlert('Укажите телефон.', 'error');
       return false;
     }
-    if (!email.trim()) {
-      showAlert('Укажите email.', 'error');
-      return false;
-    }
-    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRe.test(email)) {
-      showAlert('Некорректный email.', 'error');
-      return false;
-    }
     if (!musicGenre) {
-      showAlert('Выберите жанр музыки.', 'error');
+      showAlert('Сначала выберите тип записи и жанр на странице «Запись».', 'error');
       return false;
     }
     if (!songsCount.trim() || Number(songsCount) < 1) {
       showAlert('Укажите количество песен (не менее 1).', 'error');
       return false;
     }
-    if (!dateStart) {
-      showAlert('Укажите желаемую дату начала записи.', 'error');
-      return false;
-    }
-    if (!dateEnd) {
-      showAlert('Укажите желаемую дату окончания.', 'error');
-      return false;
-    }
-    if (new Date(dateEnd) < new Date(dateStart)) {
-      showAlert('Дата окончания не может быть раньше даты начала.', 'error');
+    if (selectedBookingDates.length < 1) {
+      showAlert('Выберите хотя бы один день записи в календаре (нажмите на зелёные дни).', 'error');
       return false;
     }
     if (hasMusicians === '') {
@@ -108,6 +218,25 @@ function StudioBookingPage({ onNavigate }) {
     return true;
   };
 
+  const buildBody = () => ({
+    firstName: firstName.trim(),
+    lastName: lastName.trim(),
+    phone: phone.trim(),
+    email: '',
+    intlPrefix: intlPrefix.trim() || undefined,
+    musicGenre: musicGenre || undefined,
+    songsCount: Number(songsCount),
+    musicDetails: musicDetails.trim() || undefined,
+    dateStart: bookingDatesSorted.length > 0 ? bookingDatesSorted[0] : '',
+    dateEnd: bookingDatesSorted.length > 0 ? bookingDatesSorted[bookingDatesSorted.length - 1] : '',
+    hasMusicians: hasMusicians === 'yes',
+    needSessionMusicians: needSessionMusicians === 'yes',
+    needProducer: needProducer === 'yes',
+    needEngineer: needEngineer === 'yes',
+    additionalInfo: additionalInfo.trim() || undefined,
+    beatmakerId: selectedBeatmakerId || undefined
+  });
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (submitting) return;
@@ -117,27 +246,29 @@ function StudioBookingPage({ onNavigate }) {
     setAlert(null);
 
     try {
-      const response = await fetch(`${API_URL}/studio-booking`, {
+      let url = recordingType === 'home-recording'
+        ? `${API_URL}/studio-booking/home-recording`
+        : `${API_URL}/studio-booking/with-music`;
+      let body = buildBody();
+      if (recordingType === 'with-music') {
+        url = `${API_URL}/studio-booking/with-music`;
+        try {
+          const stored = sessionStorage.getItem('studioBookingBeatIds');
+          if (stored) {
+            const ids = JSON.parse(stored);
+            if (Array.isArray(ids) && ids.length) {
+              body.beatIds = ids;
+              body.beatId = ids[0];
+            }
+            sessionStorage.removeItem('studioBookingBeatIds');
+          }
+        } catch (_) {}
+      }
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName: firstName.trim(),
-          lastName: lastName.trim(),
-          phone: phone.trim(),
-          email: email.trim(),
-          intlPrefix: intlPrefix.trim() || undefined,
-          website: website.trim() || undefined,
-          musicGenre,
-          songsCount: Number(songsCount),
-          musicDetails: musicDetails.trim() || undefined,
-          dateStart,
-          dateEnd,
-          hasMusicians: hasMusicians === 'yes',
-          needSessionMusicians: needSessionMusicians === 'yes',
-          needProducer: needProducer === 'yes',
-          needEngineer: needEngineer === 'yes',
-          additionalInfo: additionalInfo.trim() || undefined
-        })
+        body: JSON.stringify(body)
       });
 
       const data = await response.json().catch(() => ({}));
@@ -148,17 +279,22 @@ function StudioBookingPage({ onNavigate }) {
         setLastName('');
         setPhone('');
         setEmail('');
-        setWebsite('');
         setMusicGenre('');
         setSongsCount('');
         setMusicDetails('');
-        setDateStart('');
-        setDateEnd('');
+        setSelectedBookingDates([]);
         setHasMusicians('');
         setNeedSessionMusicians('');
         setNeedProducer('');
         setNeedEngineer('');
         setAdditionalInfo('');
+        sessionStorage.removeItem('studioBookingRecordingType');
+        sessionStorage.removeItem('studioBookingMusicStyle');
+        if (data.bookingId && (recordingType === 'home-recording' || recordingType === 'with-music') && onNavigate) {
+          localStorage.setItem('pendingStudioBookingId', String(data.bookingId));
+          localStorage.setItem('paymentPageSummaryOnly', '1');
+          setTimeout(() => onNavigate('payment'), 800);
+        }
       } else {
         showAlert(data.message || data.error || 'Не удалось отправить заявку. Попробуйте позже.', 'error');
       }
@@ -188,16 +324,61 @@ function StudioBookingPage({ onNavigate }) {
         )}
 
         <form className="studio-booking-form" onSubmit={handleSubmit} noValidate>
+          {/* Тип записи */}
+          <section className="booking-section booking-section-type">
+            <h2 className="booking-section-title">Тип записи</h2>
+            <p className="booking-section-desc">Выберите формат записи</p>
+            <div className="booking-type-row">
+              {RECORDING_TYPES.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  className={`booking-type-chip ${recordingType === t.id ? 'selected' : ''}`}
+                  onClick={() => setRecordingType(t.id)}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          {/* Выбор битмейкера */}
+          {beatmakers.length > 0 && (
+            <section className="booking-section booking-section-beatmaker">
+              <h2 className="booking-section-title">Битмейкер</h2>
+              <p className="booking-section-desc">Выберите, к кому хотите записаться</p>
+              <div className="booking-beatmakers-row">
+                {beatmakers.map((bm) => (
+                  <button
+                    key={bm.id}
+                    type="button"
+                    className={`booking-beatmaker-chip ${selectedBeatmakerId === bm.id ? 'selected' : ''}`}
+                    onClick={() => setSelectedBeatmakerId(selectedBeatmakerId === bm.id ? null : bm.id)}
+                  >
+                    <span className="booking-beatmaker-chip-avatar">
+                      {resolveAvatarUrl(bm.avatar_path) ? (
+                        <img src={resolveAvatarUrl(bm.avatar_path)} alt="" />
+                      ) : (
+                        <span>{bm.name ? bm.name.charAt(0) : '?'}</span>
+                      )}
+                    </span>
+                    <span className="booking-beatmaker-chip-name">{bm.name || 'Битмейкер'}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
+
           {/* Контактные данные */}
           <section className="booking-section">
             <h2 className="booking-section-title">Контактные данные</h2>
             <div className="booking-fields booking-fields-inline">
               <div className="form-group booking-name-group">
-                <label htmlFor="booking-first">Имя *</label>
+                <label htmlFor="booking-first">Ваше имя *</label>
                 <input
                   id="booking-first"
                   type="text"
-                  placeholder="Имя"
+                  placeholder="Как к вам обращаться"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   autoComplete="given-name"
@@ -215,9 +396,9 @@ function StudioBookingPage({ onNavigate }) {
                 />
               </div>
             </div>
-            <div className="booking-fields booking-phone-row">
+            <div className="booking-fields booking-fields-inline booking-phone-row">
               <div className="form-group">
-                <label htmlFor="booking-phone">Телефон *</label>
+                <label htmlFor="booking-phone">Телефон для связи *</label>
                 <input
                   id="booking-phone"
                   type="tel"
@@ -228,7 +409,7 @@ function StudioBookingPage({ onNavigate }) {
                 />
               </div>
               <div className="form-group booking-intl">
-                <label htmlFor="booking-intl">Межд. префикс</label>
+                <label htmlFor="booking-intl">Код страны</label>
                 <input
                   id="booking-intl"
                   type="text"
@@ -238,47 +419,11 @@ function StudioBookingPage({ onNavigate }) {
                 />
               </div>
             </div>
-            <div className="booking-fields">
-              <div className="form-group">
-                <label htmlFor="booking-email">Email *</label>
-                <input
-                  id="booking-email"
-                  type="email"
-                  placeholder="email@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="email"
-                />
-              </div>
-            </div>
-            <div className="booking-fields">
-              <div className="form-group">
-                <label htmlFor="booking-website">Сайт</label>
-                <input
-                  id="booking-website"
-                  type="url"
-                  placeholder="https://..."
-                  value={website}
-                  onChange={(e) => setWebsite(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="booking-fields">
-              <div className="form-group">
-                <label htmlFor="booking-genre">Жанр музыки *</label>
-                <select
-                  id="booking-genre"
-                  value={musicGenre}
-                  onChange={(e) => setMusicGenre(e.target.value)}
-                >
-                  {MUSIC_GENRES.map((opt) => (
-                    <option key={opt.value || 'empty'} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+            {musicGenre ? (
+              <p className="booking-genre-hint">Жанр: <strong>{musicGenre}</strong> (задан на странице «Запись»)</p>
+            ) : (
+              <p className="booking-genre-hint booking-genre-hint-warn">Сначала выберите тип записи и жанр на странице «Запись».</p>
+            )}
           </section>
 
           {/* Детали проекта */}
@@ -295,16 +440,16 @@ function StudioBookingPage({ onNavigate }) {
                   value={songsCount}
                   onChange={(e) => setSongsCount(e.target.value)}
                 />
-                <span className="field-hint">Сколько песен планируете записать?</span>
+                <span className="field-hint">Сколько треков планируете записать?</span>
               </div>
             </div>
             <div className="booking-fields">
               <div className="form-group">
-                <label htmlFor="booking-details">О вашей музыке</label>
+                <label htmlFor="booking-details">О проекте</label>
                 <textarea
                   id="booking-details"
                   rows={4}
-                  placeholder="Опишите стиль, идеи и по возможности приложите ссылки на треки."
+                  placeholder="Стиль, идеи, ссылки на демо или референсы"
                   value={musicDetails}
                   onChange={(e) => setMusicDetails(e.target.value)}
                 />
@@ -314,27 +459,95 @@ function StudioBookingPage({ onNavigate }) {
 
           {/* Даты записи */}
           <section className="booking-section">
-            <h2 className="booking-section-title">Когда хотите записаться?</h2>
-            <div className="booking-fields booking-fields-inline">
-              <div className="form-group">
-                <label htmlFor="booking-date-start">Начало *</label>
-                <input
-                  id="booking-date-start"
-                  type="date"
-                  value={dateStart}
-                  onChange={(e) => setDateStart(e.target.value)}
-                />
+            <h2 className="booking-section-title">Период записи</h2>
+            {selectedBeatmakerId && (
+              <div className="booking-calendar-wrap">
+                <div className="booking-calendar-header">
+                  <button
+                    type="button"
+                    className="booking-calendar-nav"
+                    onClick={() => {
+                      if (calendarMonth === 1) {
+                        setCalendarYear((y) => y - 1);
+                        setCalendarMonth(12);
+                      } else setCalendarMonth((m) => m - 1);
+                    }}
+                  >
+                    ← Назад
+                  </button>
+                  <h3 className="booking-calendar-title">
+                    {MONTH_NAMES[calendarMonth - 1]} {calendarYear}
+                  </h3>
+                  <button
+                    type="button"
+                    className="booking-calendar-nav"
+                    onClick={() => {
+                      if (calendarMonth === 12) {
+                        setCalendarYear((y) => y + 1);
+                        setCalendarMonth(1);
+                      } else setCalendarMonth((m) => m + 1);
+                    }}
+                  >
+                    Вперёд →
+                  </button>
+                </div>
+                <p className="booking-calendar-hint">Зелёные дни — рабочие у битмейкера. Нажимайте на дни, чтобы выбрать несколько дней записи (повторное нажатие снимает выбор).</p>
+                {workingDaysLoading ? (
+                  <div className="booking-calendar-loading">Загрузка…</div>
+                ) : (
+                  <div className="booking-calendar-grid">
+                    {WEEKDAY_NAMES.map((name) => (
+                      <div key={name} className="booking-calendar-weekday">{name}</div>
+                    ))}
+                    {getCalendarDays().map((dateStr, idx) => {
+                      const working = dateStr && isWorkingDay(dateStr);
+                      const busy = dateStr && isDateBusy(dateStr);
+                      const clickable = working && !busy;
+                      const ymd = dateStr ? dateStr.slice(0, 10) : '';
+                      const selected = ymd && selectedBookingDates.includes(ymd);
+                      return (
+                        <div
+                          key={dateStr || `e-${idx}`}
+                          className={`booking-calendar-day ${dateStr ? '' : 'booking-calendar-day-empty'} ${working ? 'booking-calendar-day-working' : ''} ${busy ? 'booking-calendar-day-busy' : ''} ${selected ? 'booking-calendar-day-selected' : ''}`}
+                          role={clickable ? 'button' : undefined}
+                          tabIndex={clickable ? 0 : undefined}
+                          onClick={() => clickable && handleCalendarDayClick(dateStr)}
+                          onKeyDown={(e) => clickable && (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), handleCalendarDayClick(dateStr))}
+                          aria-label={dateStr ? (clickable ? `Выбрать ${dateStr}` : undefined) : undefined}
+                        >
+                          {dateStr ? new Date(dateStr + 'T12:00:00').getDate() : ''}
+                          {working && !busy && <span className="booking-calendar-day-check">✓</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-              <div className="form-group">
-                <label htmlFor="booking-date-end">Окончание *</label>
-                <input
-                  id="booking-date-end"
-                  type="date"
-                  value={dateEnd}
-                  onChange={(e) => setDateEnd(e.target.value)}
-                />
+            )}
+            {selectedBeatmakerId && (
+              <div className="booking-calendar-summary">
+                {bookingDaysCount > 0 ? (
+                  <>
+                    <p className="booking-calendar-dates-hint">
+                      Выбрано дней: <strong>{bookingDaysCount}</strong>
+                      {dateStart && dateEnd && dateStart !== dateEnd && ` • Период: ${dateStart} — ${dateEnd}`}
+                      {dateStart && dateEnd && dateStart === dateEnd && ` • Дата: ${dateStart}`}
+                    </p>
+                    <p className="booking-calendar-price">
+                      Стоимость: <strong>{totalBookingPrice.toLocaleString('ru-RU')} ₽</strong>
+                      {bookingDaysCount > 1 && (
+                        <span className="booking-calendar-price-extra"> (1 день — {BASE_RECORDING_PRICE.toLocaleString('ru-RU')} ₽, за каждый дополнительный день +{EXTRA_DAY_PRICE} ₽)</span>
+                      )}
+                    </p>
+                  </>
+                ) : (
+                  <p className="booking-calendar-dates-hint">Нажмите на зелёные дни в календаре, чтобы выбрать дни записи.</p>
+                )}
               </div>
-            </div>
+            )}
+            {!selectedBeatmakerId && (
+              <p className="booking-calendar-no-beatmaker">Выберите битмейкера на главной (секция «Почему выбирают нас») и нажмите «Записаться», затем выберите тип записи и перейдите к форме.</p>
+            )}
           </section>
 
           {/* Услуги */}
@@ -448,14 +661,14 @@ function StudioBookingPage({ onNavigate }) {
 
           {/* Дополнительно */}
           <section className="booking-section">
-            <h2 className="booking-section-title">Дополнительно</h2>
+            <h2 className="booking-section-title">Пожелания</h2>
             <div className="booking-fields">
               <div className="form-group">
-                <label htmlFor="booking-extra">Всё остальное</label>
+                <label htmlFor="booking-extra">Особые запросы</label>
                 <textarea
                   id="booking-extra"
                   rows={3}
-                  placeholder="Пожелания по времени, оборудованию, особые запросы."
+                  placeholder="Оборудование, время суток, другие пожелания"
                   value={additionalInfo}
                   onChange={(e) => setAdditionalInfo(e.target.value)}
                 />

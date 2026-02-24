@@ -648,6 +648,18 @@ function RecordingPage({ onNavigate }) {
     return `${baseUrl}${normalized}`;
   };
 
+  const goToMainBookingForm = () => {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem('studioBookingRecordingType', selectedType);
+      if (selectedStyle) sessionStorage.setItem('studioBookingMusicStyle', selectedStyle);
+      if (selectedType === 'with-music' && selectedBeatIds.length > 0) {
+        sessionStorage.setItem('studioBookingBeatIds', JSON.stringify(selectedBeatIds));
+      }
+    }
+    closePopup();
+    if (onNavigate) onNavigate('studio-booking');
+  };
+
   const currentType = recordingTypes.find(type => type.id === selectedType);
   const selectedBeat = purchasedBeats.find(b => b.id === selectedBeatId);
   const selectedBeatsList = purchasedBeats.filter(b => selectedBeatIds.includes(b.id));
@@ -975,183 +987,19 @@ function RecordingPage({ onNavigate }) {
               </div>
             </div>
 
-            {/* Форма уточнения для «Запись на дому» — та же система, без упоминания скидки */}
-            {selectedType === 'home-recording' && selectedStyle && (
+            {/* Запись на дому / с покупкой музыки — переход к основной форме */}
+            {(selectedType === 'home-recording' || selectedType === 'with-music') && selectedStyle && (
               <div className="popup-wm-form-wrap">
-                <form className="popup-wm-form" onSubmit={handleHomeRecordingFormSubmit}>
-                  <h3 className="popup-wm-form-title">Уточнение для записи на дому</h3>
-                  <div className="popup-wm-form-grid">
-                    <div className="popup-wm-row popup-wm-row-inline">
-                      <div className="popup-wm-field">
-                        <label>Имя *</label>
-                        <input type="text" placeholder="Имя" value={wmFirstName} onChange={(e) => setWmFirstName(e.target.value)} />
-                      </div>
-                      <div className="popup-wm-field">
-                        <label>Фамилия *</label>
-                        <input type="text" placeholder="Фамилия" value={wmLastName} onChange={(e) => setWmLastName(e.target.value)} />
-                      </div>
-                    </div>
-                    <div className="popup-wm-row popup-wm-row-inline">
-                      <div className="popup-wm-field">
-                        <label>Телефон *</label>
-                        <input type="tel" placeholder="+7 (999) 123-45-67" value={wmPhone} onChange={handleWmPhoneChange} />
-                      </div>
-                      <div className="popup-wm-field popup-wm-intl">
-                        <label>Межд. префикс</label>
-                        <input type="text" placeholder="+7" value={wmIntlPrefix} onChange={(e) => setWmIntlPrefix(e.target.value)} />
-                      </div>
-                    </div>
-                    <div className="popup-wm-row">
-                      <div className="popup-wm-field">
-                        <label>Количество песен *</label>
-                        <input type="number" min={1} placeholder="1" value={wmSongsCount} onChange={(e) => setWmSongsCount(e.target.value)} />
-                        <span className="popup-wm-hint">Сколько песен планируете записать?</span>
-                      </div>
-                    </div>
-                    <div className="popup-wm-row">
-                      <div className="popup-wm-field">
-                        <label>О вашей музыке</label>
-                        <textarea rows={3} placeholder="Опишите стиль и по возможности приложите ссылки на треки." value={wmMusicDetails} onChange={(e) => setWmMusicDetails(e.target.value)} />
-                      </div>
-                    </div>
-                    <div className="popup-wm-row">
-                      <span className="popup-wm-section-label">Когда хотите записаться?</span>
-                    </div>
-                    <div className="popup-wm-row popup-wm-row-inline">
-                      <div className="popup-wm-field">
-                        <label>Начало *</label>
-                        <input type="date" value={wmDateStart} onChange={(e) => setWmDateStart(e.target.value)} />
-                      </div>
-                      <div className="popup-wm-field">
-                        <label>Окончание *</label>
-                        <input type="date" value={wmDateEnd} onChange={(e) => setWmDateEnd(e.target.value)} />
-                      </div>
-                    </div>
-                    <div className="popup-wm-row popup-wm-radio-row">
-                      <span className="popup-wm-label">У вас есть музыканты или группа? *</span>
-                      <label className="popup-wm-radio"><input type="radio" name="hrHasMusicians" value="yes" checked={wmHasMusicians === 'yes'} onChange={() => setWmHasMusicians('yes')} /> Да</label>
-                      <label className="popup-wm-radio"><input type="radio" name="hrHasMusicians" value="no" checked={wmHasMusicians === 'no'} onChange={() => setWmHasMusicians('no')} /> Нет</label>
-                    </div>
-                    <div className="popup-wm-row popup-wm-radio-row">
-                      <span className="popup-wm-label">Нужны сессионные музыканты? *</span>
-                      <label className="popup-wm-radio"><input type="radio" name="hrNeedSession" value="yes" checked={wmNeedSessionMusicians === 'yes'} onChange={() => setWmNeedSessionMusicians('yes')} /> Да</label>
-                      <label className="popup-wm-radio"><input type="radio" name="hrNeedSession" value="no" checked={wmNeedSessionMusicians === 'no'} onChange={() => setWmNeedSessionMusicians('no')} /> Нет</label>
-                    </div>
-                    <div className="popup-wm-row popup-wm-radio-row">
-                      <span className="popup-wm-label">Нужен продюсер? *</span>
-                      <span className="popup-wm-hint">Рекомендуем «Да», если сомневаетесь.</span>
-                      <label className="popup-wm-radio"><input type="radio" name="hrNeedProducer" value="yes" checked={wmNeedProducer === 'yes'} onChange={() => setWmNeedProducer('yes')} /> Да</label>
-                      <label className="popup-wm-radio"><input type="radio" name="hrNeedProducer" value="no" checked={wmNeedProducer === 'no'} onChange={() => setWmNeedProducer('no')} /> Нет</label>
-                    </div>
-                    <div className="popup-wm-row popup-wm-radio-row">
-                      <span className="popup-wm-label">Нужен звукорежиссёр? *</span>
-                      <span className="popup-wm-hint">Рекомендуем «Да», если сомневаетесь.</span>
-                      <label className="popup-wm-radio"><input type="radio" name="hrNeedEngineer" value="yes" checked={wmNeedEngineer === 'yes'} onChange={() => setWmNeedEngineer('yes')} /> Да</label>
-                      <label className="popup-wm-radio"><input type="radio" name="hrNeedEngineer" value="no" checked={wmNeedEngineer === 'no'} onChange={() => setWmNeedEngineer('no')} /> Нет</label>
-                    </div>
-                    <div className="popup-wm-row">
-                      <div className="popup-wm-field">
-                        <label>Всё остальное</label>
-                        <textarea rows={2} placeholder="Пожелания, особые запросы" value={wmAdditionalInfo} onChange={(e) => setWmAdditionalInfo(e.target.value)} />
-                      </div>
-                    </div>
-                    <div className="popup-wm-row popup-wm-submit-row">
-                      <button type="submit" className="popup-wm-submit" disabled={wmFormSubmitting}>
-                        {wmFormSubmitting ? 'Отправка…' : 'Отправить'}
-                      </button>
-                    </div>
-                  </div>
-                </form>
-              </div>
-            )}
-
-            {/* Форма уточнения для «Запись с покупкой музыки» — передаётся битмейкеру */}
-            {selectedType === 'with-music' && selectedStyle && (
-              <div className="popup-wm-form-wrap">
-                <form className="popup-wm-form" onSubmit={handleWithMusicFormSubmit}>
-                  <h3 className="popup-wm-form-title">Уточнение для битмейкера</h3>
-                  <div className="popup-wm-form-grid">
-                    <div className="popup-wm-row popup-wm-row-inline">
-                      <div className="popup-wm-field">
-                        <label>Имя *</label>
-                        <input type="text" placeholder="Имя" value={wmFirstName} onChange={(e) => setWmFirstName(e.target.value)} />
-                      </div>
-                      <div className="popup-wm-field">
-                        <label>Фамилия *</label>
-                        <input type="text" placeholder="Фамилия" value={wmLastName} onChange={(e) => setWmLastName(e.target.value)} />
-                      </div>
-                    </div>
-                    <div className="popup-wm-row popup-wm-row-inline">
-                      <div className="popup-wm-field">
-                        <label>Телефон *</label>
-                        <input type="tel" placeholder="+7 (999) 123-45-67" value={wmPhone} onChange={handleWmPhoneChange} />
-                      </div>
-                      <div className="popup-wm-field popup-wm-intl">
-                        <label>Межд. префикс</label>
-                        <input type="text" placeholder="+7" value={wmIntlPrefix} onChange={(e) => setWmIntlPrefix(e.target.value)} />
-                      </div>
-                    </div>
-                    <div className="popup-wm-row">
-                      <div className="popup-wm-field">
-                        <label>Количество песен *</label>
-                        <input type="number" min={1} placeholder="1" value={wmSongsCount} onChange={(e) => setWmSongsCount(e.target.value)} />
-                        <span className="popup-wm-hint">Сколько песен планируете записать?</span>
-                      </div>
-                    </div>
-                    <div className="popup-wm-row">
-                      <div className="popup-wm-field">
-                        <label>О вашей музыке</label>
-                        <textarea rows={3} placeholder="Опишите стиль и по возможности приложите ссылки на треки." value={wmMusicDetails} onChange={(e) => setWmMusicDetails(e.target.value)} />
-                      </div>
-                    </div>
-                    <div className="popup-wm-row">
-                      <span className="popup-wm-section-label">Когда хотите записаться?</span>
-                    </div>
-                    <div className="popup-wm-row popup-wm-row-inline">
-                      <div className="popup-wm-field">
-                        <label>Начало *</label>
-                        <input type="date" value={wmDateStart} onChange={(e) => setWmDateStart(e.target.value)} />
-                      </div>
-                      <div className="popup-wm-field">
-                        <label>Окончание *</label>
-                        <input type="date" value={wmDateEnd} onChange={(e) => setWmDateEnd(e.target.value)} />
-                      </div>
-                    </div>
-                    <div className="popup-wm-row popup-wm-radio-row">
-                      <span className="popup-wm-label">У вас есть музыканты или группа? *</span>
-                      <label className="popup-wm-radio"><input type="radio" name="wmHasMusicians" value="yes" checked={wmHasMusicians === 'yes'} onChange={() => setWmHasMusicians('yes')} /> Да</label>
-                      <label className="popup-wm-radio"><input type="radio" name="wmHasMusicians" value="no" checked={wmHasMusicians === 'no'} onChange={() => setWmHasMusicians('no')} /> Нет</label>
-                    </div>
-                    <div className="popup-wm-row popup-wm-radio-row">
-                      <span className="popup-wm-label">Нужны сессионные музыканты? *</span>
-                      <label className="popup-wm-radio"><input type="radio" name="wmNeedSession" value="yes" checked={wmNeedSessionMusicians === 'yes'} onChange={() => setWmNeedSessionMusicians('yes')} /> Да</label>
-                      <label className="popup-wm-radio"><input type="radio" name="wmNeedSession" value="no" checked={wmNeedSessionMusicians === 'no'} onChange={() => setWmNeedSessionMusicians('no')} /> Нет</label>
-                    </div>
-                    <div className="popup-wm-row popup-wm-radio-row">
-                      <span className="popup-wm-label">Нужен продюсер? *</span>
-                      <span className="popup-wm-hint">Рекомендуем «Да», если сомневаетесь.</span>
-                      <label className="popup-wm-radio"><input type="radio" name="wmNeedProducer" value="yes" checked={wmNeedProducer === 'yes'} onChange={() => setWmNeedProducer('yes')} /> Да</label>
-                      <label className="popup-wm-radio"><input type="radio" name="wmNeedProducer" value="no" checked={wmNeedProducer === 'no'} onChange={() => setWmNeedProducer('no')} /> Нет</label>
-                    </div>
-                    <div className="popup-wm-row popup-wm-radio-row">
-                      <span className="popup-wm-label">Нужен звукорежиссёр? *</span>
-                      <span className="popup-wm-hint">Рекомендуем «Да», если сомневаетесь.</span>
-                      <label className="popup-wm-radio"><input type="radio" name="wmNeedEngineer" value="yes" checked={wmNeedEngineer === 'yes'} onChange={() => setWmNeedEngineer('yes')} /> Да</label>
-                      <label className="popup-wm-radio"><input type="radio" name="wmNeedEngineer" value="no" checked={wmNeedEngineer === 'no'} onChange={() => setWmNeedEngineer('no')} /> Нет</label>
-                    </div>
-                    <div className="popup-wm-row">
-                      <div className="popup-wm-field">
-                        <label>Всё остальное</label>
-                        <textarea rows={2} placeholder="Пожелания, особые запросы" value={wmAdditionalInfo} onChange={(e) => setWmAdditionalInfo(e.target.value)} />
-                      </div>
-                    </div>
-                    <div className="popup-wm-row popup-wm-submit-row">
-                      <button type="submit" className="popup-wm-submit" disabled={wmFormSubmitting}>
-                        {wmFormSubmitting ? 'Отправка…' : 'Отправить'}
-                      </button>
-                    </div>
-                  </div>
-                </form>
+                <h3 className="popup-wm-form-title">Перейти к форме записи</h3>
+                <p className="popup-wm-form-desc">
+                  Выбран стиль: <strong>{musicStyles.find(s => s.id === selectedStyle)?.name}</strong>.
+                  Заполните общую форму записи на студию — там можно указать тип «Запись на дому» или «Запись с покупкой музыки».
+                </p>
+                <div className="popup-wm-row popup-wm-submit-row">
+                  <button type="button" className="popup-wm-submit" onClick={goToMainBookingForm}>
+                    Перейти к форме записи
+                  </button>
+                </div>
               </div>
             )}
           </div>

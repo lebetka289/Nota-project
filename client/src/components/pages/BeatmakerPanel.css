@@ -201,6 +201,149 @@
   color: var(--muted);
 }
 
+/* Календарь рабочих дней */
+.bm-calendar-wrap {
+  max-width: 720px;
+  margin-top: 1rem;
+  padding: 1.5rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--asos-white);
+}
+
+.bm-calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.bm-calendar-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.bm-calendar-nav {
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--asos-white);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: var(--text);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.bm-calendar-nav:hover {
+  border-color: rgba(225, 6, 47, 0.5);
+  background: rgba(225, 6, 47, 0.06);
+}
+
+.bm-calendar-hint {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin: 0 0 1.25rem 0;
+}
+
+.bm-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.bm-calendar-weekday {
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  padding: 0.5rem 0;
+}
+
+.bm-calendar-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  background: var(--asos-gray, #f5f5f5);
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text);
+  cursor: pointer;
+  position: relative;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+}
+
+.bm-calendar-day:hover:not(.bm-calendar-day-empty):not(.bm-calendar-day-busy) {
+  border-color: rgba(225, 6, 47, 0.5);
+  background: rgba(225, 6, 47, 0.08);
+}
+
+.bm-calendar-day-empty {
+  cursor: default;
+  background: transparent;
+  border-color: transparent;
+}
+
+.bm-calendar-day-working {
+  border-color: rgba(34, 160, 80, 0.6);
+  background: rgba(34, 160, 80, 0.15);
+  color: #1a6b34;
+}
+
+.bm-calendar-day-working:hover {
+  border-color: rgba(34, 160, 80, 0.8);
+  background: rgba(34, 160, 80, 0.25);
+}
+
+.bm-calendar-day-check {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.75rem;
+  color: inherit;
+}
+
+.bm-calendar-save-wrap {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+.bm-calendar-save-btn {
+  padding: 0.85rem 2rem;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(180deg, rgba(34, 160, 80, 0.95), rgba(34, 160, 80, 0.75));
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+}
+
+.bm-calendar-save-btn:hover:not(:disabled) {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+
+.bm-calendar-save-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 /* Tabs */
 .bm-tabs {
   display: flex;
@@ -326,7 +469,11 @@
 }
 
 .bm-booking-actions {
-  padding-top: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding-top: 0.75rem;
   border-top: 1px solid var(--border);
 }
 
@@ -351,6 +498,97 @@
 .bm-btn-take:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.bm-btn-reject {
+  height: 40px;
+  padding: 0 1.25rem;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  background: #fff;
+  color: var(--text, #333);
+  font-weight: 700;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.bm-btn-reject:hover {
+  border-color: rgba(180, 50, 50, 0.5);
+  background: rgba(180, 50, 50, 0.06);
+}
+
+.bm-reject-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bm-reject-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text, #333);
+}
+
+.bm-reject-textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.bm-reject-textarea:focus {
+  outline: none;
+  border-color: rgba(225, 6, 47, 0.5);
+}
+
+.bm-reject-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.bm-btn-reject-submit {
+  height: 38px;
+  padding: 0 1.1rem;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(180deg, rgba(225, 6, 47, 0.9), rgba(200, 50, 70, 0.8));
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.bm-btn-reject-submit:hover:not(:disabled) {
+  opacity: 0.95;
+}
+
+.bm-btn-reject-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.bm-btn-reject-cancel {
+  height: 38px;
+  padding: 0 1.1rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text, #333);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.bm-btn-reject-cancel:hover {
+  background: rgba(0, 0, 0, 0.04);
 }
 
 /* Заявка в работе: оплачено/бит/загрузка трека */
