@@ -1,4 +1,7 @@
-require('dotenv').config();
+// Загружаем переменные окружения из основного .env в корне проекта (../.env),
+// если он есть. В Docker переменные приходят из docker-compose и тоже будут доступны.
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 const app = require('./src/app');
 const { initDatabase } = require('./src/services/database.service');
 
