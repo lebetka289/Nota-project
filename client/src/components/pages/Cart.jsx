@@ -74,8 +74,8 @@ function Cart() {
         throw new Error(data.error || 'Ошибка создания платежа');
       }
 
-      if (data.free || data.mock) {
-        setAlert({ message: 'Оплата проведена в тестовом режиме.', type: 'success' });
+      if (data.free) {
+        setAlert({ message: 'Оплата успешно проведена, бит отмечен как купленный.', type: 'success' });
         window.dispatchEvent(new Event('nota:cart-updated'));
         fetchCart();
       } else if (data.confirmation_url) {
@@ -129,11 +129,6 @@ function Cart() {
 
       if (data.free) {
         setAlert({ message: 'Биты отмечены как купленные.', type: 'success' });
-        window.dispatchEvent(new Event('nota:cart-updated'));
-        return fetchCart();
-      }
-      if (data.mock) {
-        setAlert({ message: 'Оплата проведена в тестовом режиме.', type: 'success' });
         window.dispatchEvent(new Event('nota:cart-updated'));
         return fetchCart();
       }

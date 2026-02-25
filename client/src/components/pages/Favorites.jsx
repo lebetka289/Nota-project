@@ -96,8 +96,8 @@ function Favorites() {
         throw new Error(data.error || 'Ошибка создания платежа');
       }
 
-      if (data.free || data.mock) {
-        setAlert({ message: 'Оплата проведена в тестовом режиме.', type: 'success' });
+      if (data.free) {
+        setAlert({ message: 'Оплата успешно проведена, бит отмечен как купленный.', type: 'success' });
         fetchFavorites();
       } else if (data.confirmation_url) {
         window.location.href = data.confirmation_url;

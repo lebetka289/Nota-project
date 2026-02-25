@@ -166,12 +166,7 @@ function UserProfile() {
         throw new Error(data.error || 'Ошибка создания платежа');
       }
 
-      if (data.mock) {
-        setAlert({ message: 'Оплата проведена в тестовом режиме.', type: 'success' });
-        fetchData();
-        localStorage.removeItem('pendingStudioBookingId');
-        setPendingBooking(null);
-      } else if (data.confirmation_url) {
+      if (data.confirmation_url) {
         window.location.href = data.confirmation_url;
       } else {
         setAlert({ message: 'Платеж создан, но нет ссылки на оплату', type: 'error' });
@@ -206,12 +201,7 @@ function UserProfile() {
         throw new Error(data.error || 'Ошибка создания платежа');
       }
 
-      if (data.mock) {
-        setAlert({ message: 'Оплата проведена в тестовом режиме. Статус заявки обновлён у битмейкера.', type: 'success' });
-        fetchData();
-        localStorage.removeItem('pendingStudioBookingId');
-        setPendingBooking(null);
-      } else if (data.confirmation_url) {
+      if (data.confirmation_url) {
         window.location.href = data.confirmation_url;
       } else {
         setAlert({ message: 'Платеж создан, но нет ссылки на оплату', type: 'error' });
@@ -241,8 +231,8 @@ function UserProfile() {
         throw new Error(data.error || 'Ошибка создания платежа');
       }
 
-      if (data.free || data.mock) {
-        setAlert({ message: 'Оплата проведена в тестовом режиме.', type: 'success' });
+      if (data.free) {
+        setAlert({ message: 'Оплата успешно проведена, бит отмечен как купленный.', type: 'success' });
         fetchData();
         setSelectedBeatIds((prev) => {
           const next = new Set(prev);

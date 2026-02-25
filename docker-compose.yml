@@ -24,8 +24,9 @@ services:
       DB_PASSWORD: 3p717nWL
       DB_NAME: maksmalu_notabel
       JWT_SECRET: ${JWT_SECRET}
-      PAYMENT_RETURN_URL: http://localhost/
-      PAYMENT_SKIP_CONFIRMATION: 'true'
+      PAYMENT_RETURN_URL: http://155.212.217.144:5173/
+      YOOKASSA_SHOP_ID: ${YOOKASSA_SHOP_ID:-1286265}
+      YOOKASSA_SECRET_KEY: ${YOOKASSA_SECRET_KEY}
       SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}
@@ -42,7 +43,7 @@ services:
     image: node:20-slim
     working_dir: /app
     environment:
-      VITE_API_URL: http://localhost:5000/api
+      VITE_API_URL: http://155.212.217.144:5000/api
     volumes:
       - ./client:/app
       - client_node_modules:/app/node_modules
