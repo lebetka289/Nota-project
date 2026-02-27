@@ -16,7 +16,9 @@ function getEnvIds() {
   const ymIdRaw = import.meta.env.VITE_YM_COUNTER_ID;
   const gaIdRaw = import.meta.env.VITE_GA_MEASUREMENT_ID;
 
-  const ymId = ymIdRaw ? String(ymIdRaw).trim() : '';
+  // По умолчанию используем ваш счётчик 107028114,
+  // но даём возможность переопределить его через VITE_YM_COUNTER_ID
+  const ymId = ymIdRaw ? String(ymIdRaw).trim() : '107028114';
   const gaId = gaIdRaw ? String(gaIdRaw).trim() : '';
 
   return { ymId, gaId };
@@ -52,10 +54,14 @@ export function initAnalytics() {
     window.ym.l = Date.now();
 
     window.ym(Number(ymId), 'init', {
-      clickmap: true,
-      trackLinks: true,
-      accurateTrackBounce: true,
+      ssr: true,
       webvisor: true,
+      clickmap: true,
+      ecommerce: 'dataLayer',
+      referrer: typeof document !== 'undefined' ? document.referrer : undefined,
+      url: typeof window !== 'undefined' ? window.location.href : undefined,
+      accurateTrackBounce: true,
+      trackLinks: true,
     });
   }
 }

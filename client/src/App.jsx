@@ -48,6 +48,29 @@ const PAGE_TITLES = {
   payment: 'Оплата — Нота бель',
 }
 
+const PAGE_META = {
+  home: {
+    description: 'Нота бель — студия и маркетплейс битов: запись вокала, покупка битов, домашняя запись и бронирование студии.',
+    ogTitle: 'Нота бель — студия и биты',
+    ogDescription: 'Профессиональная запись, покупка битов и бронирование студии в одном месте.',
+  },
+  shop: {
+    description: 'Каталог битов Нота бель: жанры, BPM, покупка и скачивание после оплаты.',
+    ogTitle: 'Каталог битов — Нота бель',
+    ogDescription: 'Выберите и купите биты в нужном жанре и темпе.',
+  },
+  news: {
+    description: 'Новости студии Нота бель: акции, обновления каталога и истории клиентов.',
+    ogTitle: 'Новости студии — Нота бель',
+    ogDescription: 'Будьте в курсе новостей студии и обновлений сервиса.',
+  },
+  'studio-booking': {
+    description: 'Бронирование студии Нота бель: удобные слоты, профессиональное оборудование и команда.',
+    ogTitle: 'Бронирование студии — Нота бель',
+    ogDescription: 'Забронируйте время в студии Нота бель для записи и продакшена.',
+  },
+}
+
 function setRobotsMeta(content) {
   if (typeof document === 'undefined') return;
   let tag = document.querySelector('meta[name="robots"]');
@@ -57,6 +80,38 @@ function setRobotsMeta(content) {
     document.head.appendChild(tag);
   }
   tag.setAttribute('content', content);
+}
+
+function setSeoMetaForPage(pageKey) {
+  if (typeof document === 'undefined') return;
+  const meta = PAGE_META[pageKey] || PAGE_META.home;
+
+  // description
+  let desc = document.querySelector('meta[name="description"]');
+  if (!desc) {
+    desc = document.createElement('meta');
+    desc.setAttribute('name', 'description');
+    document.head.appendChild(desc);
+  }
+  desc.setAttribute('content', meta.description);
+
+  // og:title
+  let ogTitle = document.querySelector('meta[property="og:title"]');
+  if (!ogTitle) {
+    ogTitle = document.createElement('meta');
+    ogTitle.setAttribute('property', 'og:title');
+    document.head.appendChild(ogTitle);
+  }
+  ogTitle.setAttribute('content', meta.ogTitle);
+
+  // og:description
+  let ogDesc = document.querySelector('meta[property="og:description"]');
+  if (!ogDesc) {
+    ogDesc = document.createElement('meta');
+    ogDesc.setAttribute('property', 'og:description');
+    document.head.appendChild(ogDesc);
+  }
+  ogDesc.setAttribute('content', meta.ogDescription);
 }
 
 function App() {
@@ -81,6 +136,8 @@ function App() {
     // Личные/технические разделы лучше закрывать от индексации
     const noindexPages = new Set(['admin', 'profile', 'support', 'cart', 'favorites', 'payment', 'reset-password'])
     setRobotsMeta(noindexPages.has(currentPage) ? 'noindex,nofollow' : 'index,follow')
+
+    setSeoMetaForPage(currentPage)
 
     trackPageView({ title })
   }, [currentPage])
